@@ -60,7 +60,25 @@ Otimizações de performance (do segundo vídeo) — incorporadas às etapas fut
 - **Sempre**: remover dependências não usadas, testar em celular real e rede lenta
 
 Testes: 18/18 passando (16 core + 2 vault). Typecheck: 100% verde.
-Falta: commit, push e CI.
+Etapa 1 completa e enviada.
+
+## Etapa 2 concluída (15/11/2026)
+
+Arquivos criados/modificados:
+- `apps/mobile/src/theme/index.ts` — tokens claro/escuro (cores, tipografia, espaçamento)
+- `apps/mobile/src/components/SafeScreen.tsx` — wrapper área segura + status bar
+- `apps/mobile/src/navigation/index.tsx` — stack raiz (Splash → App) + 4 bottom tabs
+- `apps/mobile/src/screens/Splash.tsx` — tela de boas-vindas (gradiente escuro, logo, botões)
+- `apps/mobile/src/screens/Home.tsx` — casca da home (saudação, saldo, placeholders)
+- `apps/mobile/src/screens/Lancamentos.tsx` — casca placeholder
+- `apps/mobile/src/screens/Metas.tsx` — casca placeholder
+- `apps/mobile/src/screens/Mais.tsx` — menu (configurar acesso, backup, privacidade, sobre)
+- `apps/mobile/App.tsx` — wired ao AppNavigator
+
+Dependências adicionadas: `@react-navigation/native`, `@react-navigation/bottom-tabs`,
+`@react-navigation/native-stack`, `react-native-screens`.
+
+Commit: `757f1e6`. Falta: push e CI.
 
 ## Estrutura
 ```
@@ -69,7 +87,8 @@ Solis_V3/
   apps/mobile/        app Expo (Android); leia apps/mobile/AGENTS.md
   CLAUDE.md, LICENSE (Apache-2.0), SECURITY.md, .prettierrc.json, .gitignore
 ```
-Planejado: `packages/dados` (banco, migrações, repositórios), `packages/ia` (Solis AI), `apps/web` (futuro).
+Planejado: `packages/ia` (Solis AI), `apps/web` (futuro).
+`packages/dados` já existe (Etapa 1).
 
 ## Etapas (aprovadas pelo usuário)
 0. **Fundação**: monorepo, README, repositório, autoteste de banco cifrado; CI só após aprovação.
