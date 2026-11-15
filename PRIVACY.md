@@ -44,10 +44,19 @@ A chave é derivada da sua senha mestra e guardada no **Android Keystore** do se
 
 ---
 
-## 4. Dados de mercado (a partir da Etapa 6 do desenvolvimento)
+## 4. Dados de mercado (Etapa 6+)
 
-Para exibir cotações (Selic, CDI, IPCA, câmbio), o app consulta **APIs públicas do governo brasileiro** (Banco Central, Tesouro Nacional).
-Essas requisições **não carregam nenhum dado pessoal** — são pedidos públicos, como acessar uma página de notícias.
+O app pode consultar serviços externos para exibir indicadores e cotações. Isso só ocorre com sua permissão explícita (configuração "Buscar cotações online").
+
+| Serviço | O que é enviado | Para quê | Base legal |
+|---|---|---|---|
+| Banco Central do Brasil (`api.bcb.gov.br`) | Nada (consulta pública) | Selic e CDI | Legítimo interesse público |
+| IBGE (`servicodados.ibge.gov.br`) | Nada (consulta pública) | IPCA mensal | Legítimo interesse público |
+| **brapi.dev** | Tickers dos ativos da sua carteira | Cotação em tempo real | **Consentimento** (você ativa nas configurações) |
+
+> **brapi.dev** é um serviço terceiro brasileiro de dados de mercado. Ao ativar cotações online, os códigos dos seus ativos (ex.: "PETR4", "VALE3") são enviados ao servidor da brapi.dev para retornar o preço atual. Esses códigos **não identificam você pessoalmente**, mas revelam quais ativos você acompanha. A política de privacidade da brapi.dev está em <https://brapi.dev>.
+>
+> Para não enviar nenhum dado externo, mantenha a opção "Buscar cotações online" desativada — o app continua funcionando com o preço médio que você cadastrou.
 
 ---
 
@@ -58,8 +67,9 @@ Essas requisições **não carregam nenhum dado pessoal** — são pedidos públ
 | Acessar seus dados | Todos estão no app, visíveis para você |
 | Exportar seus dados | Menu → Backup (exporta o banco cifrado) |
 | Excluir seus dados | Menu → Configurações → Apagar todos os dados |
-| Saber quais fornecedores processam seus dados | Nenhum: o app é offline |
-| Revogar consentimento | Desinstale o app — os dados são apagados pelo Android |
+| Saber quais fornecedores processam seus dados | Seção 4 acima (brapi.dev, apenas se ativado) |
+| Revogar consentimento de cotações | Desative "Buscar cotações online" nas configurações |
+| Revogar todo consentimento | Desinstale o app — os dados são apagados pelo Android |
 
 ---
 

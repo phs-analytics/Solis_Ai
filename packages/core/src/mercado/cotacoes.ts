@@ -1,6 +1,9 @@
 /**
- * Cotações de ativos brasileiros e internacionais via brapi.dev (gratuito, sem chave).
- * Apenas leitura de mercado — nenhum dado do usuário é enviado.
+ * Cotações de ativos via brapi.dev (gratuito, sem chave).
+ * PRIVACIDADE: os tickers enviados identificam a carteira do usuário.
+ * Esta função só deve ser chamada após consentimento explícito do usuário
+ * (configuração "Buscar cotações online" nas preferências).
+ * brapi.dev é listado como processador em PRIVACY.md.
  */
 
 export type Cotacao = {
