@@ -1,0 +1,79 @@
+name: Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      # versão do pnpm vem do campo packageManager do package.json
+      - uses: pnpm/action-setup@v6.1.1
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm typecheck
+
+      - uses: actions/setup-java@v6.3.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # O Android SDK já vem instalado no ubuntu-latest (ANDROID_HOME).
+      - name: Prebuild
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install
+
+      # Release em vez de debug: o debug espera o Metro e não embute o JS.
+      # O modelo do Expo assina o release com a chave de debug, então nenhum segredo é necessário.
+      - name: Build do APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=x86_64,arm64-v8a --no-daemon
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: solis-apk
+          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Autoteste no emulador
+        uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            mkdir -p capturas
+            adb install -r apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            adb shell am start -W -n io.github.phsanalytics.solis/.MainActivity
+            sleep 30
+            adb exec-out screencap -p > capturas/autoteste.png
+            adb exec-out uiautomator dump /dev/tty > capturas/autoteste.xml || true
+            adb logcat -d > capturas/logcat.txt || true
+
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: autoteste
+          path: capturas/
