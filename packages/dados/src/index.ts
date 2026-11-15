@@ -4,3 +4,5 @@ export { salvarSalt, lerSalt, lerPrefs, removerChave } from "./keystore.js";
 export { inicializarSchema, VERSAO_SCHEMA } from "./schema.js";
 export { exportarBackup, limparBackupTemporario, apagarTudo } from "./backup.js";
 export * from "./repositorios/index.js";
+export { montarContexto } from "./ia/analisador.js";
+export type { ContextoFinanceiro } from "./ia/analisador.js";
