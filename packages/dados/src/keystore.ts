@@ -1,25 +1,61 @@
 /**
- * Acesso à chave mestra no Android Keystore via expo-secure-store.
- * A chave nunca sai do chip de segurança do aparelho.
+ * Acesso ao salt e à chave cifrada no Android Keystore via expo-secure-store.
+ *
+ * Modelo de segurança:
+ * - A chave do banco (AES-256) é DERIVADA da senha do usuário via PBKDF2.
+ * - O salt de derivação é armazenado no Keystore (protegido pelo chip).
+ * - A chave derivada NUNCA é persistida: é recalculada a cada desbloqueio.
+ * - Com biometria: o salt fica num slot com requireAuthentication=true,
+ *   vinculando o acesso ao chip biométrico do Android Keystore.
+ * - Sem biometria: o salt fica num slot acessível só com aparelho desbloqueado.
  */
 
 import * as SecureStore from "expo-secure-store";
 
-const CHAVE_ID = "solis_chave_mestra_v1";
+const SALT_ID = "solis_salt_v1";
+const SALT_ID_BIO = "solis_salt_bio_v1";
+const PREFS_ID = "solis_prefs_v1";
 
-/** Salva a chave derivada no Keystore. Chama só na criação/troca de senha. */
-export async function salvarChave(chave: string): Promise<void> {
-  await SecureStore.setItemAsync(CHAVE_ID, chave, {
+export type Prefs = { biometriaAtiva: boolean };
+
+/** Salva o salt no Keystore. Com biometria, exige autenticação biométrica para ler. */
+export async function salvarSalt(salt: string, biometria: boolean): Promise<void> {
+  if (biometria) {
+    await SecureStore.setItemAsync(SALT_ID_BIO, salt, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      requireAuthentication: true,
+      authenticationPrompt: "Desbloquear Solis",
+    });
+  } else {
+    await SecureStore.setItemAsync(SALT_ID, salt, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
+  }
+  await SecureStore.setItemAsync(PREFS_ID, JSON.stringify({ biometriaAtiva: biometria }), {
     keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   });
 }
 
-/** Lê a chave do Keystore. Retorna null se ainda não foi definida. */
-export async function lerChave(): Promise<string | null> {
-  return SecureStore.getItemAsync(CHAVE_ID);
+/** Lê o salt do Keystore (aciona biometria se necessário). Retorna null se não configurado. */
+export async function lerSalt(): Promise<string | null> {
+  const prefs = await lerPrefs();
+  const id = prefs?.biometriaAtiva ? SALT_ID_BIO : SALT_ID;
+  return SecureStore.getItemAsync(id, {
+    authenticationPrompt: "Desbloquear Solis",
+  });
 }
 
-/** Remove a chave (apagar tudo / redefinir senha). */
+export async function lerPrefs(): Promise<Prefs | null> {
+  const raw = await SecureStore.getItemAsync(PREFS_ID);
+  if (!raw) return null;
+  return JSON.parse(raw) as Prefs;
+}
+
+/** Remove salt e prefs (apagar tudo / redefinir senha). */
 export async function removerChave(): Promise<void> {
-  await SecureStore.deleteItemAsync(CHAVE_ID);
+  await Promise.all([
+    SecureStore.deleteItemAsync(SALT_ID),
+    SecureStore.deleteItemAsync(SALT_ID_BIO),
+    SecureStore.deleteItemAsync(PREFS_ID),
+  ]);
 }

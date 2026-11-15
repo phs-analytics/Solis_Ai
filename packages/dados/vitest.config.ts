@@ -9,11 +9,14 @@ const nativeAlias = (name: string) => ({ [name]: resolve(mocksDir, "native-stub.
 
 export default defineConfig({
   test: {
+    setupFiles: ["./test/setup.ts"],
     alias: {
-      // Apenas react-native e expo-modules-core precisam de alias — têm Flow types
-      // que o Vitest não consegue parsear. Os outros são controlados via vi.mock() no teste.
+      // Módulos nativos/Expo não são parseáveis em Node — alias para stubs vazios.
+      // A lógica de derivação de chave (expo-crypto) é testada no emulador (CI).
       ...nativeAlias("react-native"),
       "expo-modules-core": resolve(mocksDir, "expo-modules-core.ts"),
+      ...nativeAlias("expo-crypto"),
+      ...nativeAlias("expo"),
     },
   },
 });

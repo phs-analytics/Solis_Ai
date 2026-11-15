@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
-import { salvarChave } from "@solis/dados";
+import { salvarSalt, gerarSalt, derivarChave } from "@solis/dados";
 
 const MIN_SENHA = 8;
 
@@ -35,9 +35,14 @@ export function ConfigurarAcesso({ aoConfigurar }: Props) {
     if (!podeContinuar) return;
     setCarregando(true);
     try {
+      // Gera salt aleatório e deriva a chave — a senha NUNCA é persistida
+      const salt = gerarSalt();
+      await derivarChave(senha, salt); // valida que a derivação funciona antes de salvar
+
       // Oferece biometria se o aparelho suportar
       const temBiometria = await LocalAuthentication.hasHardwareAsync();
       const biometriaConfigurada = await LocalAuthentication.isEnrolledAsync();
+      let usouBiometria = false;
 
       if (temBiometria && biometriaConfigurada) {
         const resultado = await LocalAuthentication.authenticateAsync({
@@ -45,15 +50,12 @@ export function ConfigurarAcesso({ aoConfigurar }: Props) {
           cancelLabel: "Usar só senha",
           disableDeviceFallback: true,
         });
-        if (resultado.success) {
-          await salvarChave(`bio:${senha}`);
-        } else {
-          await salvarChave(senha);
-        }
-      } else {
-        await salvarChave(senha);
+        usouBiometria = resultado.success;
       }
 
+      // Salva o salt no Keystore (com ou sem biometria vinculada)
+      // A chave do banco é sempre derivada de salt+senha em tempo de desbloqueio
+      await salvarSalt(salt, usouBiometria);
       aoConfigurar();
     } catch (e) {
       Alert.alert("Erro", "Não foi possível salvar a senha. Tente novamente.");
