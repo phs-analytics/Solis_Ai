@@ -9,6 +9,7 @@ import { Home } from "../screens/Home";
 import { Lancamentos } from "../screens/Lancamentos";
 import { Metas } from "../screens/Metas";
 import { Mais } from "../screens/Mais";
+import { Investimentos } from "../screens/Investimentos";
 
 export type RootStackParams = {
   Splash: undefined;
@@ -19,6 +20,7 @@ export type TabParams = {
   Inicio: undefined;
   Lancamentos: undefined;
   Metas: undefined;
+  Investimentos: undefined;
   Mais: undefined;
 };
 
@@ -30,6 +32,7 @@ function TabIcon({ nome, focado, cor }: { nome: string; focado: boolean; cor: st
     Inicio: { ativo: "⌂", inativo: "⌂" },
     Lancamentos: { ativo: "↕", inativo: "↕" },
     Metas: { ativo: "◎", inativo: "◎" },
+    Investimentos: { ativo: "📈", inativo: "📈" },
     Mais: { ativo: "≡", inativo: "≡" },
   };
   return (
@@ -64,6 +67,7 @@ function Tabs() {
       <Tab.Screen name="Inicio" component={Home} options={{ title: "Início" }} />
       <Tab.Screen name="Lancamentos" component={Lancamentos} options={{ title: "Lançamentos" }} />
       <Tab.Screen name="Metas" component={Metas} options={{ title: "Metas" }} />
+      <Tab.Screen name="Investimentos" component={Investimentos} options={{ title: "Invest." }} />
       <Tab.Screen name="Mais" component={Mais} options={{ title: "Mais" }} />
     </Tab.Navigator>
   );

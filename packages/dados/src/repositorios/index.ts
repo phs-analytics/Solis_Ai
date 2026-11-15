@@ -5,3 +5,4 @@ export * from "./cartoes.js";
 export * from "./orcamento.js";
 export * from "./recorrentes.js";
 export * from "./metas.js";
+export * from "./investimentos.js";

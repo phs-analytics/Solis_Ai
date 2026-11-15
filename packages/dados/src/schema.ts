@@ -5,7 +5,7 @@
 
 import type { Banco } from "./vault.js";
 
-export const VERSAO_SCHEMA = 2;
+export const VERSAO_SCHEMA = 3;
 
 export async function inicializarSchema(banco: Banco): Promise<void> {
   await banco.withTransactionAsync(async () => {
@@ -23,6 +23,7 @@ export async function inicializarSchema(banco: Banco): Promise<void> {
 
     if (versaoAtual < 1) await migrar_v1(banco);
     if (versaoAtual < 2) await migrar_v2(banco);
+    if (versaoAtual < 3) await migrar_v3(banco);
   });
 }
 
@@ -147,5 +148,27 @@ async function migrar_v2(banco: Banco): Promise<void> {
 
     INSERT INTO _migracoes (versao, aplicada_em)
     VALUES (2, datetime('now'));
+  `);
+}
+
+// ── Migração v3 ───────────────────────────────────────────────────────────
+
+async function migrar_v3(banco: Banco): Promise<void> {
+  await banco.execAsync(`
+    CREATE TABLE IF NOT EXISTS ativos (
+      id              TEXT PRIMARY KEY,
+      ticker          TEXT NOT NULL,
+      nome            TEXT NOT NULL,
+      tipo            TEXT NOT NULL CHECK(tipo IN ('acao','fii','etf','renda_fixa','cripto','outro')),
+      quantidade      REAL NOT NULL DEFAULT 0,
+      preco_medio_centavos INTEGER NOT NULL DEFAULT 0,
+      moeda           TEXT NOT NULL DEFAULT 'BRL',
+      ativo           INTEGER NOT NULL DEFAULT 1,
+      criado_em       TEXT NOT NULL,
+      atualizado_em   TEXT NOT NULL
+    );
+
+    INSERT INTO _migracoes (versao, aplicada_em)
+    VALUES (3, datetime('now'));
   `);
 }
