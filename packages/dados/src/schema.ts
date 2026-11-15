@@ -5,7 +5,7 @@
 
 import type { Banco } from "./vault.js";
 
-export const VERSAO_SCHEMA = 1;
+export const VERSAO_SCHEMA = 2;
 
 export async function inicializarSchema(banco: Banco): Promise<void> {
   await banco.withTransactionAsync(async () => {
@@ -22,6 +22,7 @@ export async function inicializarSchema(banco: Banco): Promise<void> {
     const versaoAtual = rows[0]?.versao ?? 0;
 
     if (versaoAtual < 1) await migrar_v1(banco);
+    if (versaoAtual < 2) await migrar_v2(banco);
   });
 }
 
@@ -75,5 +76,76 @@ async function migrar_v1(banco: Banco): Promise<void> {
 
     INSERT INTO _migracoes (versao, aplicada_em)
     VALUES (1, datetime('now'));
+  `);
+}
+
+// ── Migração v2 ───────────────────────────────────────────────────────────
+
+async function migrar_v2(banco: Banco): Promise<void> {
+  await banco.execAsync(`
+    CREATE TABLE IF NOT EXISTS cartoes (
+      id          TEXT PRIMARY KEY,
+      nome        TEXT NOT NULL,
+      limite_centavos INTEGER NOT NULL DEFAULT 0,
+      dia_vencimento  INTEGER NOT NULL CHECK(dia_vencimento BETWEEN 1 AND 31),
+      dia_fechamento  INTEGER NOT NULL CHECK(dia_fechamento BETWEEN 1 AND 31),
+      ativo       INTEGER NOT NULL DEFAULT 1,
+      criado_em   TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS faturas (
+      id          TEXT PRIMARY KEY,
+      cartao_id   TEXT NOT NULL REFERENCES cartoes(id),
+      mes         INTEGER NOT NULL,
+      ano         INTEGER NOT NULL,
+      pago        INTEGER NOT NULL DEFAULT 0,
+      pago_em     TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS lancamentos_cartao (
+      id          TEXT PRIMARY KEY,
+      fatura_id   TEXT NOT NULL REFERENCES faturas(id),
+      descricao   TEXT NOT NULL DEFAULT '',
+      valor_centavos INTEGER NOT NULL,
+      data        TEXT NOT NULL,
+      categoria_id TEXT REFERENCES categorias(id),
+      parcela_atual INTEGER,
+      parcelas_total INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS orcamentos (
+      id              TEXT PRIMARY KEY,
+      categoria_id    TEXT NOT NULL REFERENCES categorias(id),
+      limite_centavos INTEGER NOT NULL,
+      mes             INTEGER NOT NULL,
+      ano             INTEGER NOT NULL,
+      UNIQUE(categoria_id, mes, ano)
+    );
+
+    CREATE TABLE IF NOT EXISTS recorrentes (
+      id              TEXT PRIMARY KEY,
+      descricao       TEXT NOT NULL,
+      valor_centavos  INTEGER NOT NULL,
+      tipo            TEXT NOT NULL CHECK(tipo IN ('receita','despesa')),
+      categoria_id    TEXT REFERENCES categorias(id),
+      conta_id        TEXT NOT NULL REFERENCES contas(id),
+      dia_mes         INTEGER NOT NULL CHECK(dia_mes BETWEEN 1 AND 31),
+      ativo           INTEGER NOT NULL DEFAULT 1,
+      criado_em       TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS metas (
+      id              TEXT PRIMARY KEY,
+      nome            TEXT NOT NULL,
+      icone           TEXT,
+      alvo_centavos   INTEGER NOT NULL,
+      atual_centavos  INTEGER NOT NULL DEFAULT 0,
+      prazo           TEXT,
+      concluida       INTEGER NOT NULL DEFAULT 0,
+      criado_em       TEXT NOT NULL
+    );
+
+    INSERT INTO _migracoes (versao, aplicada_em)
+    VALUES (2, datetime('now'));
   `);
 }

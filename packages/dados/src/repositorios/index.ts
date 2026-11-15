@@ -1,3 +1,7 @@
 export * from "./contas.js";
 export * from "./categorias.js";
 export * from "./lancamentos.js";
+export * from "./cartoes.js";
+export * from "./orcamento.js";
+export * from "./recorrentes.js";
+export * from "./metas.js";
