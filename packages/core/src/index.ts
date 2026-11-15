@@ -1,3 +1,3 @@
-export { Money } from './money.ts';
-export { preverProximos, type Lancamento } from './previsao.ts';
-export { saudacao } from './saudacao.ts';
+export { Money } from './money.js';
+export { preverProximos, type Lancamento } from './previsao.js';
+export { saudacao } from './saudacao.js';
