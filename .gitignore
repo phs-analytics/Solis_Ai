@@ -1,0 +1,22 @@
+node_modules/
+dist/
+coverage/
+.expo/
+*.apk
+*.aab
+*.keystore
+*.jks
+.env
+.env.*
+!.env.example
+# bancos locais e chaves
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.p12
+*.pem
+*.key
+# código nativo gerado pelo expo prebuild
+apps/mobile/android/
+apps/mobile/ios/
