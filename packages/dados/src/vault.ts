@@ -5,7 +5,6 @@
 
 import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system/legacy";
-import * as Crypto from "expo-crypto";
 
 const NOME_BANCO = "solis.db";
 const MAX_TENTATIVAS = 5;
@@ -15,23 +14,54 @@ export type Banco = SQLite.SQLiteDatabase;
 
 let _banco: Banco | null = null;
 
+// Parâmetros do KDF armazenados junto com o salt para permitir upgrade futuro.
+export type KdfParams = { iterations: number; hash: string };
+export const KDF_DEFAULTS: KdfParams = { iterations: 600_000, hash: "SHA-256" };
+
 /**
- * Deriva a chave AES-256 do banco a partir da senha e do salt via PBKDF2.
+ * Deriva a chave AES-256 do banco usando PBKDF2 via Web Crypto API.
+ * Disponível no Hermes (RN 0.73+) e Node.js 18+. Sem dependências extras.
  * A chave derivada nunca é persistida.
  */
-export async function derivarChave(senha: string, salt: string): Promise<string> {
-  const digest = await Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    `${salt}:${senha}`,
-    { encoding: Crypto.CryptoEncoding.HEX }
+export async function derivarChave(
+  senha: string,
+  saltHex: string,
+  params: KdfParams = KDF_DEFAULTS
+): Promise<string> {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(senha),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
   );
-  return digest;
+  const salt = hexToBuffer(saltHex).buffer as ArrayBuffer;
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: params.iterations, hash: params.hash },
+    keyMaterial,
+    256
+  );
+  return bufferToHex(new Uint8Array(bits));
 }
 
 /** Gera um salt aleatório de 32 bytes em hex. */
 export function gerarSalt(): string {
-  const bytes = Crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return bufferToHex(bytes);
+}
+
+function hexToBuffer(hex: string): Uint8Array {
+  const arr = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < arr.length; i++) {
+    arr[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return arr;
+}
+
+function bufferToHex(buf: Uint8Array): string {
+  return Array.from(buf).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 /** Abre (ou reabre) o banco com a chave fornecida. Lança erro se a chave estiver errada. */

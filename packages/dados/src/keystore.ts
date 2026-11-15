@@ -16,7 +16,10 @@ const SALT_ID = "solis_salt_v1";
 const SALT_ID_BIO = "solis_salt_bio_v1";
 const PREFS_ID = "solis_prefs_v1";
 
-export type Prefs = { biometriaAtiva: boolean };
+import type { KdfParams } from "./vault.js";
+import { KDF_DEFAULTS } from "./vault.js";
+
+export type Prefs = { biometriaAtiva: boolean; kdf: KdfParams };
 
 /** Salva o salt no Keystore. Com biometria, exige autenticação biométrica para ler. */
 export async function salvarSalt(salt: string, biometria: boolean): Promise<void> {
@@ -31,7 +34,7 @@ export async function salvarSalt(salt: string, biometria: boolean): Promise<void
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     });
   }
-  await SecureStore.setItemAsync(PREFS_ID, JSON.stringify({ biometriaAtiva: biometria }), {
+  await SecureStore.setItemAsync(PREFS_ID, JSON.stringify({ biometriaAtiva: biometria, kdf: KDF_DEFAULTS }), {
     keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   });
 }
