@@ -12,7 +12,7 @@ A **Solis AI** oferece informação e análise sobre os dados da própria pessoa
 |---|---|
 | Plataforma | **Expo (React Native) + TypeScript**, mobile primeiro. **Só Android agora**; iPhone depois (exige Apple Developer, US$ 99/ano). |
 | Web | Futuro: acesso pelo navegador. A arquitetura já separa regras (`packages/core`) e dados da interface para isso. |
-| Repositório | Novo **`phs-analytics/solis-v3`** (público), ainda **não criado**. O antigo `phs-analytics/solis` está **privado e arquivado**. |
+| Repositório | Novo **`phs-analytics/Solis_Ai`**, **criado e público em 15/11/2026**. O antigo `phs-analytics/solis` está **privado e arquivado**. |
 | v1 | Pasta local do v1, fora deste repositório (Tauri + React, com agenda e saúde), **desligada do GitHub** (sem remote). Fonte de consulta para código e design. Não enviar nada dela. |
 | Motor da IA | **Local no celular**: modelo pequeno (1–2 bi de parâmetros, via `llama.rn`, MIT) ajustado antes do lançamento para finanças de pessoas periféricas, mais memória dos dados da pessoa. Não se retreina o modelo no celular; o "aprender com a pessoa" é memória e modelos pequenos (ex.: categoria que aprende com correções). Internet só para dados de mercado por API; nunca enviar dados da pessoa. |
 | Commits | Autor `phs-analytics <336734781+phs-analytics@users.noreply.github.com>` (já configurado no git local). Mensagens em português. Terminar com a linha `Co-Authored-By` indicada pelo Claude Code. |
