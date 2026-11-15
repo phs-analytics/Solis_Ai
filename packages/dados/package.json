@@ -1,0 +1,23 @@
+{
+  "name": "@solis/dados",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Banco de dados cifrado do Solis: cofre SQLCipher, schema, backup.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "*",
+    "expo-file-system": "*",
+    "expo-secure-store": "*",
+    "expo-sqlite": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

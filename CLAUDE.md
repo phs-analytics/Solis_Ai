@@ -17,12 +17,50 @@ A **Solis AI** oferece informação e análise sobre os dados da própria pessoa
 | Motor da IA | **Local no celular**: modelo pequeno (1–2 bi de parâmetros, via `llama.rn`, MIT) ajustado antes do lançamento para finanças de pessoas periféricas, mais memória dos dados da pessoa. Não se retreina o modelo no celular; o "aprender com a pessoa" é memória e modelos pequenos (ex.: categoria que aprende com correções). Internet só para dados de mercado por API; nunca enviar dados da pessoa. |
 | Commits | Autor `phs-analytics <336734781+phs-analytics@users.noreply.github.com>` (já configurado no git local). Mensagens em português. Terminar com a linha `Co-Authored-By` indicada pelo Claude Code. |
 
-## Estado atual (Etapa 0 em andamento)
-- Pasta criada com `git init` (branch `main`), **nenhum commit ainda**.
-- `packages/core`: `Money` (centavos inteiros, BRL), `preverProximos` (fixos que se repetem em 2+ meses), `saudacao` (por hora), com testes em Vitest (vieram do v1).
-- `apps/mobile`: Expo SDK **58.0.25**, React Native 0.88, React 19.3, TypeScript 6, `expo-sqlite` e `expo-file-system` instalados (plugin do `expo-sqlite` já em `app.json`). Ainda é o modelo em branco (`App.tsx`). O nome e o ícone do app ainda são os do modelo.
-- `.npmrc` com `node-linker=hoisted` (o autolinking do React Native funciona melhor assim em monorepo pnpm).
-- Falta na Etapa 0: README público, criar o repositório e o primeiro commit, autoteste do SQLCipher. O **CI fica para depois de o usuário aprovar** (ele pediu para parar antes do CI).
+## Estado atual (Etapa 0 concluída — 15/11/2026)
+
+**Repositório:** `phs-analytics/Solis_Ai` (público, branch `main`).
+
+Commits enviados:
+- `b91cca9` — Fundação: monorepo, core com testes, app Expo, README
+- `8181e33` — Autoteste do banco cifrado (SQLCipher)
+- `ed4c860` — CI do Android: testes, APK e autoteste no emulador
+- `b3f8e28` — CLAUDE.md atualizado (nome Solis_Ai)
+
+**CI (GitHub Actions):** passou com 100% de sucesso — testes (16/16), typecheck, build do APK de release e autoteste do SQLCipher no emulador. Aviso não-bloqueante sobre migração do ubuntu-latest para Ubuntu 26.
+
+- `5da104a` — mobile: expo run:android/ios nos scripts
+
+**Etapa 0 fechada.**
+
+## Etapa 1 em andamento (15/11/2026)
+
+Arquivos criados:
+- `PRIVACY.md` — política de privacidade (LGPD, dados locais, 13+, contato)
+- `TERMS.md` — termos de uso (sem investimento, gratuito, sem dark patterns)
+- `packages/dados/` — cofre SQLCipher: vault, keystore, schema, backup, testes
+- `apps/mobile/src/screens/ConfigurarAcesso.tsx` — senha mestra + biometria
+
+Conformidade legal incorporada (lista de 35 pontos do vídeo — aplicados ao Solis):
+- Política de privacidade e termos de uso (pontos 1–2)
+- Retenção de dados explícita: enquanto instalado (ponto 5)
+- Exportar e apagar dados: `backup.ts` + `apagarTudo()` (ponto 12)
+- Sem dados desnecessários: princípio do cofre local (ponto 18)
+- Consentimento parental: 13+, menores com ciência dos pais (ponto 21)
+- Registro de aceite dos termos: tabela `consentimento` no schema (ponto 22)
+- IA local, nunca retreinada com dados do usuário (ponto 26)
+- Auditoria de SDKs: sem rastreadores, sem analytics (ponto 28)
+- Contato publicado na política (ponto 34)
+- Pontos não aplicáveis documentados (cookies, e-mails, assinatura, uptime, cobranças)
+
+Otimizações de performance (do segundo vídeo) — incorporadas às etapas futuras:
+- **Etapa 2**: skeleton loading, lazy loading de imagens, virtualização de listas longas
+- **Etapa 3+**: debounce em busca, paginação de resultados, requisições paralelas
+- **Etapa 6**: timeout em APIs externas, sem chamadas duplicadas
+- **Sempre**: remover dependências não usadas, testar em celular real e rede lenta
+
+Testes: 18/18 passando (16 core + 2 vault). Typecheck: 100% verde.
+Falta: commit, push e CI.
 
 ## Estrutura
 ```
