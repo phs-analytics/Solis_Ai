@@ -205,6 +205,9 @@ importers:
       expo-status-bar:
         specifier: ~58.0.5
         version: 58.0.5(expo@58.0.25(@babel/core@7.29.13(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1)(typescript@6.0.3))(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+      llama.rn:
+        specifier: 0.13.0-rc.11
+        version: 0.13.0-rc.11(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -2161,6 +2164,14 @@ packages:
   lightningcss@1.33.0:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
+
+  llama.rn@0.13.0-rc.11:
+    resolution: {integrity: sha512-2RKyIob0RcgGHH6w3d/62Hlex/ILOfAKyx3zwJqou6N3lA3wFOblwXKvwPK5Z4FzkQmbYst9bf/lXVNP30rN5w==}
+    engines: {node: '>= 16.0.0'}
+    hasBin: true
+    peerDependencies:
+      react: '*'
+      react-native: '*'
 
   lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
@@ -5538,6 +5549,11 @@ snapshots:
       lightningcss-linux-x64-musl: 1.33.0
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
+
+  llama.rn@0.13.0-rc.11(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0):
+    dependencies:
+      react: 19.3.0
+      react-native: 0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)
 
   lodash.debounce@4.0.8: {}
 
