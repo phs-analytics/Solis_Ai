@@ -23,7 +23,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      ["expo-sqlite", { "useSQLCipher": true }]
+      ["expo-sqlite", { "useSQLCipher": true }],
+      ["llama.rn", { "enableOpenCL": false }]
     ]
   }
 }

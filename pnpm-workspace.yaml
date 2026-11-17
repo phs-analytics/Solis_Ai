@@ -3,4 +3,6 @@ packages:
   - packages/*
 allowBuilds:
   esbuild: true
+  llama.rn: true
+  expo-sqlite: true
 nodeLinker: hoisted

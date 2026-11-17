@@ -17,23 +17,27 @@ A **Solis AI** oferece informação e análise sobre os dados da própria pessoa
 | Motor da IA | **Local no celular**: modelo pequeno (1–2 bi de parâmetros, via `llama.rn`, MIT) ajustado antes do lançamento para finanças de pessoas periféricas, mais memória dos dados da pessoa. Não se retreina o modelo no celular; o "aprender com a pessoa" é memória e modelos pequenos (ex.: categoria que aprende com correções). Internet só para dados de mercado por API; nunca enviar dados da pessoa. |
 | Commits | Autor `phs-analytics <336734781+phs-analytics@users.noreply.github.com>` (já configurado no git local). Mensagens em português. Terminar com a linha `Co-Authored-By` indicada pelo Claude Code. |
 
-## Estado atual (Etapa 0 concluída — 15/11/2026)
+## Estado atual (Etapas 0–8 concluídas — 15/11/2026)
 
 **Repositório:** `phs-analytics/Solis_Ai` (público, branch `main`).
 
-Commits enviados:
+Commits enviados (ordem cronológica):
 - `b91cca9` — Fundação: monorepo, core com testes, app Expo, README
 - `8181e33` — Autoteste do banco cifrado (SQLCipher)
 - `ed4c860` — CI do Android: testes, APK e autoteste no emulador
 - `b3f8e28` — CLAUDE.md atualizado (nome Solis_Ai)
-
-**CI (GitHub Actions):** passou com 100% de sucesso — testes (16/16), typecheck, build do APK de release e autoteste do SQLCipher no emulador. Aviso não-bloqueante sobre migração do ubuntu-latest para Ubuntu 26.
-
 - `5da104a` — mobile: expo run:android/ios nos scripts
+- `a429eef` — Etapa 3: finanças 1 — contas, lançamentos e categorias
+- `c68d8dc` — Etapa 4: finanças 2 — cartões, orçamento, recorrentes e metas
+- `a16d987` — Etapa 5: importação OFX e CSV com detecção de duplicatas
+- `2cb3dbe` — Etapa 6: investimentos e mercado
+- `5373adb` — privacidade: brapi.dev requer consentimento explícito para cotações
+- `c7f776d` — Etapa 7: Solis AI v1 — motor de regras e chat
+- *(Etapa 8 — pendente push: Solis AI v2 — modelo local Qwen2.5-1.5B via llama.rn)*
 
-**Etapa 0 fechada.**
+**CI (GitHub Actions):** passou com 100% de sucesso até a Etapa 6. Etapas 7–8 ainda não passaram pelo CI.
 
-## Etapa 1 em andamento (15/11/2026)
+## Etapa 1 concluída (15/11/2026)
 
 Arquivos criados:
 - `PRIVACY.md` — política de privacidade (LGPD, dados locais, 13+, contato)
@@ -78,7 +82,40 @@ Arquivos criados/modificados:
 Dependências adicionadas: `@react-navigation/native`, `@react-navigation/bottom-tabs`,
 `@react-navigation/native-stack`, `react-native-screens`.
 
-Commit: `757f1e6`. Falta: push e CI.
+Commit: `757f1e6`.
+
+## Etapas 3–6 concluídas (15/11/2026)
+
+- **Etapa 3** (`a429eef`): contas, lançamentos CRUD, categorias, busca, visão mensal
+- **Etapa 4** (`c68d8dc`): cartões/faturas/parcelas, orçamento, recorrentes, metas/cofrinhos
+- **Etapa 5** (`a16d987`): parser OFX e CSV, detecção de duplicatas por hash, tela de importação
+- **Etapa 6** (`2cb3dbe`): tabela `ativos` (schema v3), repositório de investimentos, APIs BCB/IBGE/brapi.dev, tela Investimentos com tabs Carteira/Mercado, disclaimer obrigatório
+- **Fix privacidade** (`5373adb`): brapi.dev requer consentimento explícito (tickers = dado do usuário); PRIVACY.md atualizado
+
+Testes: 43/43 passando (36 core + 7 dados). Typecheck: 100% verde.
+
+## Etapa 7 concluída (15/11/2026)
+
+Commit: `c7f776d`.
+
+- `packages/core/src/ia/regras.ts` — motor de regras: 8 intenções (saldo, gastos, orçamento, metas, recorrentes, posso gastar, resumo, desconhecida), alertas automáticos
+- `packages/core/src/ia/categorizacao.ts` — 30+ padrões padrão + aprendizado por correção (extrai primeiras 2 palavras significativas)
+- `packages/dados/src/ia/analisador.ts` — monta `ContextoFinanceiro` a partir do banco SQLCipher
+- `apps/mobile/src/screens/ChatSolis.tsx` — tela de chat: tela vazia com mascote, balões, 6 chips de sugestão, input com enviar
+- `apps/mobile/src/navigation/index.tsx` — nova tab "Solis AI" (🌟) entre Metas e Invest.
+
+Testes: 43/43 passando. Typecheck: 100% verde.
+
+## Etapa 8 concluída (15/11/2026)
+
+Commit: *(pendente push)*
+
+- `llama.rn@0.13.0-rc.11` instalado; `pnpm-workspace.yaml` com `allowBuilds`; `app.json` com plugin llama.rn (enableOpenCL: false)
+- `apps/mobile/src/ia/llm.ts` — download do modelo do HuggingFace (1.12 GB, `DownloadTask` com `AbortSignal`), `initLlama` com fallback automático para v1 em OOM ou modelo ausente
+- `apps/mobile/src/screens/Mais.tsx` — bloco "Solis AI avançada": status, barra de progresso, botões Ativar/Remover
+- `apps/mobile/src/screens/ChatSolis.tsx` — usa `gerarResposta()` (v2) quando modelo presente; badge "IA avançada / IA básica"; fallback transparente para v1
+- Modelo: `Qwen/Qwen2.5-1.5B-Instruct-GGUF` Q4_K_M (Apache-2.0, 1.12 GB)
+- **Pendente**: validar build nativo com llama.rn no CI; testar download e initLlama no emulador/dispositivo real
 
 ## Estrutura
 ```
@@ -106,7 +143,7 @@ Planejado: `packages/ia` (Solis AI), `apps/web` (futuro).
 Futuro: iPhone e versão web.
 
 ## Decisões ainda abertas
-- Etapa 8: GPU para o ajuste fino (Colab/Kaggle grátis com limite, ou paga); licença do conteúdo de treino e do modelo (conferir antes de usar); celulares simples podem não ter os 2–3 GB de RAM livres.
+- Etapa 8 (parcialmente resolvida): modelo escolhido = `Qwen2.5-1.5B-Instruct` Q4_K_M (Apache-2.0, 1.12 GB); distribuição = download sob demanda do HuggingFace; fallback = tenta initLlama, cai para v1 em OOM. Pendente: validar no emulador/dispositivo real; verificar se o CI do GitHub Actions consegue buildar com llama.rn.
 - Etapa 10: onde roda o servidor; usar ou não a Pluggy.
 
 ## Referências analisadas (só ideias, sem copiar código AGPL)

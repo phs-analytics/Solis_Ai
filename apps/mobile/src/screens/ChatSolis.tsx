@@ -9,6 +9,7 @@ import { useBanco } from "../contexto/BancoContext";
 import { montarContexto } from "@solis/dados";
 import { responder, gerarAlertas } from "@solis/core";
 import type { RespostaIA } from "@solis/core";
+import { gerarResposta, modeloExiste } from "../ia/llm";
 
 type Mensagem = {
   id: string;
@@ -41,7 +42,12 @@ export function ChatSolis() {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [usandoV2, setUsandoV2] = useState(false);
   const flatRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    setUsandoV2(modeloExiste());
+  }, []);
 
   function addMsg(msg: Omit<Mensagem, "id">) {
     setMensagens((prev) => [...prev, { ...msg, id: `${Date.now()}-${Math.random()}` }]);
@@ -55,7 +61,7 @@ export function ChatSolis() {
     setCarregando(true);
     try {
       const ctx = await montarContexto(banco);
-      const resposta = responder(pergunta, ctx);
+      const resposta = usandoV2 ? await gerarResposta(pergunta, ctx) : responder(pergunta, ctx);
       addMsg({ origem: "solis", texto: resposta.texto, tipo: resposta.tipo });
     } catch {
       addMsg({ origem: "solis", texto: "Não consegui acessar seus dados agora. Tente novamente.", tipo: "alerta" });
@@ -98,6 +104,11 @@ export function ChatSolis() {
             <Text style={[tema.font.corpo, { color: c.textoSuave, marginTop: 4 }]}>
               Pergunte sobre suas finanças
             </Text>
+            <View style={[s.badge, { backgroundColor: usandoV2 ? c.primarioSuave : c.superficie, borderColor: usandoV2 ? c.primario : c.borda, marginTop: 12 }]}>
+              <Text style={{ fontSize: 11, color: usandoV2 ? c.primario : c.textoSuave, fontWeight: "600" }}>
+                {usandoV2 ? "IA avançada ativa" : "IA básica (regras)"}
+              </Text>
+            </View>
           </View>
         ) : (
           <FlatList
@@ -166,6 +177,7 @@ export function ChatSolis() {
 
 const s = StyleSheet.create({
   centro: { flex: 1, justifyContent: "center", alignItems: "center" },
+  badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 50, borderWidth: 1 },
   balao: { borderRadius: 16, padding: 14, marginBottom: 10, maxWidth: "100%" },
   indicadorTipo: { width: 4, height: "100%", position: "absolute", left: 0, top: 0, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 },
   sugestoesRow: { paddingHorizontal: 12, paddingVertical: 10, gap: 8, flexDirection: "row" },
