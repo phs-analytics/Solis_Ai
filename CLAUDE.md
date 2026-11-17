@@ -33,9 +33,10 @@ Commits enviados (ordem cronológica):
 - `2cb3dbe` — Etapa 6: investimentos e mercado
 - `5373adb` — privacidade: brapi.dev requer consentimento explícito para cotações
 - `c7f776d` — Etapa 7: Solis AI v1 — motor de regras e chat
-- *(Etapa 8 — pendente push: Solis AI v2 — modelo local Qwen2.5-1.5B via llama.rn)*
+- `28b6f07` — Etapa 8: Solis AI v2 — modelo local Qwen2.5-1.5B via llama.rn
+- `3e5bafc` — ci: lockfile do llama.rn e Metro resolvendo imports .js para .ts
 
-**CI (GitHub Actions):** passou com 100% de sucesso até a Etapa 6. Etapas 7–8 ainda não passaram pelo CI.
+**CI (GitHub Actions):** falhou da Etapa 6 à 8 (Metro não resolvia `./x.js` → `x.ts`; lockfile desatualizado). Corrigido em `3e5bafc` com `apps/mobile/metro.config.js`.
 
 ## Etapa 1 concluída (15/11/2026)
 
@@ -108,7 +109,7 @@ Testes: 43/43 passando. Typecheck: 100% verde.
 
 ## Etapa 8 concluída (15/11/2026)
 
-Commit: *(pendente push)*
+Commit: `28b6f07`.
 
 - `llama.rn@0.13.0-rc.11` instalado; `pnpm-workspace.yaml` com `allowBuilds`; `app.json` com plugin llama.rn (enableOpenCL: false)
 - `apps/mobile/src/ia/llm.ts` — download do modelo do HuggingFace (1.12 GB, `DownloadTask` com `AbortSignal`), `initLlama` com fallback automático para v1 em OOM ou modelo ausente
