@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, View, Pressable } from "react-native";
+import { Alert, StyleSheet, Switch, Text, View, Pressable } from "react-native";
+import { lerConsentimentoCotacoes, salvarConsentimentoCotacoes } from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
 import { useTema } from "../theme";
 import { modeloExiste, baixarModelo, removerModelo } from "../ia/llm";
@@ -23,9 +24,17 @@ export function Mais() {
   const [progresso, setProgresso] = useState(0); // 0–100
   const abortRef = React.useRef<AbortController | null>(null);
 
+  const [cotacoesOnline, setCotacoesOnline] = useState(false);
+
   useEffect(() => {
     setStatusIA(modeloExiste() ? "ativo" : "inativo");
+    lerConsentimentoCotacoes().then(setCotacoesOnline).catch(() => {});
   }, []);
+
+  function alternarCotacoes(ativo: boolean) {
+    setCotacoesOnline(ativo);
+    salvarConsentimentoCotacoes(ativo).catch(() => setCotacoesOnline(!ativo));
+  }
 
   async function ativarIA() {
     Alert.alert(
@@ -112,6 +121,17 @@ export function Mais() {
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>Remover</Text>
           </Pressable>
         ) : null}
+      </View>
+
+      <View style={[s.blocoIA, { backgroundColor: c.superficie, borderColor: c.borda, marginHorizontal: tema.spacing.lg, marginTop: 12 }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>Buscar cotações online</Text>
+          <Text style={[tema.font.legenda, { color: c.textoSuave, marginTop: 2 }]}>
+            Envia os códigos dos seus ativos (ex.: PETR4) para a brapi.dev. Nenhum outro dado sai do aparelho.
+          </Text>
+        </View>
+        <Switch value={cotacoesOnline} onValueChange={alternarCotacoes}
+          accessibilityLabel="Buscar cotações online" />
       </View>
 
       <View style={{ paddingHorizontal: tema.spacing.lg, gap: 2, marginTop: 16 }}>

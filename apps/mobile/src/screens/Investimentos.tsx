@@ -6,7 +6,7 @@ import {
 import { SafeScreen } from "../components/SafeScreen";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";
-import { listarAtivos, resumoCarteira, arquivarAtivo } from "@solis/dados";
+import { listarAtivos, resumoCarteira, arquivarAtivo, lerConsentimentoCotacoes } from "@solis/dados";
 import type { Ativo } from "@solis/dados";
 import { buscarIndices, buscarCotacoes } from "@solis/core";
 import type { IndiceEconomico, Cotacao } from "@solis/core";
@@ -32,8 +32,10 @@ export function Investimentos() {
     try {
       const lista = await listarAtivos(banco);
       setAtivos(lista);
+      // Tickers só saem do aparelho com consentimento (PRIVACY.md, seção 4).
+      const online = await lerConsentimentoCotacoes();
       const [cotsArr, inds] = await Promise.allSettled([
-        buscarCotacoes(lista.map((a) => a.ticker)),
+        online ? buscarCotacoes(lista.map((a) => a.ticker)) : Promise.resolve([]),
         buscarIndices(),
       ]);
       if (cotsArr.status === "fulfilled") {

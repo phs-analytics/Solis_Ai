@@ -15,7 +15,7 @@ A **Solis AI** oferece informação e análise sobre os dados da própria pessoa
 | Repositório | Novo **`phs-analytics/Solis_Ai`**, **criado e público em 15/11/2026**. O antigo `phs-analytics/solis` está **privado e arquivado**. |
 | v1 | Pasta local do v1, fora deste repositório (Tauri + React, com agenda e saúde), **desligada do GitHub** (sem remote). Fonte de consulta para código e design. Não enviar nada dela. |
 | Motor da IA | **Local no celular**: modelo pequeno (1–2 bi de parâmetros, via `llama.rn`, MIT) ajustado antes do lançamento para finanças de pessoas periféricas, mais memória dos dados da pessoa. Não se retreina o modelo no celular; o "aprender com a pessoa" é memória e modelos pequenos (ex.: categoria que aprende com correções). Internet só para dados de mercado por API; nunca enviar dados da pessoa. |
-| Commits | Autor `phs-analytics <336734781+phs-analytics@users.noreply.github.com>` (já configurado no git local). Mensagens em português. Terminar com a linha `Co-Authored-By` indicada pelo Claude Code. |
+| Commits | Autor `phs-analytics <336734781+phs-analytics@users.noreply.github.com>` (já configurado no git local). Mensagens em português. **Sem** linha `Co-Authored-By` (commits só no nome do Pedro). |
 
 ## Estado atual (Etapas 0–8 concluídas — 15/11/2026)
 
@@ -117,6 +117,17 @@ Commit: `28b6f07`.
 - `apps/mobile/src/screens/ChatSolis.tsx` — usa `gerarResposta()` (v2) quando modelo presente; badge "IA avançada / IA básica"; fallback transparente para v1
 - Modelo: `Qwen/Qwen2.5-1.5B-Instruct-GGUF` Q4_K_M (Apache-2.0, 1.12 GB)
 - **Pendente**: validar build nativo com llama.rn no CI; testar download e initLlama no emulador/dispositivo real
+
+## Etapa 9: distribuição Android (em andamento, 17/11/2026)
+
+- CI: `-PrnllamaVariants` limita o llama.rn a rnllama, v8, v8_2_dotprod, v8_2_dotprod_i8mm (+ x86_64 no emulador) e há cache do Gradle.
+- Release: `git tag vX.Y.Z && git push origin vX.Y.Z` roda o job `release`, que gera um APK **só ARM 64-bit**, assina com `apksigner`, publica no GitHub Releases com o SHA-256. Antes de cada release, subir `android.versionCode` e `version` no `app.json`.
+- Chave de release: gerada pelo Pedro, **nunca no Git** (`*.keystore`/`*.jks` no `.gitignore`), com backup fora do PC (pendrive + gerenciador de senhas). Perdeu a chave = não dá mais para atualizar o app instalado.
+  ```bash
+  keytool -genkeypair -v -keystore solis-release.keystore -alias solis -keyalg RSA -keysize 4096 -validity 10000
+  ```
+- Segredos do GitHub: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+- Consentimento brapi.dev: chave "Buscar cotações online" em Mais (desligada por padrão, `solis_cotacoes_online_v1` no SecureStore); Investimentos só busca cotações se ligada.
 
 ## Estrutura
 ```

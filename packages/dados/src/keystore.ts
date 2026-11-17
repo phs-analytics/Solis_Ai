@@ -15,6 +15,17 @@ import * as SecureStore from "expo-secure-store";
 const SALT_ID = "solis_salt_v1";
 const SALT_ID_BIO = "solis_salt_bio_v1";
 const PREFS_ID = "solis_prefs_v1";
+const COTACOES_ID = "solis_cotacoes_online_v1";
+
+/** Consentimento para enviar tickers à brapi.dev (LGPD). Desligado por padrão. */
+export async function lerConsentimentoCotacoes(): Promise<boolean> {
+  return (await SecureStore.getItemAsync(COTACOES_ID)) === "1";
+}
+
+export async function salvarConsentimentoCotacoes(ativo: boolean): Promise<void> {
+  if (ativo) await SecureStore.setItemAsync(COTACOES_ID, "1");
+  else await SecureStore.deleteItemAsync(COTACOES_ID);
+}
 
 import type { KdfParams } from "./vault.js";
 import { KDF_DEFAULTS } from "./vault.js";
@@ -60,5 +71,6 @@ export async function removerChave(): Promise<void> {
     SecureStore.deleteItemAsync(SALT_ID),
     SecureStore.deleteItemAsync(SALT_ID_BIO),
     SecureStore.deleteItemAsync(PREFS_ID),
+    SecureStore.deleteItemAsync(COTACOES_ID),
   ]);
 }
