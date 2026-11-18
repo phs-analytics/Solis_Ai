@@ -33,6 +33,11 @@ export function Mais() {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParams>>();
 
   const ITENS: Item[] = [
+    {
+      label: "Conexão bancária (Meu Pluggy)",
+      desc: "Opcional: traz seus lançamentos automaticamente, uma vez por dia",
+      acao: () => nav.navigate("ConexaoBancaria"),
+    },
     { label: "Importar extrato", desc: "Arquivo OFX ou CSV do seu banco", acao: () => nav.navigate("Importacao") },
     {
       label: "Exportar backup",

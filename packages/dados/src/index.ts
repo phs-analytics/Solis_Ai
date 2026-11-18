@@ -5,4 +5,8 @@ export { inicializarSchema, VERSAO_SCHEMA } from "./schema.js";
 export { exportarBackup, restaurarBackup, limparBackupTemporario, apagarTudo } from "./backup.js";
 export * from "./repositorios/index.js";
 export { montarContexto } from "./ia/analisador.js";
+export { lerCredenciaisPluggy, salvarCredenciaisPluggy, apagarCredenciaisPluggy } from "./pluggy/credenciais.js";
+export type { CredenciaisPluggy } from "./pluggy/credenciais.js";
+export { sincronizarPluggy, ultimaSyncPluggy } from "./pluggy/sincronizar.js";
+export type { ResultadoSync } from "./pluggy/sincronizar.js";
 export type { ContextoFinanceiro } from "./ia/analisador.js";

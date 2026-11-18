@@ -5,7 +5,7 @@
 ## Resumo
 
 O Solis é um app de organização financeira pessoal.
-**Os seus dados ficam só no seu aparelho.** Não criamos conta, não enviamos nada para servidores nossos e não compartilhamos suas informações com terceiros.
+**Os seus dados ficam só no seu aparelho.** Não criamos conta, não enviamos nada para servidores nossos (não temos servidor) e não compartilhamos suas informações com terceiros. As únicas conexões externas são opcionais e você liga se quiser (seção 4).
 
 ---
 
@@ -58,6 +58,17 @@ O app pode consultar serviços externos para exibir indicadores e cotações. Is
 >
 > Para não enviar nenhum dado externo, mantenha a opção "Buscar cotações online" desativada — o app continua funcionando com o preço médio que você cadastrou.
 
+### Conexão bancária com o Meu Pluggy (opcional, desligada por padrão)
+
+| Serviço | O que é enviado | O que volta | Base legal |
+|---|---|---|---|
+| **Pluggy** (`api.pluggy.ai`) | Seu Client ID, Client Secret e os itemIds que você cadastrou | Saldos e lançamentos dos bancos que **você** conectou no Meu Pluggy | **Consentimento** (você cadastra as credenciais em Mais → Conexão bancária) |
+
+- O Solis não manda seus lançamentos, sua senha nem outros dados para a Pluggy; só baixa o que ela já tem.
+- **A Pluggy, porém, recebe e guarda os dados dos bancos que você conecta no site dela**, segundo a política dela (<https://www.pluggy.ai/legal>), que prevê uso de parceiros e armazenamento fora do Brasil. Essa relação é entre você e a Pluggy.
+- As credenciais ficam no armazenamento seguro do Android; os dados baixados, no banco cifrado. "Desconectar" apaga as credenciais; "Apagar todos os dados" apaga tudo.
+- Passo a passo e riscos: [GUIDE_PLUGGY.md](GUIDE_PLUGGY.md).
+
 ---
 
 ## 5. Seus direitos (LGPD — Lei 13.709/2018)
@@ -67,7 +78,7 @@ O app pode consultar serviços externos para exibir indicadores e cotações. Is
 | Acessar seus dados | Todos estão no app, visíveis para você |
 | Exportar seus dados | Mais → Exportar backup (arquivo `.solis` cifrado; abre só com a sua senha). Você escolhe onde guardar, como o seu Google Drive; o Solis não envia o arquivo para lugar nenhum. Quem tiver o arquivo pode tentar adivinhar a senha sem limite de tentativas; por isso a senha tem no mínimo 12 caracteres. |
 | Excluir seus dados | Menu → Configurações → Apagar todos os dados |
-| Saber quais fornecedores processam seus dados | Seção 4 acima (brapi.dev, apenas se ativado) |
+| Saber quais fornecedores processam seus dados | Seção 4 acima (brapi.dev e Pluggy, apenas se você ativar) |
 | Revogar consentimento de cotações | Desative "Buscar cotações online" nas configurações |
 | Revogar todo consentimento | Desinstale o app — os dados são apagados pelo Android |
 

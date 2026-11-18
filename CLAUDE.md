@@ -153,13 +153,14 @@ Planejado: `packages/ia` (Solis AI), `apps/web` (futuro).
 7. **Solis AI v1 (regras)**: perguntas sobre os dados, alertas, categorização que aprende. Roda em qualquer celular.
 8. **Solis AI v2 (modelo no celular)**: `llama.rn`, ajuste fino prévio, memória da pessoa, checagem de RAM com volta para a v1.
 9. **Distribuição Android**: APK assinado (chave fora do Git, com backup), testes em aparelhos simples.
-10. **Levar dados para outro celular**: backup `.solis` (banco SQLCipher + salt) salvo onde a pessoa quiser (ex.: Drive pela tela de compartilhar); restauração no primeiro acesso, testando a senha antes de substituir. Sem servidor. **Pluggy descartada** (18/11/2026): paga e envia dados bancários a terceiro.
+10. **Levar dados para outro celular**: backup `.solis` (banco SQLCipher + salt) salvo onde a pessoa quiser (ex.: Drive pela tela de compartilhar); restauração no primeiro acesso, testando a senha antes de substituir. Sem servidor.
+11. **Meu Pluggy (18/11/2026, decisão do Pedro, muda o escopo)**: o Solis vira ferramenta de **uso pessoal + portfólio**. Conexão bancária opcional via conta gratuita do Meu Pluggy de cada pessoa: Client ID/Secret/itemIds no SecureStore (`solis_pluggy_v1`), app chama `api.pluggy.ai` direto (`packages/core/src/pluggy`), grava no SQLCipher (`packages/dados/src/pluggy/sincronizar.ts`, schema v4 `externo_id`), no máximo 1x/24h ao abrir. Tutorial em `GUIDE_PLUGGY.md`. A Pluggy vê os dados bancários: isso é dito no app, no guia e no PRIVACY.md. `GET /transactions` antigo some em 31/12/2026; usamos `/v2/transactions`.
 
 Futuro: iPhone e versão web.
 
 ## Decisões ainda abertas
 - Etapa 8 (parcialmente resolvida): modelo escolhido = `Qwen2.5-1.5B-Instruct` Q4_K_M (Apache-2.0, 1.12 GB); distribuição = download sob demanda do HuggingFace; fallback = tenta initLlama, cai para v1 em OOM. Pendente: validar no emulador/dispositivo real; verificar se o CI do GitHub Actions consegue buildar com llama.rn.
-- Etapa 10 decidida em 18/11/2026: sem servidor, sem Pluggy. Sync automático com Drive exigiria OAuth do Google; fica para depois, se pedirem.
+- Etapa 10 decidida em 18/11/2026: sem servidor. Sync automático com Drive exigiria OAuth do Google; fica para depois, se pedirem. Pluggy: ver item 11.
 
 ## Referências analisadas (só ideias, sem copiar código AGPL)
 | Projeto | Licença | Uso no Solis |

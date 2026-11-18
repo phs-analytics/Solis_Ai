@@ -5,7 +5,7 @@
 
 import type { Banco } from "./vault.js";
 
-export const VERSAO_SCHEMA = 3;
+export const VERSAO_SCHEMA = 4;
 
 export async function inicializarSchema(banco: Banco): Promise<void> {
   await banco.withTransactionAsync(async () => {
@@ -24,6 +24,7 @@ export async function inicializarSchema(banco: Banco): Promise<void> {
     if (versaoAtual < 1) await migrar_v1(banco);
     if (versaoAtual < 2) await migrar_v2(banco);
     if (versaoAtual < 3) await migrar_v3(banco);
+    if (versaoAtual < 4) await migrar_v4(banco);
   });
 }
 
@@ -170,5 +171,19 @@ async function migrar_v3(banco: Banco): Promise<void> {
 
     INSERT INTO _migracoes (versao, aplicada_em)
     VALUES (3, datetime('now'));
+  `);
+}
+
+// ── Migração v4: id de origem externa (Meu Pluggy), para buscar de novo sem duplicar ──
+
+async function migrar_v4(banco: Banco): Promise<void> {
+  await banco.execAsync(`
+    ALTER TABLE contas ADD COLUMN externo_id TEXT;
+    ALTER TABLE lancamentos ADD COLUMN externo_id TEXT;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_contas_externo ON contas(externo_id) WHERE externo_id IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_lancamentos_externo ON lancamentos(externo_id) WHERE externo_id IS NOT NULL;
+
+    INSERT INTO _migracoes (versao, aplicada_em)
+    VALUES (4, datetime('now'));
   `);
 }

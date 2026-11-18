@@ -3,7 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text } from "react-native";
-import { lerPrefs } from "@solis/dados";
+import { lerPrefs, lerCredenciaisPluggy, sincronizarPluggy } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { useTema } from "../theme";
 import { BancoProvider } from "../contexto/BancoContext";
@@ -19,6 +19,7 @@ import { ChatSolis } from "../screens/ChatSolis";
 import { NovaConta } from "../screens/NovaConta";
 import { NovoLancamento } from "../screens/NovoLancamento";
 import { Importacao } from "../screens/Importacao";
+import { ConexaoBancaria } from "../screens/ConexaoBancaria";
 
 export type RootStackParams = {
   Splash: undefined;
@@ -27,6 +28,7 @@ export type RootStackParams = {
   NovaConta: undefined;
   NovoLancamento: undefined;
   Importacao: undefined;
+  ConexaoBancaria: undefined;
 };
 
 export type TabParams = {
@@ -98,6 +100,14 @@ export function AppNavigator() {
     lerPrefs().then((p) => setConfigurado(p !== null)).catch(() => setConfigurado(false));
   }, []);
 
+  // Ao abrir o cofre, busca o Meu Pluggy se estiver conectado (a própria função respeita as 24h).
+  useEffect(() => {
+    if (!banco) return;
+    lerCredenciaisPluggy()
+      .then((cred) => cred && sincronizarPluggy(banco, cred))
+      .catch(() => {}); // sem internet: tenta de novo na próxima abertura
+  }, [banco]);
+
   return (
     <BancoProvider value={banco}>
       <NavigationContainer>
@@ -112,6 +122,7 @@ export function AppNavigator() {
                 {({ navigation }) => <NovoLancamento onSalvo={() => navigation.goBack()} />}
               </Stack.Screen>
               <Stack.Screen name="Importacao" component={Importacao} options={{ headerShown: true, title: "Importar extrato" }} />
+              <Stack.Screen name="ConexaoBancaria" component={ConexaoBancaria} options={{ headerShown: true, title: "Conexão bancária" }} />
             </>
           ) : (
             <>

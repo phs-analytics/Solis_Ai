@@ -72,5 +72,6 @@ export async function removerChave(): Promise<void> {
     SecureStore.deleteItemAsync(SALT_ID_BIO),
     SecureStore.deleteItemAsync(PREFS_ID),
     SecureStore.deleteItemAsync(COTACOES_ID),
+    SecureStore.deleteItemAsync("solis_pluggy_v1"),
   ]);
 }

@@ -241,6 +241,9 @@ importers:
       '@react-native-async-storage/async-storage':
         specifier: '*'
         version: 3.1.1(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)
+      '@solis/core':
+        specifier: workspace:*
+        version: link:../core
       expo-file-system:
         specifier: '*'
         version: 58.0.13(expo@58.0.25(@babel/core@7.29.13(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1)(typescript@5.9.3))(react-native@0.88.1(@babel/core@7.29.13(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))
