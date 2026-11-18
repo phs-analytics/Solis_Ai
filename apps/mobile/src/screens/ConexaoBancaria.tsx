@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { autenticarPluggy, listarContasPluggy } from "@solis/core";
 import {
   lerCredenciaisPluggy, salvarCredenciaisPluggy, apagarCredenciaisPluggy, sincronizarPluggy, ultimaSyncPluggy,
@@ -8,6 +8,8 @@ import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";
 
 const GUIA = "github.com/phs-analytics/Solis_Ai/blob/main/GUIDE_PLUGGY.md";
+const MEU_PLUGGY = "https://meu.pluggy.ai";
+const GUIA_API = "https://meu.pluggy.ai/api-guide";
 
 export function ConexaoBancaria() {
   const tema = useTema();
@@ -20,6 +22,7 @@ export function ConexaoBancaria() {
   const [conectado, setConectado] = useState(false);
   const [ultima, setUltima] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
+  const [etapa, setEtapa] = useState<"escolha" | "cadastro" | "form">("escolha");
 
   useEffect(() => {
     lerCredenciaisPluggy().then((cr) => {
@@ -88,6 +91,49 @@ export function ConexaoBancaria() {
   }
 
   const campo = [s.input, { backgroundColor: c.superficie, color: c.texto, borderColor: c.borda }];
+  const abrir = (url: string) => Linking.openURL(url).catch(() => Alert.alert("Não deu para abrir", url));
+
+  if (!conectado && etapa === "escolha") {
+    return (
+      <ScrollView contentContainerStyle={[s.scroll, { paddingHorizontal: tema.spacing.lg, gap: 12 }]}>
+        <Text style={[tema.font.corpo, { color: c.texto }]}>
+          Para trazer seus lançamentos automaticamente, o Solis usa a sua conta gratuita do Meu Pluggy.
+        </Text>
+        <Pressable style={[s.botao, { backgroundColor: c.primario }]} onPress={() => setEtapa("form")} accessibilityRole="button">
+          <Text style={s.botaoTexto}>Tenho login no Meu Pluggy</Text>
+        </Pressable>
+        <Pressable style={[s.botao, { backgroundColor: c.superficie }]} onPress={() => setEtapa("cadastro")} accessibilityRole="button">
+          <Text style={{ color: c.primario, fontWeight: "700", fontSize: 16 }}>Cadastrar no Meu Pluggy</Text>
+        </Pressable>
+      </ScrollView>
+    );
+  }
+
+  if (!conectado && etapa === "cadastro") {
+    const passos: [string, string, string][] = [
+      ["1. Crie sua conta gratuita", "Cadastre-se no site do Meu Pluggy.", MEU_PLUGGY],
+      ["2. Conecte seus bancos", "Lá mesmo, conecte cada banco pelo Open Finance e copie o itemId de cada um.", MEU_PLUGGY],
+      ["3. Gere o Client ID e o Client Secret", "No painel, crie as credenciais da API. O Secret aparece uma vez só: guarde.", GUIA_API],
+    ];
+    return (
+      <ScrollView contentContainerStyle={[s.scroll, { paddingHorizontal: tema.spacing.lg, gap: 12 }]}>
+        {passos.map(([titulo, desc, url]) => (
+          <Pressable key={titulo} style={[s.passo, { backgroundColor: c.superficie, borderColor: c.borda }]}
+            onPress={() => abrir(url)} accessibilityRole="link" accessibilityHint="Abre o site do Meu Pluggy">
+            <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>{titulo}</Text>
+            <Text style={[tema.font.legenda, { color: c.textoSuave, marginTop: 4 }]}>{desc}</Text>
+            <Text style={{ color: c.primario, fontWeight: "600", marginTop: 6 }}>Abrir site ›</Text>
+          </Pressable>
+        ))}
+        <Pressable style={[s.botao, { backgroundColor: c.primario }]} onPress={() => setEtapa("form")} accessibilityRole="button">
+          <Text style={s.botaoTexto}>Já tenho os dados, continuar</Text>
+        </Pressable>
+        <Pressable style={s.botao} onPress={() => setEtapa("escolha")} accessibilityRole="button">
+          <Text style={{ color: c.textoSuave, fontWeight: "600" }}>Voltar</Text>
+        </Pressable>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={[s.scroll, { paddingHorizontal: tema.spacing.lg }]}>
@@ -147,6 +193,7 @@ const s = StyleSheet.create({
   aviso: { borderRadius: 8, padding: 12, marginTop: 12 },
   rotulo: { fontSize: 12, fontWeight: "600", marginBottom: 6, marginTop: 16 },
   input: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 15 },
+  passo: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 16 },
   botao: { borderRadius: 50, paddingVertical: 14, alignItems: "center" },
   botaoTexto: { color: "#fff", fontWeight: "700", fontSize: 16 },
 });
