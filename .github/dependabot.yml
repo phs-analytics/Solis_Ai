@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Mantém os hashes fixados das actions atualizados.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Só atualizações de segurança do npm: as versões do app seguem o SDK do Expo (npx expo install).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0

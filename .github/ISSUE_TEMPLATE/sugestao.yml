@@ -1,0 +1,14 @@
+name: Sugestão
+description: Ideia para melhorar o Solis
+labels: [sugestão]
+body:
+  - type: textarea
+    id: ideia
+    attributes:
+      label: Qual é a ideia?
+    validations:
+      required: true
+  - type: textarea
+    id: porque
+    attributes:
+      label: Que problema ela resolve no seu dia a dia?

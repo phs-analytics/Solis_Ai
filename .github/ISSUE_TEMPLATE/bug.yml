@@ -1,0 +1,28 @@
+name: Problema no app
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "**Não cole dados financeiros reais** (saldos, extratos, arquivos OFX/CSV). Use valores inventados."
+  - type: textarea
+    id: oque
+    attributes:
+      label: O que aconteceu?
+    validations:
+      required: true
+  - type: textarea
+    id: passos
+    attributes:
+      label: Como repetir o problema
+      placeholder: "1. Abri ... 2. Toquei em ... 3. Apareceu ..."
+  - type: input
+    id: aparelho
+    attributes:
+      label: Celular e versão do Android
+      placeholder: "Ex.: Galaxy A15, Android 14"
+  - type: input
+    id: versao
+    attributes:
+      label: Versão do Solis
+      placeholder: "Ex.: v1.0.0"
