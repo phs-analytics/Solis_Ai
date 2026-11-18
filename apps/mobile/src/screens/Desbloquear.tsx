@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { registrarTentativaErrada, resetarTentativas, verificarBloqueio, apagarTudo } from "@solis/dados";
 import type { Banco } from "@solis/dados";
-import { entrar } from "../contexto/sessao";
+import { entrar, SenhaErrada } from "../contexto/sessao";
 
 const MAX_TENTATIVAS = 5;
 
@@ -19,7 +19,11 @@ export function Desbloquear({ aoAbrir, aoApagado }: { aoAbrir: (b: Banco) => voi
       const banco = await entrar(senha);
       await resetarTentativas();
       aoAbrir(banco);
-    } catch {
+    } catch (e) {
+      if (!(e instanceof SenhaErrada)) {
+        setErro("Não deu para abrir agora. Tente de novo.");
+        return;
+      }
       const n = await registrarTentativaErrada();
       if (await verificarBloqueio()) {
         await apagarTudo();
