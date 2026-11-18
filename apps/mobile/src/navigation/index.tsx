@@ -1,20 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text } from "react-native";
+import { lerPrefs } from "@solis/dados";
+import type { Banco } from "@solis/dados";
 import { useTema } from "../theme";
+import { BancoProvider } from "../contexto/BancoContext";
 import { Splash } from "../screens/Splash";
+import { ConfigurarAcesso } from "../screens/ConfigurarAcesso";
+import { Desbloquear } from "../screens/Desbloquear";
 import { Home } from "../screens/Home";
 import { Lancamentos } from "../screens/Lancamentos";
 import { Metas } from "../screens/Metas";
 import { Mais } from "../screens/Mais";
 import { Investimentos } from "../screens/Investimentos";
 import { ChatSolis } from "../screens/ChatSolis";
+import { NovaConta } from "../screens/NovaConta";
+import { NovoLancamento } from "../screens/NovoLancamento";
+import { Importacao } from "../screens/Importacao";
 
 export type RootStackParams = {
   Splash: undefined;
+  Acesso: undefined;
   App: undefined;
+  NovaConta: undefined;
+  NovoLancamento: undefined;
+  Importacao: undefined;
 };
 
 export type TabParams = {
@@ -78,12 +90,45 @@ function Tabs() {
 }
 
 export function AppNavigator() {
+  const [banco, setBanco] = useState<Banco | null>(null);
+  // null = ainda verificando se já existe senha configurada
+  const [configurado, setConfigurado] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    lerPrefs().then((p) => setConfigurado(p !== null)).catch(() => setConfigurado(false));
+  }, []);
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" component={Splash} />
-        <Stack.Screen name="App" component={Tabs} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <BancoProvider value={banco}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {banco ? (
+            <>
+              <Stack.Screen name="App" component={Tabs} />
+              <Stack.Screen name="NovaConta" options={{ headerShown: true, title: "Nova conta" }}>
+                {({ navigation }) => <NovaConta onSalvo={() => navigation.goBack()} />}
+              </Stack.Screen>
+              <Stack.Screen name="NovoLancamento" options={{ headerShown: true, title: "Novo lançamento" }}>
+                {({ navigation }) => <NovoLancamento onSalvo={() => navigation.goBack()} />}
+              </Stack.Screen>
+              <Stack.Screen name="Importacao" component={Importacao} options={{ headerShown: true, title: "Importar extrato" }} />
+            </>
+          ) : (
+            <>
+              <Stack.Screen name="Splash" component={Splash} />
+              <Stack.Screen name="Acesso">
+                {() =>
+                  configurado ? (
+                    <Desbloquear aoAbrir={setBanco} aoApagado={() => setConfigurado(false)} />
+                  ) : (
+                    <ConfigurarAcesso aoAbrir={setBanco} />
+                  )
+                }
+              </Stack.Screen>
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </BancoProvider>
   );
 }

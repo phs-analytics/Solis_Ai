@@ -65,7 +65,7 @@ O app pode consultar serviços externos para exibir indicadores e cotações. Is
 | Direito | Como exercer |
 |---|---|
 | Acessar seus dados | Todos estão no app, visíveis para você |
-| Exportar seus dados | Menu → Backup (exporta o banco cifrado) |
+| Exportar seus dados | Mais → Exportar backup (arquivo `.solis` cifrado; abre só com a sua senha). Você escolhe onde guardar, como o seu Google Drive; o Solis não envia o arquivo para lugar nenhum. |
 | Excluir seus dados | Menu → Configurações → Apagar todos os dados |
 | Saber quais fornecedores processam seus dados | Seção 4 acima (brapi.dev, apenas se ativado) |
 | Revogar consentimento de cotações | Desative "Buscar cotações online" nas configurações |

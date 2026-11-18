@@ -2,7 +2,7 @@
   "expo": {
     "name": "Solis",
     "slug": "solis",
-    "version": "1.0.0",
+    "version": "0.9.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,8 +24,19 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      ["expo-sqlite", { "useSQLCipher": true }],
-      ["llama.rn", { "enableOpenCL": false }]
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      [
+        "llama.rn",
+        {
+          "enableOpenCL": false
+        }
+      ],
+      "expo-sharing"
     ]
   }
 }

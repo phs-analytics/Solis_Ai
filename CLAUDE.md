@@ -128,6 +128,9 @@ Commit: `28b6f07`.
   ```
 - Segredos do GitHub: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
 - Consentimento brapi.dev: chave "Buscar cotações online" em Mais (desligada por padrão, `solis_cotacoes_online_v1` no SecureStore); Investimentos só busca cotações se ligada.
+- 18/11/2026: o app **nunca abria o banco** (Splash ia direto às abas e `useBanco()` quebrava; o autoteste do CI não abre telas). Ligado: Splash → Acesso (`ConfigurarAcesso` ou `Desbloquear`) → `entrar()` em `contexto/sessao.ts` → abas dentro do `BancoProvider`. Também ligados "+ Criar conta", "+" de lançamento, Importar extrato (seletor real) e Exportar backup.
+- Tag com hífen (`v0.9.0-beta`) sai como pré-lançamento. O build leva ~49 min, quase tudo no passo "Build do APK" (C++ do llama.rn/SQLCipher).
+- Pendente: testar no celular real o fluxo completo e a restauração; bloqueio por inatividade ainda não existe.
 
 ## Estrutura
 ```
@@ -150,13 +153,13 @@ Planejado: `packages/ia` (Solis AI), `apps/web` (futuro).
 7. **Solis AI v1 (regras)**: perguntas sobre os dados, alertas, categorização que aprende. Roda em qualquer celular.
 8. **Solis AI v2 (modelo no celular)**: `llama.rn`, ajuste fino prévio, memória da pessoa, checagem de RAM com volta para a v1.
 9. **Distribuição Android**: APK assinado (chave fora do Git, com backup), testes em aparelhos simples.
-10. **Opcional**: servidor de sincronização próprio e bancos via Pluggy.
+10. **Levar dados para outro celular**: backup `.solis` (banco SQLCipher + salt) salvo onde a pessoa quiser (ex.: Drive pela tela de compartilhar); restauração no primeiro acesso, testando a senha antes de substituir. Sem servidor. **Pluggy descartada** (18/11/2026): paga e envia dados bancários a terceiro.
 
 Futuro: iPhone e versão web.
 
 ## Decisões ainda abertas
 - Etapa 8 (parcialmente resolvida): modelo escolhido = `Qwen2.5-1.5B-Instruct` Q4_K_M (Apache-2.0, 1.12 GB); distribuição = download sob demanda do HuggingFace; fallback = tenta initLlama, cai para v1 em OOM. Pendente: validar no emulador/dispositivo real; verificar se o CI do GitHub Actions consegue buildar com llama.rn.
-- Etapa 10: onde roda o servidor; usar ou não a Pluggy.
+- Etapa 10 decidida em 18/11/2026: sem servidor, sem Pluggy. Sync automático com Drive exigiria OAuth do Google; fica para depois, se pedirem.
 
 ## Referências analisadas (só ideias, sem copiar código AGPL)
 | Projeto | Licença | Uso no Solis |

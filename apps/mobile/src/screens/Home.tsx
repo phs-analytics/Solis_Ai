@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View, ScrollView, Pressable, RefreshControl } from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParams } from "../navigation";
 import { SafeScreen } from "../components/SafeScreen";
 import { useTema } from "../theme";
 import { saudacao } from "@solis/core";
@@ -12,6 +15,7 @@ export function Home() {
   const tema = useTema();
   const c = tema.cores;
   const banco = useBanco();
+  const nav = useNavigation<NativeStackNavigationProp<RootStackParams>>();
 
   const [contas, setContas] = useState<Conta[]>([]);
   const [ultimos, setUltimos] = useState<Lancamento[]>([]);
@@ -34,7 +38,7 @@ export function Home() {
     }
   }, [banco]);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useFocusEffect(useCallback(() => { carregar(); }, [carregar]));
 
   return (
     <SafeScreen>
@@ -70,8 +74,12 @@ export function Home() {
         </View>
 
         {/* Contas */}
-        <View style={s.secaoHeader}>
+        <View style={[s.secaoHeader, s.linhaTitulo]}>
           <Text style={[tema.font.titulo, { color: c.texto }]}>Contas</Text>
+          <Pressable onPress={() => nav.navigate("NovaConta")} accessibilityRole="button"
+            accessibilityLabel="Criar conta" hitSlop={12}>
+            <Text style={{ color: c.primario, fontWeight: "700" }}>+ Criar conta</Text>
+          </Pressable>
         </View>
 
         {contas.length === 0 ? (
@@ -150,6 +158,7 @@ const s = StyleSheet.create({
   avatar: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   cardSaldo: { borderRadius: 16, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
   secaoHeader: { marginTop: 24, marginBottom: 10 },
+  linhaTitulo: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cardVazio: { borderRadius: 16, padding: 24, borderWidth: 1, borderStyle: "dashed", alignItems: "center" },
   cardConta: { borderRadius: 12, padding: 16, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
   linheLancamento: { flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },

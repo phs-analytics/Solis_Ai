@@ -2,7 +2,7 @@ export { abrirBanco, fecharBanco, bancoCorrente, apagarBanco, registrarTentativa
 export type { KdfParams, Banco } from "./vault.js";
 export { salvarSalt, lerSalt, lerPrefs, removerChave, lerConsentimentoCotacoes, salvarConsentimentoCotacoes } from "./keystore.js";
 export { inicializarSchema, VERSAO_SCHEMA } from "./schema.js";
-export { exportarBackup, limparBackupTemporario, apagarTudo } from "./backup.js";
+export { exportarBackup, restaurarBackup, limparBackupTemporario, apagarTudo } from "./backup.js";
 export * from "./repositorios/index.js";
 export { montarContexto } from "./ia/analisador.js";
 export type { ContextoFinanceiro } from "./ia/analisador.js";

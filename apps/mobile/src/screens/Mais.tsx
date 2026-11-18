@@ -1,24 +1,47 @@
 import React, { useEffect, useState } from "react";
 import { Alert, StyleSheet, Switch, Text, View, Pressable } from "react-native";
-import { lerConsentimentoCotacoes, salvarConsentimentoCotacoes } from "@solis/dados";
+import * as Sharing from "expo-sharing";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {
+  lerConsentimentoCotacoes, salvarConsentimentoCotacoes, exportarBackup, limparBackupTemporario,
+} from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
 import { useTema } from "../theme";
 import { modeloExiste, baixarModelo, removerModelo } from "../ia/llm";
+import type { RootStackParams } from "../navigation";
 
-type Item = { label: string; desc: string };
+type Item = { label: string; desc: string; acao?: () => void };
 
-const ITENS: Item[] = [
-  { label: "Configurar acesso", desc: "Senha mestra e biometria" },
-  { label: "Exportar backup", desc: "Salvar cópia cifrada dos seus dados" },
-  { label: "Privacidade e termos", desc: "LGPD, política e termos de uso" },
-  { label: "Sobre o Solis", desc: "Versão, licenças, código aberto" },
-];
+async function compartilharBackup() {
+  let caminho: string | null = null;
+  try {
+    caminho = await exportarBackup();
+    await Sharing.shareAsync(caminho, { dialogTitle: "Salvar backup do Solis", mimeType: "application/octet-stream" });
+  } catch {
+    Alert.alert("Não deu para exportar", "Tente novamente.");
+  } finally {
+    if (caminho) await limparBackupTemporario(caminho);
+  }
+}
 
 type StatusIA = "verificando" | "inativo" | "baixando" | "ativo" | "erro";
 
 export function Mais() {
   const tema = useTema();
   const c = tema.cores;
+  const nav = useNavigation<NativeStackNavigationProp<RootStackParams>>();
+
+  const ITENS: Item[] = [
+    { label: "Importar extrato", desc: "Arquivo OFX ou CSV do seu banco", acao: () => nav.navigate("Importacao") },
+    {
+      label: "Exportar backup",
+      desc: "Arquivo .solis cifrado. Guarde no Drive para levar a outro celular; abre só com sua senha.",
+      acao: compartilharBackup,
+    },
+    { label: "Privacidade e termos", desc: "LGPD, política e termos de uso" },
+    { label: "Sobre o Solis", desc: "Versão, licenças, código aberto" },
+  ];
 
   const [statusIA, setStatusIA] = useState<StatusIA>("verificando");
   const [progresso, setProgresso] = useState(0); // 0–100
@@ -138,12 +161,13 @@ export function Mais() {
         {ITENS.map((item) => (
           <Pressable
             key={item.label}
+            onPress={item.acao}
             style={[s.linha, { backgroundColor: c.superficie, borderBottomColor: c.borda }]}
             accessibilityRole="button"
             accessibilityLabel={item.label}
             accessibilityHint={item.desc}
           >
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "600" }]}>
                 {item.label}
               </Text>

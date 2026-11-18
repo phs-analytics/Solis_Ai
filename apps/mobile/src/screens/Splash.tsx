@@ -28,7 +28,7 @@ export function Splash({ navigation }: Props) {
       <View style={s.rodape}>
         <Pressable
           style={s.botaoPrimario}
-          onPress={() => navigation.replace("App")}
+          onPress={() => navigation.navigate("Acesso")}
           accessibilityRole="button"
           accessibilityLabel="Começar a usar o Solis"
         >
@@ -37,7 +37,7 @@ export function Splash({ navigation }: Props) {
 
         <Pressable
           style={s.botaoSecundario}
-          onPress={() => navigation.replace("App")}
+          onPress={() => navigation.navigate("Acesso")}
           accessibilityRole="button"
           accessibilityLabel="Já tenho acesso"
         >

@@ -6,8 +6,9 @@ import { useBanco } from "../contexto/BancoContext";
 import { listarLancamentos } from "@solis/dados";
 import type { Lancamento, FiltroLancamentos } from "@solis/dados";
 import { formatarDinheiro } from "../utils/dinheiro";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { TabParams } from "../navigation";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParams } from "../navigation";
 
 type Periodo = "30d" | "7d" | "60d";
 const PERIODOS: { label: string; valor: Periodo }[] = [
@@ -20,6 +21,7 @@ export function Lancamentos() {
   const tema = useTema();
   const c = tema.cores;
   const banco = useBanco();
+  const nav = useNavigation<NativeStackNavigationProp<RootStackParams>>();
 
   const [items, setItems] = useState<Lancamento[]>([]);
   const [busca, setBusca] = useState("");
@@ -37,14 +39,14 @@ export function Lancamentos() {
     }
   }, [banco, busca, periodo]);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useFocusEffect(useCallback(() => { carregar(); }, [carregar]));
 
   return (
     <SafeScreen>
       <View style={[s.cabecalho, { paddingHorizontal: tema.spacing.lg }]}>
         <Text style={[tema.font.titulo, { color: c.texto }]}>Lançamentos</Text>
-        {/* Botão novo lançamento — navegação implementada na Etapa 3 */}
         <Pressable
+          onPress={() => nav.navigate("NovoLancamento")}
           style={[s.botaoNovo, { backgroundColor: c.primario }]}
           accessibilityRole="button"
           accessibilityLabel="Novo lançamento"

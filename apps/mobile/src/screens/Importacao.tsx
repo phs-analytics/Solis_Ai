@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View, Pressable, ScrollView, Alert } from "react-native";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
+import * as DocumentPicker from "expo-document-picker";
 import { SafeScreen } from "../components/SafeScreen";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";
@@ -38,15 +39,28 @@ export function Importacao() {
   }
 
   async function selecionarArquivo(tipo: "ofx" | "csv") {
-    // shortcut: DocumentPicker não está instalado; na CI o teste ocorre no emulador
-    // Para o MVP, usa um arquivo de exemplo hard-coded para demonstração
-    Alert.alert("Em breve", "Seleção de arquivo via DocumentPicker será ativada na Etapa 9 (distribuição).\n\nPor enquanto, use o botão de teste.");
+    const escolha = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
+    if (escolha.canceled || !escolha.assets[0]) return;
+    const uri = escolha.assets[0].uri;
+    try {
+      // shortcut: lê como UTF-8; extratos em Latin-1 podem trocar acentos — tratar se aparecer em aparelho real
+      const texto = await FileSystem.readAsStringAsync(uri);
+      await processar(texto, tipo);
+    } catch {
+      Alert.alert("Não deu para ler o arquivo", `Confira se é um arquivo ${tipo.toUpperCase()} do seu banco.`);
+    } finally {
+      await FileSystem.deleteAsync(uri, { idempotent: true });
+    }
   }
 
   async function usarExemplo() {
+    await processar(`Data;Histórico;Valor\n15/11/2026;Mercado;-120,00\n15/11/2026;Salário;3000,00`, "csv");
+  }
+
+  async function processar(texto: string, tipo: "ofx" | "csv") {
     await carregarContas();
-    const csvExemplo = `Data;Histórico;Valor\n15/11/2026;Mercado;-120,00\n15/11/2026;Salário;3000,00`;
-    const resultado = parseCSV(csvExemplo);
+    const resultado = tipo === "ofx" ? { ...parseOFX(texto), avisos: [] as string[] } : parseCSV(texto);
+    if (resultado.lancamentos.length === 0) resultado.avisos.push("Nenhum lançamento encontrado no arquivo.");
     setAvisos(resultado.avisos);
 
     const existentes = await listarLancamentos(banco);

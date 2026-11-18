@@ -73,11 +73,14 @@ export async function abrirBanco(chave: string): Promise<Banco> {
     enableChangeListener: false,
   });
 
-  // Aplica a chave de criptografia — SQLCipher rejeita se errada
-  await banco.execAsync(`PRAGMA key = '${chave.replace(/'/g, "''")}'`);
-
-  // Testa acesso real (lança se a chave estiver incorreta)
-  await banco.execAsync("SELECT count(*) FROM sqlite_master");
+  try {
+    await banco.execAsync(`PRAGMA key = '${chave.replace(/'/g, "''")}'`);
+    // Testa acesso real (lança se a chave estiver incorreta)
+    await banco.execAsync("SELECT count(*) FROM sqlite_master");
+  } catch (e) {
+    await banco.closeAsync();
+    throw e;
+  }
 
   _banco = banco;
   return banco;

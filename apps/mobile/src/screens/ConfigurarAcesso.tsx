@@ -14,15 +14,18 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
-import { salvarSalt, gerarSalt, derivarChave } from "@solis/dados";
+import * as DocumentPicker from "expo-document-picker";
+import { salvarSalt, gerarSalt, restaurarBackup } from "@solis/dados";
+import type { Banco } from "@solis/dados";
+import { entrar } from "../contexto/sessao";
 
 const MIN_SENHA = 8;
 
 interface Props {
-  aoConfigurar: () => void;
+  aoAbrir: (banco: Banco) => void;
 }
 
-export function ConfigurarAcesso({ aoConfigurar }: Props) {
+export function ConfigurarAcesso({ aoAbrir }: Props) {
   const [senha, setSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -37,7 +40,6 @@ export function ConfigurarAcesso({ aoConfigurar }: Props) {
     try {
       // Gera salt aleatório e deriva a chave — a senha NUNCA é persistida
       const salt = gerarSalt();
-      await derivarChave(senha, salt); // valida que a derivação funciona antes de salvar
 
       // Oferece biometria se o aparelho suportar
       const temBiometria = await LocalAuthentication.hasHardwareAsync();
@@ -56,9 +58,27 @@ export function ConfigurarAcesso({ aoConfigurar }: Props) {
       // Salva o salt no Keystore (com ou sem biometria vinculada)
       // A chave do banco é sempre derivada de salt+senha em tempo de desbloqueio
       await salvarSalt(salt, usouBiometria);
-      aoConfigurar();
+      aoAbrir(await entrar(senha));
     } catch (e) {
       Alert.alert("Erro", "Não foi possível salvar a senha. Tente novamente.");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function restaurar() {
+    if (!senha || carregando) {
+      Alert.alert("Digite a senha", "Use a senha que você usava no aparelho antigo.");
+      return;
+    }
+    const escolha = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
+    if (escolha.canceled || !escolha.assets[0]) return;
+    setCarregando(true);
+    try {
+      await restaurarBackup(escolha.assets[0].uri, senha);
+      aoAbrir(await entrar(senha));
+    } catch (e) {
+      Alert.alert("Não deu para restaurar", e instanceof Error ? e.message : "Tente novamente.");
     } finally {
       setCarregando(false);
     }
@@ -110,6 +130,16 @@ export function ConfigurarAcesso({ aoConfigurar }: Props) {
           <Text style={s.botaoTexto}>Continuar</Text>
         )}
       </Pressable>
+
+      <Pressable
+        style={s.botaoSecundario}
+        onPress={restaurar}
+        disabled={carregando}
+        accessibilityRole="button"
+        accessibilityHint="Escolha o arquivo .solis e use a senha do aparelho antigo"
+      >
+        <Text style={s.botaoSecundarioTexto}>Já tenho um backup (.solis)</Text>
+      </Pressable>
     </View>
   );
 }
@@ -135,4 +165,6 @@ const s = StyleSheet.create({
   },
   botaoDesabilitado: { backgroundColor: "#aaa" },
   botaoTexto: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  botaoSecundario: { padding: 14, alignItems: "center" },
+  botaoSecundarioTexto: { color: "#1a73e8", fontWeight: "600", fontSize: 15 },
 });

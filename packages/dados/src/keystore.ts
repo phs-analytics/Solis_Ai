@@ -33,7 +33,7 @@ import { KDF_DEFAULTS } from "./vault.js";
 export type Prefs = { biometriaAtiva: boolean; kdf: KdfParams };
 
 /** Salva o salt no Keystore. Com biometria, exige autenticação biométrica para ler. */
-export async function salvarSalt(salt: string, biometria: boolean): Promise<void> {
+export async function salvarSalt(salt: string, biometria: boolean, kdf: KdfParams = KDF_DEFAULTS): Promise<void> {
   if (biometria) {
     await SecureStore.setItemAsync(SALT_ID_BIO, salt, {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
@@ -45,7 +45,7 @@ export async function salvarSalt(salt: string, biometria: boolean): Promise<void
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     });
   }
-  await SecureStore.setItemAsync(PREFS_ID, JSON.stringify({ biometriaAtiva: biometria, kdf: KDF_DEFAULTS }), {
+  await SecureStore.setItemAsync(PREFS_ID, JSON.stringify({ biometriaAtiva: biometria, kdf }), {
     keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   });
 }
