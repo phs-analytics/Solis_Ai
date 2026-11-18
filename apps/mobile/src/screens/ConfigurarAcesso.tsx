@@ -19,7 +19,8 @@ import { salvarSalt, gerarSalt, restaurarBackup } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { entrar } from "../contexto/sessao";
 
-const MIN_SENHA = 8;
+// O backup .solis leva o salt e pode ser atacado fora do celular, sem limite de tentativas.
+const MIN_SENHA = 12;
 
 interface Props {
   aoAbrir: (banco: Banco) => void;
@@ -88,7 +89,8 @@ export function ConfigurarAcesso({ aoAbrir }: Props) {
     <View style={s.container}>
       <Text style={s.titulo}>Crie sua senha</Text>
       <Text style={s.subtitulo}>
-        Ela protege seus dados no aparelho. Mínimo de {MIN_SENHA} caracteres.
+        Ela protege seus dados e seus backups. Mínimo de {MIN_SENHA} caracteres. Dica: junte 3 palavras
+        que só você sabe, como "pipa azul domingo". Se esquecer, ninguém consegue recuperar.
       </Text>
 
       <TextInput

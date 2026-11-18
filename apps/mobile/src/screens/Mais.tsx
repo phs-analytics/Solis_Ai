@@ -37,7 +37,13 @@ export function Mais() {
     {
       label: "Exportar backup",
       desc: "Arquivo .solis cifrado. Guarde no Drive para levar a outro celular; abre só com sua senha.",
-      acao: compartilharBackup,
+      acao: () =>
+        Alert.alert(
+          "Antes de exportar",
+          "Quem pegar este arquivo pode tentar adivinhar sua senha no computador, sem limite de tentativas. " +
+            "Guarde só em lugar seu (seu Drive, pendrive) e não mande para ninguém.",
+          [{ text: "Cancelar", style: "cancel" }, { text: "Entendi, exportar", onPress: compartilharBackup }]
+        ),
     },
     { label: "Privacidade e termos", desc: "LGPD, política e termos de uso" },
     { label: "Sobre o Solis", desc: "Versão, licenças, código aberto" },
