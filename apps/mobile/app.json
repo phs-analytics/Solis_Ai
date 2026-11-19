@@ -37,7 +37,8 @@
         }
       ],
       "expo-sharing",
-      "./plugins/withAndroidBuildConfig"
+      "./plugins/withAndroidBuildConfig",
+      "expo-secure-store"
     ]
   }
 }
