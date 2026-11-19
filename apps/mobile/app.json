@@ -36,7 +36,8 @@
           "enableOpenCL": false
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "./plugins/withAndroidBuildConfig"
     ]
   }
 }
