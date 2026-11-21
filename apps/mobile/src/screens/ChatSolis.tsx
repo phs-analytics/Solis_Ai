@@ -4,6 +4,7 @@ import {
   ScrollView, StyleSheet, Text, TextInput, View,
 } from "react-native";
 import { SafeScreen } from "../components/SafeScreen";
+import { Icone } from "../components/Icone";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";
 import { montarContexto } from "@solis/dados";
@@ -99,7 +100,9 @@ export function ChatSolis() {
 
         {tela_vazia ? (
           <View style={s.centro}>
-            <Text style={{ fontSize: 56 }}>🌟</Text>
+            <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: c.primarioSuave, alignItems: "center", justifyContent: "center" }}>
+              <Icone nome="sparkles" tamanho={32} cor={c.primario} />
+            </View>
             <Text style={[tema.font.titulo, { color: c.texto, marginTop: 12 }]}>Solis AI</Text>
             <Text style={[tema.font.corpo, { color: c.textoSuave, marginTop: 4 }]}>
               Pergunte sobre suas finanças

@@ -6,7 +6,7 @@ export type ObjetivoFinanceiro = "sair_dividas" | "reserva" | "comprar_bem" | "l
 export type Perfil = {
   nomeCompleto: string;
   apelido: string;
-  pronomes: string;
+  pronomes: string[]; // a pessoa pode usar mais de um; texto livre quando escolhe "Outro"
   genero: string;
   nascimento: string; // AAAA-MM-DD
   trabalho: string;
@@ -26,7 +26,7 @@ export type Perfil = {
 };
 
 export const PERFIL_VAZIO: Perfil = {
-  nomeCompleto: "", apelido: "", pronomes: "", genero: "", nascimento: "",
+  nomeCompleto: "", apelido: "", pronomes: [], genero: "", nascimento: "",
   trabalho: "", faixaRenda: "",
   atividades: [], ritmo: "", objetivosVida: [],
   controleFinancas: "", objetivoFinanceiro: "", reacaoQueda: "", experiencia: [],

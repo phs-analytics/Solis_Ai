@@ -4,6 +4,7 @@ import {
   ScrollView, StyleSheet, Text, View,
 } from "react-native";
 import { SafeScreen } from "../components/SafeScreen";
+import { Icone } from "../components/Icone";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";
 import { listarAtivos, resumoCarteira, arquivarAtivo, lerConsentimentoCotacoes } from "@solis/dados";
@@ -132,7 +133,9 @@ function CarteiraView({ resumo, cotacoes, onAtualizar, onArquivar, tema, c }: Ca
   if (!resumo || resumo.ativos.length === 0) {
     return (
       <View style={s.centro}>
-        <Text style={{ fontSize: 40 }}>📊</Text>
+        <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: c.primarioSuave, alignItems: "center", justifyContent: "center" }}>
+          <Icone nome="chart-pie" tamanho={32} cor={c.primario} />
+        </View>
         <Text style={[tema.font.titulo, { color: c.texto, marginTop: 12 }]}>Carteira vazia</Text>
         <Text style={[tema.font.corpo, { color: c.textoSuave, marginTop: 4, textAlign: "center" }]}>
           Registre seus ativos manualmente para acompanhar a carteira.
@@ -244,9 +247,10 @@ function MercadoView({ indices, onAtualizar, erro, tema, c }: {
         </View>
       )}
 
-      <View style={[s.aviso, { backgroundColor: c.primarioSuave, marginTop: 24 }]}>
-        <Text style={[tema.font.legenda, { color: c.textoSuave }]}>
-          ⚠️ Essas informações são apenas para consulta. Não constituem recomendação de investimento.
+      <View style={[s.aviso, { backgroundColor: c.primarioSuave, marginTop: 24, flexDirection: "row", gap: 8 }]}>
+        <Icone nome="triangle-warning" tamanho={14} cor={c.aviso} />
+        <Text style={[tema.font.legenda, { color: c.textoSuave, flex: 1 }]}>
+          Essas informações são apenas para consulta. Não constituem recomendação de investimento.
         </Text>
       </View>
     </ScrollView>

@@ -14,6 +14,7 @@ export type ContextoFinanceiro = {
   orcamentos: { categoriaId: string; limiteCentavos: number; gastosCentavos: number; restanteCentavos: number }[];
   metas: { nome: string; alvoCentavos: number; atualCentavos: number; pct: number }[];
   recorrentesProximos: { data: string; descricao: string; valorCentavos: number }[];
+  pessoa?: { apelido: string; pronomes: string[] };
 };
 
 export type RespostaIA = {

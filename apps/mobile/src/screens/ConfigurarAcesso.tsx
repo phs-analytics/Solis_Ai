@@ -12,6 +12,7 @@ import { salvarSalt, gerarSalt, restaurarBackup } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { entrar } from "../contexto/sessao";
 import { useTema } from "../theme";
+import { Icone } from "../components/Icone";
 
 interface Props {
   aoAbrir: (banco: Banco, restaurado: boolean) => void;
@@ -104,9 +105,10 @@ export function ConfigurarAcesso({ aoAbrir, pessoais = [] }: Props) {
 
       <View style={s.regras} accessibilityLiveRegion="polite">
         {regras.map((r) => (
-          <Text key={r.id} style={{ color: r.ok ? c.sucesso : c.textoSuave, fontSize: 13 }}>
-            {r.ok ? "✓" : "○"}  {r.texto}
-          </Text>
+          <View key={r.id} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Icone nome={r.ok ? "check" : "circle-small"} tamanho={12} cor={r.ok ? c.sucesso : c.textoSuave} />
+            <Text style={{ color: r.ok ? c.sucesso : c.textoSuave, fontSize: 13 }}>{r.texto}</Text>
+          </View>
         ))}
       </View>
 

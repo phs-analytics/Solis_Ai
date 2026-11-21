@@ -77,6 +77,12 @@ function montarSystemPrompt(ctx: ContextoFinanceiro): string {
   return [
     "Você é a Solis AI, assistente financeira pessoal. Responda em português do Brasil,",
     "de forma simples e direta. NUNCA recomende investimentos específicos.",
+    ...(ctx.pessoa ? [
+      `Chame a pessoa de "${ctx.pessoa.apelido}".`,
+      ctx.pessoa.pronomes.length && !ctx.pessoa.pronomes.includes("Prefiro não dizer")
+        ? `A pessoa usa os pronomes ${ctx.pessoa.pronomes.join(", ")}. Flexione o gênero das palavras de acordo com eles.`
+        : "Não presuma gênero: prefira frases neutras (\"você conseguiu\" em vez de \"você está pronto/pronta\").",
+    ] : []),
     "",
     `Dados do usuário em ${ctx.mes}/${ctx.ano}:`,
     `- Receitas: ${fmt(ctx.totalReceitas)} | Despesas: ${fmt(ctx.totalDespesas)} | Saldo: ${fmt(ctx.saldoMes)}`,

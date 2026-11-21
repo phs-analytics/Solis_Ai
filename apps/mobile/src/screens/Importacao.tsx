@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Pressable, ScrollView, Alert } from "react-nati
 import * as FileSystem from "expo-file-system/legacy";
 import * as DocumentPicker from "expo-document-picker";
 import { SafeScreen } from "../components/SafeScreen";
+import { Icone } from "../components/Icone";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";
 import { parseOFX, parseCSV, hashLancamento, filtrarDuplicatas } from "@solis/core";
@@ -98,7 +99,7 @@ export function Importacao() {
     return (
       <SafeScreen>
         <View style={s.centro}>
-          <Text style={{ fontSize: 48 }}>✅</Text>
+          <Icone nome="check-circle" tamanho={48} cor={c.sucesso} />
           <Text style={[tema.font.titulo, { color: c.texto, marginTop: 16 }]}>
             {importados} lançamento{importados !== 1 ? "s" : ""} importado{importados !== 1 ? "s" : ""}
           </Text>
@@ -179,7 +180,7 @@ export function Importacao() {
 
         <Pressable style={[s.opcao, { backgroundColor: c.superficie, borderColor: c.borda }]}
           onPress={() => selecionarArquivo("ofx")} accessibilityRole="button" accessibilityLabel="Importar OFX">
-          <Text style={{ fontSize: 32 }}>🏦</Text>
+          <View style={[s.selo, { backgroundColor: c.primarioSuave }]}><Icone nome="bank" cor={c.primario} /></View>
           <View style={{ marginLeft: 16 }}>
             <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>Arquivo OFX / QFX</Text>
             <Text style={[tema.font.legenda, { color: c.textoSuave }]}>Formato padrão dos bancos brasileiros</Text>
@@ -188,7 +189,7 @@ export function Importacao() {
 
         <Pressable style={[s.opcao, { backgroundColor: c.superficie, borderColor: c.borda }]}
           onPress={() => selecionarArquivo("csv")} accessibilityRole="button" accessibilityLabel="Importar CSV">
-          <Text style={{ fontSize: 32 }}>📄</Text>
+          <View style={[s.selo, { backgroundColor: c.primarioSuave }]}><Icone nome="file-invoice" cor={c.primario} /></View>
           <View style={{ marginLeft: 16 }}>
             <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>Planilha CSV</Text>
             <Text style={[tema.font.legenda, { color: c.textoSuave }]}>Exportado do Excel, Google Sheets…</Text>
@@ -197,7 +198,7 @@ export function Importacao() {
 
         <Pressable style={[s.opcao, { backgroundColor: c.primarioSuave, borderColor: c.primario }]}
           onPress={usarExemplo} accessibilityRole="button" accessibilityLabel="Testar com exemplo">
-          <Text style={{ fontSize: 32 }}>🧪</Text>
+          <View style={[s.selo, { backgroundColor: c.superficie }]}><Icone nome="flask" cor={c.primario} /></View>
           <View style={{ marginLeft: 16 }}>
             <Text style={[tema.font.corpo, { color: c.primario, fontWeight: "700" }]}>Testar com exemplo</Text>
             <Text style={[tema.font.legenda, { color: c.textoSuave }]}>Importa 2 lançamentos de exemplo</Text>
@@ -209,6 +210,7 @@ export function Importacao() {
 }
 
 const s = StyleSheet.create({
+  selo: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   scroll: { paddingTop: 16, paddingBottom: 48 },
   centro: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
   opcao: { flexDirection: "row", alignItems: "center", borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1 },

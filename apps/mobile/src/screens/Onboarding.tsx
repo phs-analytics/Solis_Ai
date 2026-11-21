@@ -5,13 +5,14 @@ import type { Perfil, PerfilInvestidor } from "@solis/core";
 import { lerPerfil, salvarPerfil } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
+import { Icone } from "../components/Icone";
 import { useTema } from "../theme";
 import { ConfigurarAcesso } from "./ConfigurarAcesso";
 
 type Opcao = { v: string; t: string };
 const op = (...itens: [string, string][]): Opcao[] => itens.map(([v, t]) => ({ v, t }));
 
-const PRONOMES = op(["ela", "Ela / dela"], ["ele", "Ele / dele"], ["elu", "Elu / delu"], ["nao_dizer", "Prefiro não dizer"]);
+const PRONOMES = op(["ela", "Ela/dela"], ["ele", "Ele/dele"], ["elu", "Elu/delu"], ["outro", "Outro"], ["nao_dizer", "Prefiro não dizer"]);
 const GENEROS = op(["mulher", "Mulher"], ["homem", "Homem"], ["nao_binario", "Não binário"], ["outro", "Outro"], ["nao_dizer", "Prefiro não dizer"]);
 const TRABALHO = op(
   ["clt", "CLT (carteira assinada)"], ["autonomo", "Autônomo(a)"], ["mei", "MEI / empresário(a)"], ["freela", "Freelancer / bicos"],
@@ -24,16 +25,16 @@ const RENDA = op(
   ["variavel", "Varia muito todo mês"], ["nao_dizer", "Prefiro não dizer"],
 );
 const ATIVIDADES = op(
-  ["trabalho", "💼 Trabalho"], ["estudos", "📚 Estudos"], ["filhos", "👶 Cuidar de filhos"], ["casa", "🏠 Casa"],
-  ["esporte", "⚽ Esporte"], ["academia", "🏋️ Academia"], ["musica", "🎵 Música"], ["games", "🎮 Games"],
-  ["leitura", "📖 Leitura"], ["igreja", "🙏 Fé / igreja"], ["amigos", "🍻 Amigos"], ["series", "📺 Séries"],
-  ["cozinhar", "🍳 Cozinhar"], ["artes", "🎨 Artes"], ["viagens", "✈️ Passeios"], ["negocio", "🛍️ Vender / renda extra"],
+  ["trabalho", "Trabalho"], ["estudos", "Estudos"], ["filhos", "Cuidar de filhos"], ["casa", "Casa"],
+  ["esporte", "Esporte"], ["academia", "Academia"], ["musica", "Música"], ["games", "Games"],
+  ["leitura", "Leitura"], ["igreja", "Fé / igreja"], ["amigos", "Amigos"], ["series", "Séries"],
+  ["cozinhar", "Cozinhar"], ["artes", "Artes"], ["viagens", "Passeios"], ["negocio", "Vender / renda extra"],
 );
-const RITMO = op(["corrida", "🏃 Muito corrida"], ["estressante", "😣 Estressante"], ["flexivel", "🌀 Flexível"], ["tranquila", "😌 Tranquila"], ["imprevisivel", "🎲 Cada dia é um"]);
+const RITMO = op(["corrida", "Muito corrida"], ["estressante", "Estressante"], ["flexivel", "Flexível"], ["tranquila", "Tranquila"], ["imprevisivel", "Cada dia é um"]);
 const OBJ_VIDA = op(
-  ["financas", "💰 Organizar o dinheiro"], ["produtividade", "⚡ Produtividade"], ["saude", "❤️ Saúde"], ["foco", "🎯 Foco"],
-  ["carreira", "📈 Crescer no trabalho"], ["estudos", "🎓 Estudar"], ["familia", "👨‍👩‍👧 Família"], ["casa_propria", "🏡 Casa própria"],
-  ["negocio", "🚀 Abrir um negócio"], ["paz", "🧘 Mais tranquilidade"],
+  ["financas", "Organizar o dinheiro"], ["produtividade", "Produtividade"], ["saude", "Saúde"], ["foco", "Foco"],
+  ["carreira", "Crescer no trabalho"], ["estudos", "Estudar"], ["familia", "Família"], ["casa_propria", "Casa própria"],
+  ["negocio", "Abrir um negócio"], ["paz", "Mais tranquilidade"],
 );
 const CONTROLE = op(
   ["controlo_tudo", "Anoto e controlo tudo"], ["mais_ou_menos", "Controlo mais ou menos"],
@@ -51,13 +52,13 @@ const EXPERIENCIA = op(
   ["nenhuma", "Nunca investi"], ["poupanca", "Poupança"], ["renda_fixa", "CDB, Tesouro, LCI"],
   ["fundos", "Fundos"], ["acoes", "Ações / FIIs"], ["cripto", "Criptomoedas"],
 );
-const DISCIPLINA = op(["alta", "💪 Alta: faço o que planejo"], ["media", "🙂 Média: às vezes escorrego"], ["baixa", "😅 Baixa: começo e paro"]);
+const DISCIPLINA = op(["alta", "Alta: faço o que planejo"], ["media", "Média: às vezes escorrego"], ["baixa", "Baixa: começo e paro"]);
 const DIFICULDADES = op(
-  ["celular", "📱 Celular / redes sociais"], ["cansaco", "😴 Cansaço"], ["tempo", "⏰ Falta de tempo"], ["ansiedade", "😰 Ansiedade"],
-  ["impulso", "🛒 Compras por impulso"], ["barulho", "🔊 Barulho / interrupções"], ["procrastinar", "🐢 Deixar para depois"],
-  ["dinheiro_curto", "💸 Dinheiro curto no fim do mês"],
+  ["celular", "Celular / redes sociais"], ["cansaco", "Cansaço"], ["tempo", "⏰ Falta de tempo"], ["ansiedade", "Ansiedade"],
+  ["impulso", "Compras por impulso"], ["barulho", "Barulho / interrupções"], ["procrastinar", "Deixar para depois"],
+  ["dinheiro_curto", "Dinheiro curto no fim do mês"],
 );
-const HORARIOS = op(["manha", "🌅 Manhã"], ["tarde", "☀️ Tarde"], ["noite", "🌙 Noite"], ["madrugada", "🦉 Madrugada"]);
+const HORARIOS = op(["manha", "Manhã"], ["tarde", "Tarde"], ["noite", "Noite"], ["madrugada", "Madrugada"]);
 
 const NOME_PERFIL: Record<PerfilInvestidor, string> = { conservador: "Conservador", moderado: "Moderado", arrojado: "Arrojado" };
 
@@ -95,7 +96,7 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
 
   const total = ETAPAS.length;
   useEffect(() => {
-    Animated.timing(progresso, { toValue: pronto ? 1 : passo / total, duration: 350, useNativeDriver: false }).start();
+    Animated.timing(progresso, { toValue: pronto ? 1 : (passo + 1) / total, duration: 400, useNativeDriver: false }).start();
     scroll.current?.scrollTo({ y: 0, animated: false });
   }, [passo, pronto]);
 
@@ -107,10 +108,18 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
       if (k === "experiencia") novo = v === "nenhuma" ? (novo.includes("nenhuma") ? ["nenhuma"] : []) : novo.filter((i) => i !== "nenhuma");
       return { ...x, [k]: novo };
     });
+  // "Prefiro não dizer" exclui os outros pronomes, e vice-versa.
+  const alternarPronome = (v: string) =>
+    setP((x) => {
+      const tinha = x.pronomes.includes(v);
+      const sem = x.pronomes.filter((i) => i !== v && (v === "nao_dizer" ? false : i !== "nao_dizer"));
+      return { ...x, pronomes: tinha ? sem : [...sem, v] };
+    });
 
   const idade = calcularIdade(paraISO(dataBR));
   const valido = [
-    p.nomeCompleto.trim().length >= 3 && p.apelido.trim().length >= 1 && idade !== null && idade >= 13 && idade <= 120,
+    p.nomeCompleto.trim().length >= 3 && p.apelido.trim().length >= 1 && idade !== null && idade >= 13 && idade <= 120 &&
+      (!p.pronomes.includes("outro") || !!pronomeOutro.trim()) && (p.genero !== "outro" || !!generoOutro.trim()),
     !!p.trabalho && !!p.faixaRenda,
     !!p.ritmo,
     !!p.controleFinancas && !!p.objetivoFinanceiro && !!p.reacaoQueda && p.experiencia.length > 0,
@@ -120,20 +129,16 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
 
   function continuar() {
     if (!valido) return;
-    if (passo === 0) {
-      setP((x) => ({
-        ...x,
-        nascimento: paraISO(dataBR),
-        genero: x.genero === "outro" && generoOutro.trim() ? generoOutro.trim() : x.genero,
-        pronomes: x.pronomes === "outro" && pronomeOutro.trim() ? pronomeOutro.trim() : x.pronomes,
-      }));
-    }
+    if (passo === 0) set("nascimento", paraISO(dataBR));
     setPasso(passo + 1);
   }
 
   async function aoAbrir(banco: Banco, restaurado: boolean) {
+    // Guarda como a pessoa escreveria, para a Solis AI usar direto ("ela/dela", "elu/delu", texto livre).
     const final: Perfil = {
       ...p,
+      pronomes: p.pronomes.map((v) => (v === "outro" ? pronomeOutro.trim() : PRONOMES.find((o) => o.v === v)?.t ?? v)).filter(Boolean),
+      genero: p.genero === "outro" ? generoOutro.trim() : GENEROS.find((o) => o.v === p.genero)?.t ?? p.genero,
       perfilInvestidor: classificarInvestidor(p),
       concluidoEm: new Date().toISOString(),
     };
@@ -153,37 +158,43 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
     const perfil = pronto.perfil;
     return (
       <SafeScreen>
-        <View style={[s.barraFundo, { backgroundColor: c.borda }]}>
-          <Animated.View style={[s.barra, { width: largura, backgroundColor: c.primario }]} />
+        <View style={[s.topoBar]}>
+          <View style={[s.barraFundo, { backgroundColor: c.primario, flex: 1 }]}>
+            <View style={[s.barra, { width: "100%", backgroundColor: c.primario }]} />
+          </View>
         </View>
-        <ScrollView contentContainerStyle={s.fim}>
-          <Text style={s.festa} accessibilityElementsHidden>🎉</Text>
-          <Text style={[s.titulo, { color: c.texto, textAlign: "center" }]} accessibilityRole="header">
-            Tudo pronto, {perfil.apelido.trim()}!
+        <View style={{ alignItems: "center", paddingTop: 32, paddingHorizontal: 24 }}>
+          <View style={[s.iconeEtapa, { backgroundColor: c.primarioSuave, width: 72, height: 72, borderRadius: 36 }]}>
+            <Icone nome="party-horn" tamanho={32} cor={c.primario} />
+          </View>
+          <Text style={[s.titulo, { color: c.texto, textAlign: "center", marginTop: 16 }]} accessibilityRole="header">
+            Tudo pronto,{"\n"}{perfil.apelido.trim()}!
           </Text>
+        </View>
+        <ScrollView contentContainerStyle={[s.fim, { paddingTop: 16 }]}>
           <Text style={[s.desc, { color: c.textoSuave, textAlign: "center" }]}>
             Seu perfil está configurado. A partir de agora, o Solis organiza tudo pensando em você.
           </Text>
-          <View style={[s.cartao, { backgroundColor: c.superficie, borderColor: c.borda }]}>
-            <Text style={{ color: c.textoSuave, fontSize: 13 }}>Seu perfil de investidor</Text>
-            <Text style={{ color: c.primario, fontSize: 24, fontWeight: "800" }}>
+          <View style={[s.cartaoDestaque, { backgroundColor: c.primarioSuave, borderColor: c.primario }]}>
+            <Text style={{ color: c.textoSuave, fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>Perfil de investidor</Text>
+            <Text style={{ color: c.primario, fontSize: 28, fontWeight: "800", marginTop: 4 }}>
               {NOME_PERFIL[perfil.perfilInvestidor ?? "conservador"]}
             </Text>
-            <Text style={{ color: c.textoSuave, fontSize: 12 }}>
-              É só uma informação sobre como você lida com risco. Não é recomendação de investimento.
+            <Text style={{ color: c.textoSuave, fontSize: 12, marginTop: 4 }}>
+              Só uma informação sobre como você lida com risco. Não é recomendação de investimento.
             </Text>
           </View>
           <View style={[s.cartao, { backgroundColor: c.superficie, borderColor: c.borda }]}>
-            <Text style={{ color: c.textoSuave, fontSize: 13 }}>Seu foco agora</Text>
-            <Text style={{ color: c.texto, fontSize: 16, fontWeight: "600" }}>
+            <Text style={{ color: c.textoSuave, fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>Seu foco agora</Text>
+            <Text style={{ color: c.texto, fontSize: 17, fontWeight: "700", marginTop: 4 }}>
               {OBJ_FIN.find((o) => o.v === perfil.objetivoFinanceiro)?.t}
             </Text>
           </View>
         </ScrollView>
         <View style={s.rodape}>
-          <Pressable style={[s.botao, s.botaoCheio, { backgroundColor: c.primario }]} onPress={() => aoConcluir(pronto.banco)}
+          <Pressable style={[s.botaoPrincipal, { backgroundColor: c.primario }]} onPress={() => aoConcluir(pronto.banco)}
             accessibilityRole="button">
-            <Text style={[s.botaoTextoCheio, tema.dark && { color: "#0A1628" }]}>Ir para o início</Text>
+            <Text style={[s.botaoTextoCheio, tema.dark && { color: "#0A1628" }]}>Ir para o início →</Text>
           </Pressable>
         </View>
       </SafeScreen>
@@ -195,19 +206,26 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
   return (
     <SafeScreen>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <View style={s.topo}>
-          <Text style={{ color: c.textoSuave, fontSize: 13, fontWeight: "600" }}>
-            Passo {passo + 1} de {total}
-          </Text>
-          <View style={[s.barraFundo, { backgroundColor: c.borda }]}
-            accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: total, now: passo + 1 }}>
+        <View style={s.topoBar}>
+          <Pressable onPress={() => setPasso(passo - 1)} disabled={passo === 0} hitSlop={12} style={s.voltar}
+            accessibilityRole="button" accessibilityLabel="Voltar" accessibilityState={{ disabled: passo === 0 }}>
+            {passo > 0 && <Icone nome="angle-small-left" tamanho={24} cor={c.primario} />}
+          </Pressable>
+          <View style={[s.barraFundo, { backgroundColor: c.borda, flex: 1 }]}
+            accessibilityRole="progressbar" accessibilityLabel={`Etapa ${passo + 1} de ${total}`}
+            accessibilityValue={{ min: 0, max: total, now: passo + 1 }}>
             <Animated.View style={[s.barra, { width: largura, backgroundColor: c.primario }]} />
           </View>
+          <Text style={{ color: c.textoSuave, fontSize: 12, fontWeight: "600", minWidth: 28, textAlign: "right" }}>
+            {passo + 1}/{total}
+          </Text>
         </View>
 
         <ScrollView ref={scroll} contentContainerStyle={s.conteudo} keyboardShouldPersistTaps="handled">
-          <Text style={[s.titulo, { color: c.texto }]} accessibilityRole="header">{etapa.titulo}</Text>
-          <Text style={[s.desc, { color: c.textoSuave }]}>{etapa.desc}</Text>
+          <View style={s.cabecalhoConteudo}>
+            <Text style={[s.titulo, { color: c.texto }]} accessibilityRole="header">{etapa.titulo}</Text>
+            <Text style={[s.desc, { color: c.textoSuave }]}>{etapa.desc}</Text>
+          </View>
 
           {passo === 0 && (
             <>
@@ -221,12 +239,14 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
               {idade !== null && idade >= 13 && idade < 18 && (
                 <Aviso cor={c.aviso}>Como você tem menos de 18, combine com um responsável antes de usar.</Aviso>
               )}
-              <Pergunta texto="Pronomes" />
-              <Chips opcoes={[...PRONOMES, { v: "outro", t: "Outro" }]} sel={[p.pronomes]} aoTocar={(v) => set("pronomes", p.pronomes === v ? "" : v)} />
-              {p.pronomes === "outro" && <Campo rotulo="Quais pronomes?" valor={pronomeOutro} aoMudar={setPronomeOutro} />}
+              <Pergunta texto="Quais pronomes você usa?" ajuda="Pode marcar mais de um. A Solis AI vai falar com você assim." />
+              <Chips opcoes={PRONOMES} sel={p.pronomes} aoTocar={alternarPronome} />
+              {p.pronomes.includes("outro") && (
+                <Campo rotulo="Escreva seus pronomes" dica="Ex.: ile/dile" valor={pronomeOutro} aoMudar={setPronomeOutro} autoCapitalize="none" />
+              )}
               <Pergunta texto="Gênero" />
               <Chips opcoes={GENEROS} sel={[p.genero]} aoTocar={(v) => set("genero", p.genero === v ? "" : v)} />
-              {p.genero === "outro" && <Campo rotulo="Como você se identifica?" valor={generoOutro} aoMudar={setGeneroOutro} />}
+              {p.genero === "outro" && <Campo rotulo="Como você se identifica?" dica="Escreva do seu jeito" valor={generoOutro} aoMudar={setGeneroOutro} />}
             </>
           )}
 
@@ -282,25 +302,19 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
           )}
         </ScrollView>
 
-        <View style={[s.rodape, s.rodapeLinha]}>
-          {passo > 0 && (
-            <Pressable style={[s.botao, { borderColor: c.borda, borderWidth: 1 }]} onPress={() => setPasso(passo - 1)}
-              accessibilityRole="button">
-              <Text style={{ color: c.texto, fontWeight: "600", fontSize: 16 }}>Voltar</Text>
-            </Pressable>
-          )}
-          {passo < total - 1 && (
+        {passo < total - 1 && (
+          <View style={s.rodape}>
             <Pressable
-              style={[s.botao, s.botaoCheio, { backgroundColor: valido ? c.primario : c.borda }]}
+              style={[s.botaoPrincipal, { backgroundColor: valido ? c.primario : c.borda }, !valido && s.semSombra]}
               onPress={continuar}
               disabled={!valido}
               accessibilityRole="button"
               accessibilityState={{ disabled: !valido }}
             >
-              <Text style={[s.botaoTextoCheio, tema.dark && { color: "#0A1628" }]}>Continuar</Text>
+              <Text style={[s.botaoTextoCheio, !valido ? { color: c.textoSuave } : tema.dark && { color: "#1A0929" }]}>Continuar</Text>
             </Pressable>
-          )}
-        </View>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeScreen>
   );
@@ -309,9 +323,9 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
 function Pergunta({ texto, ajuda }: { texto: string; ajuda?: string }) {
   const c = useTema().cores;
   return (
-    <View style={{ marginTop: 20, marginBottom: 10 }}>
-      <Text style={{ color: c.texto, fontSize: 16, fontWeight: "700" }}>{texto}</Text>
-      {ajuda && <Text style={{ color: c.textoSuave, fontSize: 13, marginTop: 2 }}>{ajuda}</Text>}
+    <View style={{ marginTop: 24, marginBottom: 12 }}>
+      <Text style={{ color: c.texto, fontSize: 17, fontWeight: "700", lineHeight: 24 }}>{texto}</Text>
+      {ajuda && <Text style={{ color: c.textoSuave, fontSize: 13, marginTop: 3 }}>{ajuda}</Text>}
     </View>
   );
 }
@@ -324,12 +338,13 @@ function Campo(props: {
   rotulo: string; dica?: string; valor: string; aoMudar: (v: string) => void;
   teclado?: "default" | "number-pad"; autoCapitalize?: "none" | "words";
 }) {
-  const c = useTema().cores;
+  const { cores: c } = useTema();
+  const [foco, setFoco] = useState(false);
   return (
-    <View style={{ marginTop: 14 }}>
-      <Text style={{ color: c.texto, fontSize: 14, fontWeight: "600", marginBottom: 6 }}>{props.rotulo}</Text>
+    <View style={{ marginTop: 20 }}>
+      <Text style={{ color: foco ? c.primario : c.textoSuave, fontSize: 13, fontWeight: "500" }}>{props.rotulo}</Text>
       <TextInput
-        style={[s.input, { borderColor: c.borda, backgroundColor: c.superficie, color: c.texto }]}
+        style={[s.input, { borderBottomColor: foco ? c.primario : c.borda, color: c.texto }]}
         value={props.valor}
         onChangeText={props.aoMudar}
         placeholder={props.dica}
@@ -337,30 +352,42 @@ function Campo(props: {
         keyboardType={props.teclado ?? "default"}
         autoCapitalize={props.autoCapitalize ?? "sentences"}
         accessibilityLabel={props.rotulo}
+        onFocus={() => setFoco(true)}
+        onBlur={() => setFoco(false)}
       />
     </View>
   );
 }
 
 function Chips({ opcoes, sel, aoTocar, lista }: { opcoes: Opcao[]; sel: string[]; aoTocar: (v: string) => void; lista?: boolean }) {
-  const c = useTema().cores;
+  const tema = useTema();
+  const c = tema.cores;
   return (
-    <View style={lista ? s.lista : s.chips}>
+    <View style={lista ? [s.lista, { borderTopColor: c.borda }] : s.chips}>
       {opcoes.map((o) => {
         const ativo = sel.includes(o.v);
-        return (
+        return lista ? (
           <Pressable
             key={o.v}
             onPress={() => aoTocar(o.v)}
-            style={[
-              lista ? s.itemLista : s.chip,
-              { borderColor: ativo ? c.primario : c.borda, backgroundColor: ativo ? c.primarioSuave : c.superficie },
-            ]}
-            accessibilityRole={lista ? "radio" : "checkbox"}
-            accessibilityState={lista ? { selected: ativo } : { checked: ativo }}
+            style={({ pressed }) => [s.itemLista, { borderBottomColor: c.borda }, pressed && { backgroundColor: c.primarioSuave }]}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: ativo }}
           >
-            <Text style={{ color: ativo ? c.primario : c.texto, fontWeight: ativo ? "700" : "500", fontSize: 15 }}>{o.t}</Text>
-            {lista && ativo && <Text style={{ color: c.primario, fontWeight: "800" }}>✓</Text>}
+            <Text style={{ color: ativo ? c.primario : c.texto, fontWeight: ativo ? "700" : "500", fontSize: 16, flex: 1 }}>{o.t}</Text>
+            {ativo
+              ? <Icone nome="check" tamanho={16} cor={c.primario} />
+              : <Icone nome="angle-small-right" tamanho={18} cor={c.textoSuave} style={{ opacity: 0.5 }} />}
+          </Pressable>
+        ) : (
+          <Pressable
+            key={o.v}
+            onPress={() => aoTocar(o.v)}
+            style={[s.chip, ativo ? { borderColor: c.primario, backgroundColor: c.primario } : { borderColor: c.borda, backgroundColor: c.superficie }]}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: ativo }}
+          >
+            <Text style={{ color: ativo ? (tema.dark ? "#1A0929" : "#fff") : c.texto, fontWeight: "600", fontSize: 14 }}>{o.t}</Text>
           </Pressable>
         );
       })}
@@ -369,26 +396,28 @@ function Chips({ opcoes, sel, aoTocar, lista }: { opcoes: Opcao[]; sel: string[]
 }
 
 const s = StyleSheet.create({
-  topo: { paddingHorizontal: 24, paddingTop: 12, gap: 8 },
-  barraFundo: { height: 6, borderRadius: 3, overflow: "hidden" },
-  barra: { height: 6, borderRadius: 3 },
-  conteudo: { padding: 24, paddingBottom: 40 },
-  titulo: { fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
-  desc: { fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 8 },
-  input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16 },
+  topoBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, gap: 12 },
+  voltar: { width: 32, height: 44, justifyContent: "center" },
+  barraFundo: { height: 3, borderRadius: 2, overflow: "hidden" },
+  barra: { height: 3, borderRadius: 2 },
+  cabecalhoConteudo: { alignItems: "flex-start", marginBottom: 8, gap: 8 },
+  iconeEtapa: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center" },
+  conteudo: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
+  titulo: { fontSize: 30, fontWeight: "800", letterSpacing: -0.6, lineHeight: 36 },
+  desc: { fontSize: 15, lineHeight: 22 },
+  input: { borderBottomWidth: 1.5, paddingHorizontal: 0, paddingTop: 6, paddingBottom: 10, fontSize: 17 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: { borderWidth: 1.5, borderRadius: 50, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, justifyContent: "center" },
-  lista: { gap: 8 },
+  chip: { borderWidth: 1, borderRadius: 50, paddingHorizontal: 16, paddingVertical: 10, minHeight: 44, justifyContent: "center" },
+  lista: { borderTopWidth: StyleSheet.hairlineWidth },
   itemLista: {
-    borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, minHeight: 52,
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 16, minHeight: 56,
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12,
   },
-  rodape: { paddingHorizontal: 24, paddingVertical: 12 },
-  rodapeLinha: { flexDirection: "row", gap: 12 },
-  botao: { flex: 1, paddingVertical: 16, borderRadius: 50, alignItems: "center" },
-  botaoCheio: { flex: 2 },
-  botaoTextoCheio: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  rodape: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 },
+  botaoPrincipal: { paddingVertical: 17, borderRadius: 14, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 3 },
+  semSombra: { shadowOpacity: 0, elevation: 0 },
+  botaoTextoCheio: { color: "#fff", fontWeight: "700", fontSize: 16, letterSpacing: 0.2 },
   fim: { padding: 24, gap: 16, alignItems: "stretch", justifyContent: "center", flexGrow: 1 },
-  festa: { fontSize: 64, textAlign: "center" },
-  cartao: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 4 },
+  cartao: { borderWidth: 1, borderRadius: 20, padding: 18, gap: 4 },
+  cartaoDestaque: { borderWidth: 1.5, borderRadius: 20, padding: 18, gap: 4 },
 });

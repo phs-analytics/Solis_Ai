@@ -9,5 +9,10 @@ export async function salvarPerfil(banco: Banco, perfil: Perfil): Promise<void> 
 
 export async function lerPerfil(banco: Banco): Promise<Perfil | null> {
   const row = await banco.getFirstAsync<{ valor: string }>("SELECT valor FROM configuracoes WHERE chave = ?", [CHAVE]);
-  return row ? (JSON.parse(row.valor) as Perfil) : null;
+  if (!row) return null;
+  const p = JSON.parse(row.valor) as Perfil;
+  // Perfis antigos guardavam um pronome só, como texto.
+  const antigo = p.pronomes as unknown;
+  if (typeof antigo === "string") p.pronomes = antigo ? [antigo] : [];
+  return p;
 }

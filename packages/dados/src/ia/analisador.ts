@@ -8,6 +8,7 @@ import { listarLancamentos, resumoMes } from "../repositorios/lancamentos.js";
 import { resumoOrcamentos } from "../repositorios/orcamento.js";
 import { listarMetas } from "../repositorios/metas.js";
 import { previsaoProximos30 } from "../repositorios/recorrentes.js";
+import { lerPerfil } from "../repositorios/perfil.js";
 
 // shortcut: tipo duplicado em @solis/core/ia/regras — manter sincronizado se mudar
 export type ContextoFinanceiro = {
@@ -20,6 +21,7 @@ export type ContextoFinanceiro = {
   orcamentos: { categoriaId: string; limiteCentavos: number; gastosCentavos: number; restanteCentavos: number }[];
   metas: { nome: string; alvoCentavos: number; atualCentavos: number; pct: number }[];
   recorrentesProximos: { data: string; descricao: string; valorCentavos: number }[];
+  pessoa?: { apelido: string; pronomes: string[] };
 };
 
 export async function montarContexto(banco: Banco): Promise<ContextoFinanceiro> {
@@ -27,12 +29,13 @@ export async function montarContexto(banco: Banco): Promise<ContextoFinanceiro> 
   const mes = agora.getMonth() + 1;
   const ano = agora.getFullYear();
 
-  const [resumo, lancamentos, orcamentosRaw, metasRaw, recorrentes] = await Promise.all([
+  const [resumo, lancamentos, orcamentosRaw, metasRaw, recorrentes, perfil] = await Promise.all([
     resumoMes(banco, ano, mes),
     listarLancamentos(banco, { periodo: "30d" }),
     resumoOrcamentos(banco, mes, ano),
     listarMetas(banco),
     previsaoProximos30(banco),
+    lerPerfil(banco),
   ]);
 
   // Agrupa gastos por categoriaId
@@ -66,5 +69,6 @@ export async function montarContexto(banco: Banco): Promise<ContextoFinanceiro> 
       pct: m.alvoCentavos > 0 ? m.atualCentavos / m.alvoCentavos : 0,
     })),
     recorrentesProximos: recorrentes,
+    ...(perfil && { pessoa: { apelido: perfil.apelido.trim(), pronomes: perfil.pronomes } }),
   };
 }

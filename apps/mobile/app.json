@@ -38,7 +38,13 @@
       ],
       "expo-sharing",
       "./plugins/withAndroidBuildConfig",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "fonts": ["./assets/fonts/uicons-bold-rounded.ttf"]
+        }
+      ]
     ]
   }
 }

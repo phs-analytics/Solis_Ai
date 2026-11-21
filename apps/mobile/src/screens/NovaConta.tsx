@@ -1,17 +1,18 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View, TextInput, Pressable, Alert, ScrollView } from "react-native";
 import { SafeScreen } from "../components/SafeScreen";
+import { Icone, type NomeIcone } from "../components/Icone";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";
 import { criarConta } from "@solis/dados";
 import type { TipoConta } from "@solis/dados";
 import { parseDinheiro } from "../utils/dinheiro";
 
-const TIPOS: { label: string; valor: TipoConta; icone: string }[] = [
-  { label: "Corrente", valor: "corrente", icone: "🏦" },
-  { label: "Poupança", valor: "poupanca", icone: "🐷" },
-  { label: "Dinheiro", valor: "dinheiro", icone: "💵" },
-  { label: "Outro", valor: "outro", icone: "📋" },
+const TIPOS: { label: string; valor: TipoConta; icone: NomeIcone }[] = [
+  { label: "Corrente", valor: "corrente", icone: "bank" },
+  { label: "Poupança", valor: "poupanca", icone: "piggy-bank" },
+  { label: "Dinheiro", valor: "dinheiro", icone: "money-bill-wave" },
+  { label: "Outro", valor: "outro", icone: "list" },
 ];
 
 export function NovaConta({ onSalvo }: { onSalvo?: () => void }) {
@@ -63,9 +64,8 @@ export function NovaConta({ onSalvo }: { onSalvo?: () => void }) {
               style={[s.chip, { borderColor: c.borda, backgroundColor: tipo === t.valor ? c.primario : c.superficie }]}
               onPress={() => setTipo(t.valor)}
               accessibilityRole="radio" accessibilityState={{ checked: tipo === t.valor }}>
-              <Text style={{ color: tipo === t.valor ? "#fff" : c.textoSuave, fontWeight: "600" }}>
-                {t.icone} {t.label}
-              </Text>
+              <Icone nome={t.icone} tamanho={14} cor={tipo === t.valor ? "#fff" : c.textoSuave} />
+              <Text style={{ color: tipo === t.valor ? "#fff" : c.textoSuave, fontWeight: "600" }}>{t.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -102,6 +102,6 @@ const s = StyleSheet.create({
   rotulo: { fontSize: 12, fontWeight: "600", marginBottom: 6, marginTop: 16 },
   input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50, borderWidth: 1 },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 6 },
   botao: { borderRadius: 50, paddingVertical: 16, alignItems: "center" },
 });

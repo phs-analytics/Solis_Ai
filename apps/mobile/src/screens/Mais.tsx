@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Switch, Text, View, Pressable } from "react-native";
+import { Alert, Linking, StyleSheet, Switch, Text, View, Pressable } from "react-native";
 import * as Sharing from "expo-sharing";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -7,6 +7,7 @@ import {
   lerConsentimentoCotacoes, salvarConsentimentoCotacoes, exportarBackup, limparBackupTemporario,
 } from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
+import { Icone } from "../components/Icone";
 import { useTema } from "../theme";
 import { modeloExiste, baixarModelo, removerModelo } from "../ia/llm";
 import type { RootStackParams } from "../navigation";
@@ -51,7 +52,16 @@ export function Mais() {
         ),
     },
     { label: "Privacidade e termos", desc: "LGPD, política e termos de uso" },
-    { label: "Sobre o Solis", desc: "Versão, licenças, código aberto" },
+    {
+      label: "Sobre o Solis",
+      desc: "Versão, licenças, código aberto",
+      acao: () =>
+        Alert.alert(
+          "Sobre o Solis",
+          "Código aberto sob a licença Apache-2.0.\n\nÍcones: Uicons by Flaticon (flaticon.com/uicons).",
+          [{ text: "Fechar", style: "cancel" }, { text: "Ver Uicons", onPress: () => Linking.openURL("https://www.flaticon.com/uicons") }]
+        ),
+    },
   ];
 
   const [statusIA, setStatusIA] = useState<StatusIA>("verificando");
@@ -119,7 +129,7 @@ export function Mais() {
     verificando: "Verificando...",
     inativo: "Não ativada",
     baixando: `Baixando... ${progresso}%`,
-    ativo: "Ativa ✓",
+    ativo: "Ativa",
     erro: "Erro no download — tente novamente",
   };
 
@@ -132,9 +142,10 @@ export function Mais() {
       {/* Bloco Solis AI avançada */}
       <View style={[s.blocoIA, { backgroundColor: c.superficie, borderColor: c.borda, marginHorizontal: tema.spacing.lg }]}>
         <View style={{ flex: 1 }}>
-          <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>
-            🌟 Solis AI avançada
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Icone nome="sparkles" tamanho={16} cor={c.primario} />
+            <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>Solis AI avançada</Text>
+          </View>
           <Text style={[tema.font.legenda, { color: statusIA === "erro" ? c.erro : c.textoSuave, marginTop: 2 }]}>
             {labelStatus[statusIA]}
           </Text>

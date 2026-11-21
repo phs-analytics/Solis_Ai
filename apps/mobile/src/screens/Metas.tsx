@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View, FlatList, Pressable, Alert, TextInput } from "react-native";
 import { SafeScreen } from "../components/SafeScreen";
+import { Icone } from "../components/Icone";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";
 import { listarMetas, criarMeta, depositar, excluirMeta } from "@solis/dados";
@@ -28,7 +29,7 @@ export function Metas() {
     if (!nome.trim()) return;
     const alvoCentavos = parseDinheiro(alvo) ?? 0;
     if (alvoCentavos <= 0) { Alert.alert("Valor inválido"); return; }
-    await criarMeta(banco, { nome: nome.trim(), icone: "🎯", alvoCentavos, prazo: prazo || null });
+    await criarMeta(banco, { nome: nome.trim(), icone: "bullseye", alvoCentavos, prazo: prazo || null });
     setNome(""); setAlvo(""); setPrazo(""); setMostrarForm(false);
     carregar();
   }
@@ -94,7 +95,9 @@ export function Metas() {
           return (
             <View style={[s.card, { backgroundColor: c.superficie }]}>
               <View style={s.cardTopo}>
-                <Text style={{ fontSize: 24 }}>{item.icone ?? "🎯"}</Text>
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.primarioSuave, alignItems: "center", justifyContent: "center" }}>
+                  <Icone nome="bullseye" tamanho={18} cor={c.primario} />
+                </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "600" }]}>{item.nome}</Text>
                   <Text style={[tema.font.legenda, { color: c.textoSuave }]}>
@@ -102,7 +105,7 @@ export function Metas() {
                     {item.prazo ? ` · até ${item.prazo}` : ""}
                   </Text>
                 </View>
-                {item.concluida && <Text style={{ fontSize: 18 }}>✅</Text>}
+                {item.concluida && <Icone nome="check-circle" tamanho={18} cor={c.sucesso} />}
               </View>
               {/* Barra de progresso */}
               <View style={[s.barraFundo, { backgroundColor: c.primarioSuave }]}>

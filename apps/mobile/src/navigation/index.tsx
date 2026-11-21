@@ -6,6 +6,7 @@ import { Text } from "react-native";
 import { lerPrefs, lerCredenciaisPluggy, sincronizarPluggy } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { useTema } from "../theme";
+import { Icone, type NomeIcone } from "../components/Icone";
 import { BancoProvider } from "../contexto/BancoContext";
 import { Splash } from "../screens/Splash";
 import { Onboarding } from "../screens/Onboarding";
@@ -44,19 +45,15 @@ const Stack = createNativeStackNavigator<RootStackParams>();
 const Tab = createBottomTabNavigator<TabParams>();
 
 function TabIcon({ nome, focado, cor }: { nome: string; focado: boolean; cor: string }) {
-  const icones: Record<string, { ativo: string; inativo: string }> = {
-    Inicio: { ativo: "⌂", inativo: "⌂" },
-    Lancamentos: { ativo: "↕", inativo: "↕" },
-    Metas: { ativo: "◎", inativo: "◎" },
-    Chat: { ativo: "🌟", inativo: "🌟" },
-    Investimentos: { ativo: "📈", inativo: "📈" },
-    Mais: { ativo: "≡", inativo: "≡" },
+  const icones: Record<string, NomeIcone> = {
+    Inicio: "home",
+    Lancamentos: "exchange",
+    Metas: "bullseye",
+    Chat: "sparkles",
+    Investimentos: "chart-line-up",
+    Mais: "menu-burger",
   };
-  return (
-    <Text style={{ fontSize: 20, color: cor, opacity: focado ? 1 : 0.6 }}>
-      {icones[nome]?.ativo ?? "•"}
-    </Text>
-  );
+  return <Icone nome={icones[nome] ?? "circle-small"} tamanho={20} cor={cor} style={{ opacity: focado ? 1 : 0.6 }} />;
 }
 
 function Tabs() {

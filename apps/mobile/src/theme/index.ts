@@ -15,19 +15,19 @@ export const temaClaro = {
   ...base,
   dark: false,
   cores: {
-    fundo: "#F5F7FA",
+    fundo: "#FDF4FF",
     superficie: "#FFFFFF",
-    primario: "#1A6B4A",
-    primarioSuave: "#E8F5EE",
-    texto: "#0D1117",
-    textoSuave: "#6B7280",
-    borda: "#E5E7EB",
+    primario: "#C2286B",   // Hot Rose
+    primarioSuave: "#FCEEF6",
+    texto: "#25104D",      // Dark Amethyst
+    textoSuave: "#7A4E6E",
+    borda: "#EDD5F0",
     erro: "#DC2626",
     sucesso: "#16A34A",
-    aviso: "#D97706",
+    aviso: "#FAB940",      // Sunflower Gold
     tabBar: "#FFFFFF",
-    tabAtiva: "#1A6B4A",
-    tabInativa: "#9CA3AF",
+    tabAtiva: "#C2286B",
+    tabInativa: "#B08099",
     statusBar: "dark-content" as const,
   },
 };
@@ -36,19 +36,19 @@ export const temaEscuro = {
   ...base,
   dark: true,
   cores: {
-    fundo: "#0D1117",
-    superficie: "#161B22",
-    primario: "#2ECC71",
-    primarioSuave: "#0D2E1A",
-    texto: "#F0F6FC",
-    textoSuave: "#8B949E",
-    borda: "#21262D",
+    fundo: "#1A0929",      // Deep Amethyst
+    superficie: "#2D1442",
+    primario: "#FAB940",   // Sunflower Gold
+    primarioSuave: "#2D1E04",
+    texto: "#F7D9FC",      // Lavender Veil
+    textoSuave: "#B08099",
+    borda: "#3D1E52",
     erro: "#F85149",
     sucesso: "#2ECC71",
-    aviso: "#E3B341",
-    tabBar: "#161B22",
-    tabAtiva: "#2ECC71",
-    tabInativa: "#6E7681",
+    aviso: "#FAB940",
+    tabBar: "#2D1442",
+    tabAtiva: "#FAB940",
+    tabInativa: "#6E4E7A",
     statusBar: "light-content" as const,
   },
 };
