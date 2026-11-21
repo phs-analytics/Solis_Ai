@@ -7,7 +7,7 @@ import { SafeScreen } from "../components/SafeScreen";
 import { useTema } from "../theme";
 import { saudacao } from "@solis/core";
 import { useBanco } from "../contexto/BancoContext";
-import { listarContas, saldoTotal, listarLancamentos } from "@solis/dados";
+import { listarContas, saldoTotal, listarLancamentos, lerPerfil } from "@solis/dados";
 import type { Conta, Lancamento } from "@solis/dados";
 import { formatarDinheiro } from "../utils/dinheiro";
 
@@ -21,15 +21,18 @@ export function Home() {
   const [ultimos, setUltimos] = useState<Lancamento[]>([]);
   const [saldo, setSaldo] = useState(0);
   const [atualizando, setAtualizando] = useState(false);
+  const [apelido, setApelido] = useState("");
 
   const carregar = useCallback(async () => {
     setAtualizando(true);
     try {
-      const [cs, st, ls] = await Promise.all([
+      const [cs, st, ls, perfil] = await Promise.all([
         listarContas(banco),
         saldoTotal(banco),
         listarLancamentos(banco, { periodo: "30d" }),
+        lerPerfil(banco),
       ]);
+      setApelido(perfil?.apelido.trim() ?? "");
       setContas(cs);
       setSaldo(st);
       setUltimos(ls.slice(0, 5));
@@ -52,7 +55,7 @@ export function Home() {
         {/* Cabeçalho */}
         <View style={s.cabecalho}>
           <Text style={[tema.font.corpo, { color: c.textoSuave }]}>
-            {saudacao(new Date().getHours())}
+            {saudacao(new Date().getHours())}{apelido ? `, ${apelido}` : ""}
           </Text>
           <View style={[s.avatar, { backgroundColor: c.primarioSuave }]}
             accessibilityRole="button" accessibilityLabel="Perfil">

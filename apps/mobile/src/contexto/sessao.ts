@@ -1,5 +1,5 @@
 import {
-  abrirBanco, fecharBanco, derivarChave, garantirCategoriasPadrao, inicializarSchema, lerPrefs, lerSalt, KDF_DEFAULTS,
+  abrirBanco, fecharBanco, garantirCategoriasPadrao, inicializarSchema, lerSalt,
 } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 
@@ -7,15 +7,13 @@ import type { Banco } from "@solis/dados";
 export class SenhaErrada extends Error {}
 
 /** Deriva a chave da senha, abre o cofre e garante schema e categorias. */
-export async function entrar(senha: string): Promise<Banco> {
-  const salt = await lerSalt();
-  if (!salt) throw new Error("Acesso ainda não configurado.");
-  const kdf = (await lerPrefs())?.kdf ?? KDF_DEFAULTS;
-  const chave = await derivarChave(senha, salt, kdf);
+export async function entrar(senha: string, pedirBiometria = true): Promise<Banco> {
+  // Com biometria ativa, ler o salt é o que pede a digital/rosto.
+  if (pedirBiometria && !(await lerSalt())) throw new Error("Acesso ainda não configurado.");
 
   let banco: Banco;
   try {
-    banco = await abrirBanco(chave);
+    banco = await abrirBanco(senha);
   } catch {
     throw new SenhaErrada("Senha errada.");
   }

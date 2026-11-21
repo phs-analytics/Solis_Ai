@@ -8,7 +8,7 @@ import type { Banco } from "@solis/dados";
 import { useTema } from "../theme";
 import { BancoProvider } from "../contexto/BancoContext";
 import { Splash } from "../screens/Splash";
-import { ConfigurarAcesso } from "../screens/ConfigurarAcesso";
+import { Onboarding } from "../screens/Onboarding";
 import { Desbloquear } from "../screens/Desbloquear";
 import { Home } from "../screens/Home";
 import { Lancamentos } from "../screens/Lancamentos";
@@ -132,7 +132,7 @@ export function AppNavigator() {
                   configurado ? (
                     <Desbloquear aoAbrir={setBanco} aoApagado={() => setConfigurado(false)} />
                   ) : (
-                    <ConfigurarAcesso aoAbrir={setBanco} />
+                    <Onboarding aoConcluir={setBanco} />
                   )
                 }
               </Stack.Screen>

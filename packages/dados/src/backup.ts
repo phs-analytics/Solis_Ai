@@ -5,7 +5,7 @@
 
 import * as FileSystem from "expo-file-system/legacy";
 import * as SQLite from "expo-sqlite";
-import { fecharBanco, bancoCorrente, derivarChave, KDF_DEFAULTS } from "./vault.js";
+import { fecharBanco, bancoCorrente, aplicarSenha, KDF_DEFAULTS } from "./vault.js";
 import { removerChave, lerSalt, lerPrefs, salvarSalt } from "./keystore.js";
 import { montarPacote, lerPacote } from "./pacoteBackup.js";
 
@@ -38,14 +38,13 @@ export async function exportarBackup(): Promise<string> {
  */
 export async function restaurarBackup(uriArquivo: string, senha: string): Promise<void> {
   const pacote = lerPacote(await FileSystem.readAsStringAsync(uriArquivo));
-  const chave = await derivarChave(senha, pacote.salt, pacote.kdf);
 
   await FileSystem.makeDirectoryAsync(DIR_BANCO, { intermediates: true });
   await FileSystem.writeAsStringAsync(BASE_TEMP, pacote.banco, B64);
   try {
     const teste = await SQLite.openDatabaseAsync(NOME_TEMP);
     try {
-      await teste.execAsync(`PRAGMA key = '${chave}'`);
+      await aplicarSenha(teste, senha);
       await teste.execAsync("SELECT count(*) FROM sqlite_master");
     } finally {
       await teste.closeAsync();

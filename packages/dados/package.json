@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "*",
     "@solis/core": "workspace:*",
+    "expo-crypto": "*",
     "expo-file-system": "*",
     "expo-secure-store": "*",
     "expo-sqlite": "*"

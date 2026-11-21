@@ -5,6 +5,7 @@
 
 import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system/legacy";
+import * as Crypto from "expo-crypto";
 
 const NOME_BANCO = "solis.db";
 const MAX_TENTATIVAS = 5;
@@ -14,58 +15,27 @@ export type Banco = SQLite.SQLiteDatabase;
 
 let _banco: Banco | null = null;
 
-// Parâmetros do KDF armazenados junto com o salt para permitir upgrade futuro.
+// Registro do KDF que o SQLCipher 4 aplica à senha (fixado por cipher_compatibility = 4).
 export type KdfParams = { iterations: number; hash: string };
-export const KDF_DEFAULTS: KdfParams = { iterations: 600_000, hash: "SHA-256" };
+export const KDF_DEFAULTS: KdfParams = { iterations: 256_000, hash: "PBKDF2-HMAC-SHA512" };
 
-/**
- * Deriva a chave AES-256 do banco usando PBKDF2 via Web Crypto API.
- * Disponível no Hermes (RN 0.73+) e Node.js 18+. Sem dependências extras.
- * A chave derivada nunca é persistida.
- */
-export async function derivarChave(
-  senha: string,
-  saltHex: string,
-  params: KdfParams = KDF_DEFAULTS
-): Promise<string> {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(senha),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
-  );
-  const salt = hexToBuffer(saltHex).buffer as ArrayBuffer;
-  const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt, iterations: params.iterations, hash: params.hash },
-    keyMaterial,
-    256
-  );
-  return bufferToHex(new Uint8Array(bits));
-}
-
-/** Gera um salt aleatório de 32 bytes em hex. */
+/** Gera um salt aleatório de 32 bytes em hex (o Hermes não tem crypto.getRandomValues). */
 export function gerarSalt(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return bufferToHex(bytes);
+  return bufferToHex(Crypto.getRandomBytes(32));
 }
 
-function hexToBuffer(hex: string): Uint8Array {
-  const arr = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < arr.length; i++) {
-    arr[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  }
-  return arr;
+/** Aplica a senha ao SQLCipher, que deriva a chave AES-256 nativamente com o salt do próprio arquivo. */
+export async function aplicarSenha(banco: Banco, senha: string): Promise<void> {
+  await banco.execAsync(`PRAGMA key = '${senha.replace(/'/g, "''")}'`);
+  await banco.execAsync("PRAGMA cipher_compatibility = 4");
 }
 
 function bufferToHex(buf: Uint8Array): string {
   return Array.from(buf).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Abre (ou reabre) o banco com a chave fornecida. Lança erro se a chave estiver errada. */
-export async function abrirBanco(chave: string): Promise<Banco> {
+/** Abre (ou reabre) o banco com a senha. Lança erro se a senha estiver errada. */
+export async function abrirBanco(senha: string): Promise<Banco> {
   if (_banco) return _banco;
 
   const banco = await SQLite.openDatabaseAsync(NOME_BANCO, {
@@ -74,7 +44,7 @@ export async function abrirBanco(chave: string): Promise<Banco> {
   });
 
   try {
-    await banco.execAsync(`PRAGMA key = '${chave.replace(/'/g, "''")}'`);
+    await aplicarSenha(banco, senha);
     // Testa acesso real (lança se a chave estiver incorreta)
     await banco.execAsync("SELECT count(*) FROM sqlite_master");
   } catch (e) {
