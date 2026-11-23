@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
-  Easing, FadeIn, FadeOut, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming,
+  Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming,
 } from "react-native-reanimated";
 import { Icone, type NomeIcone } from "../components/Icone";
 import { AnimatedNumber, MOLA, NUM } from "./componentes";
@@ -41,7 +41,6 @@ export type WalletCardProps = {
   triggerPulse?: number;
   /** 0 a 1: brilho verde na borda conforme a senha fica forte. */
   protecao?: number;
-  selo?: string | null;
   /** Ao revelar o saldo, conta a partir de zero. */
   contarAoRevelar?: boolean;
   /** Mude o número para o saldo contar de novo a partir de zero. */
@@ -127,12 +126,6 @@ export function WalletCard(p: WalletCardProps) {
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, st.bordaVerde, { borderRadius: pequeno ? 16 : 22 }, bordaVerde]} />
       </View>
 
-      {p.selo && (
-        <Animated.View entering={ZoomIn.springify().stiffness(350).damping(20)} style={st.selo}>
-          <Icone nome="check" tamanho={10} cor="#11241B" />
-          <Text style={{ color: "#11241B", fontSize: 11, fontWeight: "800" }}>{p.selo}</Text>
-        </Animated.View>
-      )}
     </Animated.View>
   );
 }
@@ -153,6 +146,4 @@ const st = StyleSheet.create({
   borda: { borderWidth: 1, borderColor: "rgba(255,255,255,0.14)" },
   bordaVerde: { borderWidth: 1.5, borderColor: "rgba(123,199,154,0.85)" },
   faixa: { position: "absolute", left: "35%", width: 60 },
-  selo: { position: "absolute", top: -10, right: -6, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#7BC79A",
-    borderRadius: 50, paddingHorizontal: 10, paddingVertical: 5, shadowColor: "#000", shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
 });

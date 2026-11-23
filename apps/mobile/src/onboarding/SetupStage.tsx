@@ -12,9 +12,9 @@ const ESCALA_COMPACTA = 0.5;
  * Palco do setup: o mesmo cartão do Perfil até o "Tudo pronto". Nunca desmonta;
  * só muda de tamanho (compacto nas perguntas longas) e de conteúdo.
  */
-export function SetupStage({ compacto, frente, cartoes, ativo, fase, deckAberto }: {
+export function SetupStage({ compacto, frente, cartoes, ativo, fase, deckAberto, selo, assentar }: {
   compacto: boolean; frente: Omit<WalletCardProps, "width">; cartoes: Omit<WalletCardProps, "width">[];
-  ativo: number; fase: string; deckAberto: boolean;
+  ativo: number; fase: string; deckAberto: boolean; selo?: string | null; assentar?: boolean;
 }) {
   const { width } = useWindowDimensions();
   const w = larguraDeck(width);
@@ -29,7 +29,7 @@ export function SetupStage({ compacto, frente, cartoes, ativo, fase, deckAberto 
   return (
     <Animated.View style={[{ alignItems: "center", overflow: "visible" }, caixa]}>
       <Animated.View style={[{ transformOrigin: "top center", paddingTop: 10 }, cartao]}>
-        <WalletCardDeck width={w} frente={frente} cartoes={cartoes} ativo={ativo} fase={fase} aberto={deckAberto} />
+        <WalletCardDeck width={w} frente={frente} cartoes={cartoes} ativo={ativo} fase={fase} aberto={deckAberto} selo={selo} assentar={assentar} />
       </Animated.View>
     </Animated.View>
   );

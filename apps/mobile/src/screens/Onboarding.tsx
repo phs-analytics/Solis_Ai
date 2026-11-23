@@ -228,7 +228,6 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
     triggerShimmer: brilhos,
     triggerPulse: passo === P_SENHA ? 1 : 0,
     protecao: passo === P_SENHA ? forca : 0,
-    selo: passo === P_PRONTO ? (temConta ? PRONTO.selo : PRONTO.seloSemConta) : null,
     ...(naConta ? { badgeIcon: tipo.icone }
       : passo === P_SENHA ? { badgeIcon: "lock" as const }
       : iniciais(p.nomeCompleto) ? { badgeText: iniciais(p.nomeCompleto) } : { badgeIcon: "user" as const }),
@@ -257,7 +256,8 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
         </View>
 
         <SetupStage compacto={passo >= 1 && passo <= 4} frente={frente} cartoes={cartoes} ativo={tipoIdx}
-          fase={naConta ? "conta" : "perfil"} deckAberto={naConta} />
+          fase={naConta ? "conta" : "perfil"} deckAberto={naConta}
+          selo={passo === P_PRONTO ? (temConta ? PRONTO.selo : PRONTO.seloSemConta) : null} assentar={passo === P_PRONTO} />
 
         <ScrollView ref={scroll} contentContainerStyle={s.conteudo} keyboardShouldPersistTaps="handled">
           <View key={passo}>

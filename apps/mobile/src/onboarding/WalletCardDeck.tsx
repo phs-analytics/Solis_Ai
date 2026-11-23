@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import { StyleSheet, Text, View } from "react-native";
+import Animated, { Easing, ZoomIn, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import { Icone } from "../components/Icone";
 import { c } from "./componentes";
 import { PROPORCAO, WalletCard, type WalletCardProps } from "./WalletCard";
 
@@ -25,8 +26,12 @@ const Z_PUXADA: number = 40, Z_RECUO: number = 15;
  * Baralho de 3 cartões, na mesma ordem do seletor. O cartão da aba ativa fica na frente e o da próxima
  * aba espia logo atrás (ordem circular). Trocar de aba puxa o cartão de trás para a frente.
  */
-export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto }: {
+export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto, selo, assentar }: {
   width: number; frente: Props; cartoes: Props[]; ativo: number; fase: string; aberto: boolean;
+  /** Texto do selo de confirmação (ex.: "Conta ativa"); fica numa camada acima de todo o baralho. */
+  selo?: string | null;
+  /** true na tela final: tira qualquer camada residual de uma troca de cartão interrompida. */
+  assentar?: boolean;
 }) {
   const n = cartoes.length;
   const h = width / PROPORCAO;
@@ -35,8 +40,14 @@ export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto }: 
       <View style={{ width, height: h }}>
         {cartoes.map((cartao, i) => {
           const slot = (i - ativo + n) % n;
-          return <CartaoDeck key={i} width={width} slot={slot} fase={fase} aberto={aberto} props={slot === 0 ? frente : cartao} />;
+          return <CartaoDeck key={i} width={width} slot={slot} fase={fase} aberto={aberto} assentar={!!assentar} props={slot === 0 ? frente : cartao} />;
         })}
+        {selo && (
+          <Animated.View pointerEvents="none" entering={ZoomIn.springify().stiffness(350).damping(20)} style={st.selo}>
+            <Icone nome="check" tamanho={10} cor="#11241B" />
+            <Text style={{ color: "#11241B", fontSize: 11, fontWeight: "800" }}>{selo}</Text>
+          </Animated.View>
+        )}
       </View>
       <View style={{ flexDirection: "row", gap: 5, marginTop: 14, opacity: aberto ? 1 : 0 }}>
         {cartoes.map((_, i) => (
@@ -47,7 +58,7 @@ export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto }: 
   );
 }
 
-function CartaoDeck({ width, slot, fase, aberto, props }: { width: number; slot: number; fase: string; aberto: boolean; props: Props }) {
+function CartaoDeck({ width, slot, fase, aberto, assentar, props }: { width: number; slot: number; fase: string; aberto: boolean; assentar: boolean; props: Props }) {
   const inicio = slot > 0 && !aberto ? { x: 0, s: 1, o: 0 } : SLOTS[slot]!;
   const x = useSharedValue(inicio.x), y = useSharedValue(0), r = useSharedValue(0), s = useSharedValue(inicio.s);
   const o = useSharedValue<number>(inicio.o), z = useSharedValue<number>(SLOTS[slot]!.z), giro = useSharedValue(0);
@@ -93,6 +104,9 @@ function CartaoDeck({ width, slot, fase, aberto, props }: { width: number; slot:
     }
   }, [slot, aberto]);
 
+  // Na tela final, cada cartão volta para 10/20/30 e nada fica com o 40 ou o 15 de uma troca interrompida.
+  useEffect(() => { if (assentar) z.value = SLOTS[slot]!.z; }, [assentar, slot]);
+
   // O que o cartão mostra. Quando o baralho passa do perfil para a conta, o da frente vira com um giro.
   const [exibido, setExibido] = useState(props);
   const faseAnterior = useRef(fase);
@@ -118,3 +132,11 @@ function CartaoDeck({ width, slot, fase, aberto, props }: { width: number; slot:
     </Animated.View>
   );
 }
+
+// Camada própria acima de todo o baralho: zIndex para o React Native e elevation para o Android,
+// que ordena por elevação (os cartões têm elevação própria e cobririam o selo).
+const st = StyleSheet.create({
+  selo: { position: "absolute", top: -10, right: -6, zIndex: 100, elevation: 100, flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "#7BC79A", borderRadius: 50, paddingHorizontal: 10, paddingVertical: 5,
+    shadowColor: "#000", shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
+});
