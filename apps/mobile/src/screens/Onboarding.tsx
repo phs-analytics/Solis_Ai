@@ -356,11 +356,13 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
 
             {passo === P_PRONTO && pronto && (
               <View style={{ marginTop: 12 }}>
-                <ResumoCard indice={0} icone="user" cor="#3E5269" rotulo="Perfil configurado" valor={pronto.perfil.nomeCompleto.trim()}
-                  detalhe={`Perfil de investidor: ${NOME_PERFIL[pronto.perfil.perfilInvestidor ?? "conservador"]}. Não é recomendação de investimento.`} />
-                <ResumoCard indice={1} icone="lock" cor="#2F5A45" rotulo="Segurança ativa" valor="Senha forte criada"
+                <ResumoCard indice={0} icone="user" cor="#3E5269" rotulo="Perfil configurado" valor={pronto.perfil.nomeCompleto.trim()} />
+                <ResumoCard indice={1} icone="chart-line-up" cor="#5B4A8A" rotulo="Perfil de investidor"
+                  valor={NOME_PERFIL[pronto.perfil.perfilInvestidor ?? "conservador"]}
+                  detalhe="Só mostra como você lida com risco. Não é recomendação de investimento." />
+                <ResumoCard indice={2} icone="lock" cor="#2F5A45" rotulo="Segurança ativa" valor="Senha forte criada"
                   detalhe="Seus dados ficam cifrados só neste celular." />
-                <ResumoCard indice={2} icone={temConta ? tipo.icone : "wallet"} cor="#7A3C29"
+                <ResumoCard indice={3} icone={temConta ? tipo.icone : "wallet"} cor="#7A3C29"
                   rotulo={temConta ? "Primeira conta criada" : "Primeira conta"}
                   valor={temConta ? `${contaNome.trim()} · ${formatarDinheiro(saldoCentavos)}` : "Você cria pela tela inicial"} />
               </View>
