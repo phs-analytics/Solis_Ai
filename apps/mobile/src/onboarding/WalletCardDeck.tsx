@@ -1,56 +1,120 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
-import { MOLA, c } from "./componentes";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import { c } from "./componentes";
 import { PROPORCAO, WalletCard, type WalletCardProps } from "./WalletCard";
 
-type Frente = Omit<WalletCardProps, "width">;
+type Props = Omit<WalletCardProps, "width">;
+
+/** Largura do cartão no deck; deixa folga na direita para os cartões de trás e para o arco da troca. */
+export const larguraDeck = (larguraTela: number) => Math.min(larguraTela - 88, 320);
+
+// Posição de cada cartão no baralho: 0 = frente, 1 = logo atrás, 2 = no fundo.
+const SLOTS = [
+  { x: 0, s: 1, o: 1, z: 30 },
+  { x: 16, s: 0.94, o: 0.85, z: 20 },
+  { x: 30, s: 0.88, o: 0.65, z: 10 },
+] as const;
+const PUXADA = { x: 54, y: -10, r: 3.5, s: 0.97 }; // contorna a borda do cartão da frente
+const RECUO = { x: -16, y: 4, r: -2, s: 0.95 };    // o cartão da frente cede lugar
+const FASE1 = 180;                                  // ~42% da troca
+const MOLA_DECK = { stiffness: 320, damping: 26, mass: 0.9 };
+const Z_PUXADA: number = 40, Z_RECUO: number = 15;
 
 /**
- * Cartão da frente com 2 cartões espiando atrás à direita e pílulas embaixo.
- * Quando `chave` muda (ex.: tipo de conta), o cartão da frente gira e troca de conteúdo.
+ * Baralho de 3 cartões, na mesma ordem do seletor. O cartão da aba ativa fica na frente e o da próxima
+ * aba espia logo atrás (ordem circular). Trocar de aba puxa o cartão de trás para a frente.
  */
-export function WalletCardDeck({ width, frente, chave, indice, total, aberto }: {
-  width: number; frente: Frente; chave: string; indice: number; total: number; aberto: boolean;
+export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto }: {
+  width: number; frente: Props; cartoes: Props[]; ativo: number; fase: string; aberto: boolean;
 }) {
+  const n = cartoes.length;
   const h = width / PROPORCAO;
-  const [mostrado, setMostrado] = useState(frente);
-  const chaveAnterior = useRef(chave);
-  const giro = useSharedValue(0), desliza = useSharedValue(0);
-
-  // Campos que não trocam o tipo (nome, saldo) passam direto; trocar o tipo gira o cartão.
-  useEffect(() => {
-    if (chave === chaveAnterior.current) { setMostrado(frente); return; }
-    const dir = indice > total / 2 ? 1 : -1;
-    chaveAnterior.current = chave;
-    giro.value = withSequence(withTiming(90 * dir, { duration: 170 }), withTiming(-90 * dir, { duration: 0 }), withSpring(0, MOLA));
-    desliza.value = withSequence(withTiming(-24 * dir, { duration: 170 }), withSpring(0, MOLA));
-    const t = setTimeout(() => setMostrado(frente), 170);
-    return () => clearTimeout(t);
-  }, [chave, frente]);
-
-  const aberturaV = useSharedValue(aberto ? 1 : 0);
-  useEffect(() => { aberturaV.value = withSpring(aberto ? 1 : 0, MOLA); }, [aberto]);
-  const tras1 = useAnimatedStyle(() => ({ opacity: aberturaV.value, transform: [{ translateX: 14 * aberturaV.value }, { scale: 1 - 0.06 * aberturaV.value }] }));
-  const tras2 = useAnimatedStyle(() => ({ opacity: aberturaV.value, transform: [{ translateX: 26 * aberturaV.value }, { scale: 1 - 0.12 * aberturaV.value }] }));
-  const estiloFrente = useAnimatedStyle(() => ({
-    transform: [{ perspective: 900 }, { translateX: desliza.value }, { rotateY: `${giro.value}deg` }],
-  }));
-  const pilulas = useAnimatedStyle(() => ({ opacity: aberturaV.value }));
-
-  const vazio = { title: "", subtitle: "", balance: 0, tipoIcon: frente.tipoIcon, isBalanceHidden: true } as const;
   return (
     <View style={{ width, alignItems: "center" }}>
       <View style={{ width, height: h }}>
-        <Animated.View style={[{ position: "absolute" }, tras2]}><WalletCard {...vazio} width={width} variant="deck2" /></Animated.View>
-        <Animated.View style={[{ position: "absolute" }, tras1]}><WalletCard {...vazio} width={width} variant="deck1" /></Animated.View>
-        <Animated.View style={estiloFrente}><WalletCard {...mostrado} width={width} /></Animated.View>
+        {cartoes.map((cartao, i) => {
+          const slot = (i - ativo + n) % n;
+          return <CartaoDeck key={i} width={width} slot={slot} fase={fase} aberto={aberto} props={slot === 0 ? frente : cartao} />;
+        })}
       </View>
-      <Animated.View style={[{ flexDirection: "row", gap: 5, marginTop: 14 }, pilulas]}>
-        {Array.from({ length: total }, (_, i) => (
-          <View key={i} style={{ height: 5, width: i === indice ? 16 : 5, borderRadius: 3, backgroundColor: i === indice ? c.primario : "rgba(255,255,255,0.25)" }} />
+      <View style={{ flexDirection: "row", gap: 5, marginTop: 14, opacity: aberto ? 1 : 0 }}>
+        {cartoes.map((_, i) => (
+          <View key={i} style={{ height: 5, width: i === ativo ? 16 : 5, borderRadius: 3, backgroundColor: i === ativo ? c.primario : "rgba(255,255,255,0.25)" }} />
         ))}
-      </Animated.View>
+      </View>
     </View>
+  );
+}
+
+function CartaoDeck({ width, slot, fase, aberto, props }: { width: number; slot: number; fase: string; aberto: boolean; props: Props }) {
+  const inicio = slot > 0 && !aberto ? { x: 0, s: 1, o: 0 } : SLOTS[slot]!;
+  const x = useSharedValue(inicio.x), y = useSharedValue(0), r = useSharedValue(0), s = useSharedValue(inicio.s);
+  const o = useSharedValue<number>(inicio.o), z = useSharedValue<number>(SLOTS[slot]!.z), giro = useSharedValue(0);
+  const slotAnterior = useRef(slot);
+
+  // Reposiciona sempre que o slot muda. Cada atribuição interrompe a animação anterior a partir do valor atual,
+  // então cliques rápidos nunca deixam um cartão preso no meio do caminho.
+  useEffect(() => {
+    const de = slotAnterior.current;
+    slotAnterior.current = slot;
+    const a = SLOTS[slot]!;
+    const oculto = !aberto && slot > 0;
+    const fx = oculto ? 0 : a.x, fs = oculto ? 1 : a.s, fo = oculto ? 0 : a.o, zFinal = a.z;
+
+    if (de === slot) { // só abriu ou fechou o baralho
+      x.value = withSpring(fx, MOLA_DECK); s.value = withSpring(fs, MOLA_DECK);
+      y.value = withSpring(0, MOLA_DECK); r.value = withSpring(0, MOLA_DECK);
+      o.value = withTiming(fo, { duration: 250 });
+      z.value = zFinal;
+      return;
+    }
+    const puxa = (p: number) => withTiming(p, { duration: FASE1, easing: Easing.out(Easing.cubic) });
+
+    if (slot === 0) { // estava atrás e vem para a frente: sai pela lateral, passa por cima e encaixa
+      x.value = withSequence(puxa(PUXADA.x), withSpring(0, MOLA_DECK, (fim) => { 'worklet'; if (fim) z.value = 30; }));
+      y.value = withSequence(puxa(PUXADA.y), withSpring(0, MOLA_DECK));
+      r.value = withSequence(puxa(PUXADA.r), withSpring(0, MOLA_DECK));
+      s.value = withSequence(puxa(PUXADA.s), withSpring(1, MOLA_DECK));
+      o.value = withTiming(1, { duration: FASE1 });
+      z.value = withDelay(FASE1, withTiming(Z_PUXADA, { duration: 0 }));
+    } else if (de === 0) { // estava na frente: recua e desliza por trás do baralho
+      x.value = withSequence(puxa(RECUO.x), withSpring(fx, MOLA_DECK, (fim) => { 'worklet'; if (fim) z.value = zFinal; }));
+      y.value = withSequence(puxa(RECUO.y), withSpring(0, MOLA_DECK));
+      r.value = withSequence(puxa(RECUO.r), withSpring(0, MOLA_DECK));
+      s.value = withSequence(puxa(RECUO.s), withSpring(fs, MOLA_DECK));
+      o.value = withDelay(FASE1, withTiming(fo, { duration: 320 }));
+      z.value = withDelay(FASE1, withTiming(Z_RECUO, { duration: 0 }));
+    } else { // remanescente: troca de lugar entre o meio e o fundo
+      x.value = withSpring(fx, MOLA_DECK); s.value = withSpring(fs, MOLA_DECK);
+      y.value = withSpring(0, MOLA_DECK); r.value = withSpring(0, MOLA_DECK);
+      o.value = withTiming(fo, { duration: 320 });
+      z.value = withDelay(FASE1, withTiming(zFinal, { duration: 0 }));
+    }
+  }, [slot, aberto]);
+
+  // O que o cartão mostra. Quando o baralho passa do perfil para a conta, o da frente vira com um giro.
+  const [exibido, setExibido] = useState(props);
+  const faseAnterior = useRef(fase);
+  useEffect(() => {
+    if (faseAnterior.current === fase || slot !== 0) { faseAnterior.current = fase; setExibido(props); return; }
+    faseAnterior.current = fase;
+    giro.value = withSequence(withTiming(90, { duration: 170 }), withTiming(-90, { duration: 0 }), withSpring(0, MOLA_DECK));
+    const t = setTimeout(() => setExibido(props), 170);
+    return () => clearTimeout(t);
+  }, [props, fase]);
+
+  const estilo = useAnimatedStyle(() => ({
+    opacity: o.value,
+    zIndex: z.value,
+    transform: [
+      { perspective: 900 }, { translateX: x.value }, { translateY: y.value },
+      { rotate: `${r.value}deg` }, { rotateY: `${giro.value}deg` }, { scale: s.value },
+    ],
+  }));
+  return (
+    <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, left: 0 }, estilo]}>
+      <WalletCard {...exibido} width={width} />
+    </Animated.View>
   );
 }

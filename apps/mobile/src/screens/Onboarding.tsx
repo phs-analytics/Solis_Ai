@@ -223,16 +223,23 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
     contarAoRevelar: true,
     recontar: passo === P_PRONTO ? 1 : 0,
     variant: naConta ? tipo.variante : "abyssal",
-    tipoIcon: naConta ? tipo.icone : "wallet",
+    tipoIcon: naConta ? "shield-check" : "wallet",
     holder: apelido || SETUP_ROTULOS.titularVazio,
     triggerShimmer: brilhos,
     triggerPulse: passo === P_SENHA ? 1 : 0,
     protecao: passo === P_SENHA ? forca : 0,
     selo: passo === P_PRONTO ? (temConta ? PRONTO.selo : PRONTO.seloSemConta) : null,
-    ...(passo === P_PRONTO ? { badgeIcon: "shield-check" as const }
-      : passo >= P_SENHA ? { badgeIcon: "lock" as const }
+    ...(naConta ? { badgeIcon: tipo.icone }
+      : passo === P_SENHA ? { badgeIcon: "lock" as const }
       : iniciais(p.nomeCompleto) ? { badgeText: iniciais(p.nomeCompleto) } : { badgeIcon: "user" as const }),
   };
+
+  // Os 3 cartões do baralho, na ordem do seletor. Nome e saldo digitados aparecem em todos, cada um com a sua identidade.
+  const cartoes: Omit<WalletCardProps, "width">[] = CONTA_INICIAL.tipos.map((t) => ({
+    title: contaNome.trim() || t.exemplo.replace("Ex.: ", ""),
+    subtitle: t.sub, balance: saldoCentavos, variant: t.variante, badgeIcon: t.icone, tipoIcon: "shield-check" as const,
+    holder: apelido || SETUP_ROTULOS.titularVazio,
+  }));
 
   const etapa = passo <= P_SENHA ? ETAPAS[passo]! : passo === P_CONTA
     ? { titulo: CONTA_INICIAL.titulo, desc: CONTA_INICIAL.texto } : { titulo: PRONTO.titulo, desc: PRONTO.texto };
@@ -249,8 +256,8 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
           </Text>
         </View>
 
-        <SetupStage compacto={passo >= 1 && passo <= 4} frente={frente} chave={naConta ? tipo.v : "perfil"}
-          indice={tipoIdx} deckAberto={naConta} />
+        <SetupStage compacto={passo >= 1 && passo <= 4} frente={frente} cartoes={cartoes} ativo={tipoIdx}
+          fase={naConta ? "conta" : "perfil"} deckAberto={naConta} />
 
         <ScrollView ref={scroll} contentContainerStyle={s.conteudo} keyboardShouldPersistTaps="handled">
           <View key={passo}>

@@ -4,7 +4,7 @@ import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } fr
 import { Icone, type NomeIcone } from "../components/Icone";
 import { BORDA_FINA, MOLA, c } from "./componentes";
 import { PROPORCAO, type WalletCardProps } from "./WalletCard";
-import { WalletCardDeck } from "./WalletCardDeck";
+import { WalletCardDeck, larguraDeck } from "./WalletCardDeck";
 
 const ESCALA_COMPACTA = 0.5;
 
@@ -12,11 +12,12 @@ const ESCALA_COMPACTA = 0.5;
  * Palco do setup: o mesmo cartão do Perfil até o "Tudo pronto". Nunca desmonta;
  * só muda de tamanho (compacto nas perguntas longas) e de conteúdo.
  */
-export function SetupStage({ compacto, frente, chave, indice, deckAberto }: {
-  compacto: boolean; frente: Omit<WalletCardProps, "width">; chave: string; indice: number; deckAberto: boolean;
+export function SetupStage({ compacto, frente, cartoes, ativo, fase, deckAberto }: {
+  compacto: boolean; frente: Omit<WalletCardProps, "width">; cartoes: Omit<WalletCardProps, "width">[];
+  ativo: number; fase: string; deckAberto: boolean;
 }) {
   const { width } = useWindowDimensions();
-  const w = Math.min(width - 72, 330);
+  const w = larguraDeck(width);
   const alturaCheia = w / PROPORCAO + 40;
   const alturaCompacta = (w / PROPORCAO) * ESCALA_COMPACTA + 12;
 
@@ -28,7 +29,7 @@ export function SetupStage({ compacto, frente, chave, indice, deckAberto }: {
   return (
     <Animated.View style={[{ alignItems: "center", overflow: "visible" }, caixa]}>
       <Animated.View style={[{ transformOrigin: "top center", paddingTop: 10 }, cartao]}>
-        <WalletCardDeck width={w} frente={frente} chave={chave} indice={indice} total={3} aberto={deckAberto} />
+        <WalletCardDeck width={w} frente={frente} cartoes={cartoes} ativo={ativo} fase={fase} aberto={deckAberto} />
       </Animated.View>
     </Animated.View>
   );

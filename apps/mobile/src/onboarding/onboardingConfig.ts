@@ -104,8 +104,8 @@ export const CONTA_INICIAL = {
   titulo: "Sua primeira conta",
   texto: "Comece pela conta que você mais usa. Dá para adicionar as outras depois.",
   tipos: [
-    { v: "corrente" as const, t: "Banco", sub: "Conta corrente", variante: "fantastic" as Variante, icone: "bank" as NomeIcone, cor: CARDS.banco.cor, exemplo: "Ex.: Nubank, Caixa" },
-    { v: "poupanca" as const, t: "Reserva", sub: "Poupança", variante: "truffle" as Variante, icone: "piggy-bank" as NomeIcone, cor: "#7A5AA6", exemplo: "Ex.: Poupança Caixa" },
+    { v: "corrente" as const, t: "Banco", sub: "Conta bancária", variante: "fantastic" as Variante, icone: "bank" as NomeIcone, cor: CARDS.banco.cor, exemplo: "Ex.: Nubank, Caixa" },
+    { v: "poupanca" as const, t: "Reserva", sub: "Reserva", variante: "truffle" as Variante, icone: "piggy-bank" as NomeIcone, cor: "#7A5AA6", exemplo: "Ex.: Poupança Caixa" },
     { v: "dinheiro" as const, t: "Carteira", sub: "Dinheiro vivo", variante: "musgo" as Variante, icone: "money-bill-wave" as NomeIcone, cor: CARDS.dinheiro.cor, exemplo: "Ex.: Carteira" },
   ],
   nota: "O saldo pode ser aproximado. Você corrige quando quiser.",
