@@ -39,7 +39,7 @@ const faturaDepois = VALORES.cartaoAntes + VALORES.compraCartao;
 
 export const PASSOS: PassoTour[] = [
   {
-    kicker: "Bem-vindo(a) ao Solis",
+    kicker: "Boas-vindas ao Solis", // o tour vem antes da escolha do pronome: texto sem marca de gênero
     titulo: "Seu dinheiro em um lugar só",
     texto: "Contas, dinheiro vivo, cartão e metas juntos, guardados só no seu celular. Veja como funciona em menos de um minuto.",
     cta: "Mostrar como funciona",

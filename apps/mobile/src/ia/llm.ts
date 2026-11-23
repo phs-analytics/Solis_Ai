@@ -7,7 +7,7 @@
 import { File, Paths, DownloadTask } from "expo-file-system";
 import { initLlama, type LlamaContext } from "llama.rn";
 import type { ContextoFinanceiro, RespostaIA } from "@solis/core";
-import { responder } from "@solis/core";
+import { ESTADOS, flexaoDe, responder } from "@solis/core";
 
 const MODELO_URL =
   "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf";
@@ -80,7 +80,8 @@ function montarSystemPrompt(ctx: ContextoFinanceiro): string {
     ...(ctx.pessoa ? [
       `Chame a pessoa de "${ctx.pessoa.apelido}".`,
       ctx.pessoa.pronomes.length && !ctx.pessoa.pronomes.includes("Prefiro não dizer")
-        ? `A pessoa usa os pronomes ${ctx.pessoa.pronomes.join(", ")}. Flexione o gênero das palavras de acordo com eles.`
+        ? `A pessoa usa os pronomes ${ctx.pessoa.pronomes.join(", ")}. Flexione o gênero das palavras de acordo com eles${
+            flexaoDe(ctx.pessoa.pronomes) === "neutro" ? "." : ` (ex.: "você está ${ESTADOS[flexaoDe(ctx.pessoa.pronomes)].pronto}").`}`
         : "Não presuma gênero: prefira frases neutras (\"você conseguiu\" em vez de \"você está pronto/pronta\").",
     ] : []),
     "",

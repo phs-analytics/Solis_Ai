@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
-import { PERFIL_VAZIO, calcularIdade, classificarInvestidor } from "@solis/core";
+import { OCUPACOES, PERFIL_VAZIO, calcularIdade, classificarInvestidor, flexaoDe, papelInvestidor } from "@solis/core";
+import type { Flexao } from "@solis/core";
 import type { Perfil, PerfilInvestidor } from "@solis/core";
 import { atualizarConta, criarConta, lerPerfil, salvarPerfil } from "@solis/dados";
 import type { Banco } from "@solis/dados";
@@ -21,10 +22,11 @@ const op = (...itens: [string, string][]): Opcao[] => itens.map(([v, t]) => ({ v
 
 const PRONOMES = op(["ela", "Ela/dela"], ["ele", "Ele/dele"], ["elu", "Elu/delu"], ["outro", "Outro"], ["nao_dizer", "Prefiro não dizer"]);
 const GENEROS = op(["mulher", "Mulher"], ["homem", "Homem"], ["nao_binario", "Não binário"], ["outro", "Outro"], ["nao_dizer", "Prefiro não dizer"]);
-const TRABALHO = op(
-  ["clt", "CLT (carteira assinada)"], ["autonomo", "Autônomo(a)"], ["mei", "MEI / empresário(a)"], ["freela", "Freelancer / bicos"],
-  ["app", "Apps (entrega, motorista)"], ["servidor", "Servidor(a) público(a)"], ["estudante", "Estudante"],
-  ["desempregado", "Procurando trabalho"], ["aposentado", "Aposentado(a)"], ["lar", "Cuido da casa"],
+// As ocupações concordam com os pronomes escolhidos no primeiro passo (ver packages/core/src/pronomes.ts).
+const trabalho = (f: Flexao) => op(
+  ["clt", "CLT (carteira assinada)"], ["autonomo", OCUPACOES[f].autonomo], ["mei", OCUPACOES[f].mei], ["freela", "Freelancer / bicos"],
+  ["app", "Apps (entrega, motorista)"], ["servidor", OCUPACOES[f].servidor], ["estudante", "Estudante"],
+  ["desempregado", "Procurando trabalho"], ["aposentado", OCUPACOES[f].aposentado], ["lar", "Cuido da casa"],
 );
 const RENDA = op(
   ["ate_1sm", "Até 1 salário mínimo"], ["1_2sm", "De 1 a 2 salários"], ["2_3sm", "De 2 a 3 salários"],
@@ -67,7 +69,6 @@ const DIFICULDADES = op(
 );
 const HORARIOS = op(["manha", "Manhã"], ["tarde", "Tarde"], ["noite", "Noite"], ["madrugada", "Madrugada"]);
 
-const NOME_PERFIL: Record<PerfilInvestidor, string> = { conservador: "Conservador", moderado: "Moderado", arrojado: "Arrojado" };
 
 const ETAPAS = [
   { titulo: "Vamos nos conhecer", desc: "Conta um pouco sobre você. Tudo fica guardado só neste celular, protegido." },
@@ -213,6 +214,8 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
 
   // ----- Cartão do palco: muda de conteúdo a cada passo, sem desmontar -----
   const apelido = p.apelido.trim();
+  // Atualiza na hora se a pessoa voltar e trocar os pronomes.
+  const flexao = flexaoDe(p.pronomes);
   const naConta = passo >= P_CONTA;
   const temConta = !!contaId;
   const frente: Omit<WalletCardProps, "width"> = {
@@ -270,7 +273,7 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
               {passo === 0 && (
                 <>
                   <Campo rotulo="Nome completo" valor={p.nomeCompleto} aoMudar={(v) => set("nomeCompleto", v)} autoCapitalize="words" />
-                  <Campo rotulo="Como quer ser chamado(a)?" dica="Apelido ou nome social" valor={p.apelido}
+                  <Campo rotulo="Como devemos te chamar?" dica="Apelido ou nome social" valor={p.apelido}
                     aoMudar={(v) => set("apelido", v)} autoCapitalize="words" />
                   <Campo rotulo="Data de nascimento" dica="DD/MM/AAAA" valor={dataBR} aoMudar={(v) => setDataBR(mascaraData(v))}
                     teclado="number-pad" />
@@ -293,7 +296,7 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
               {passo === 1 && (
                 <>
                   <Pergunta texto="Como você trabalha hoje?" />
-                  <Chips opcoes={TRABALHO} sel={[p.trabalho]} aoTocar={(v) => set("trabalho", v)} lista />
+                  <Chips opcoes={trabalho(flexao)} sel={[p.trabalho]} aoTocar={(v) => set("trabalho", v)} lista />
                   <Pergunta texto="Quanto entra por mês, em média?" ajuda="Somando tudo o que você recebe." />
                   <Chips opcoes={RENDA} sel={[p.faixaRenda]} aoTocar={(v) => set("faixaRenda", v)} lista />
                 </>
@@ -358,7 +361,7 @@ function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Ba
               <View style={{ marginTop: 12 }}>
                 <ResumoCard indice={0} icone="user" cor="#3E5269" rotulo="Perfil configurado" valor={pronto.perfil.nomeCompleto.trim()} />
                 <ResumoCard indice={1} icone="chart-line-up" cor="#5B4A8A" rotulo="Perfil de investidor"
-                  valor={NOME_PERFIL[pronto.perfil.perfilInvestidor ?? "conservador"]}
+                  valor={papelInvestidor(flexao, pronto.perfil.perfilInvestidor ?? "conservador", true)}
                   detalhe="Só mostra como você lida com risco. Não é recomendação de investimento." />
                 <ResumoCard indice={2} icone="lock" cor="#2F5A45" rotulo="Segurança ativa" valor="Senha forte criada"
                   detalhe="Seus dados ficam cifrados só neste celular." />

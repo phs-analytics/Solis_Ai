@@ -46,7 +46,7 @@ export function Desbloquear({ aoAbrir, aoApagado }: { aoAbrir: (b: Banco) => voi
   return (
     <SafeScreen>
       <View style={s.container}>
-        <Text style={[s.titulo, { color: c.texto }]} accessibilityRole="header">Bem-vindo(a) de volta</Text>
+        <Text style={[s.titulo, { color: c.texto }]} accessibilityRole="header">Boas-vindas de volta</Text>
         <Text style={{ color: c.textoSuave, fontSize: 15, lineHeight: 22 }}>Digite sua senha para abrir o Solis.</Text>
         <Text style={{ color: foco ? c.primario : c.textoSuave, fontSize: 13, fontWeight: "500", marginTop: 24 }}>Senha</Text>
         <TextInput
