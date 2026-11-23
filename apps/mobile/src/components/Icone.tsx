@@ -11,6 +11,9 @@ const GLIFOS = {
   "cross-small": 62713, "credit-card": 62705, "shopping-cart": 64513, "arrow-small-up": 61855,
   "arrow-small-down": 61852, equals: 62948, coins: 62614, wallet: 65243, "plane-alt": 64143,
   lock: 63709, "shield-check": 64480, user: 65186, eye: 62971, "eye-crossed": 62968,
+  search: 64448, clock: 62556, "arrow-trend-up": 61865, "arrow-trend-down": 61864, plus: 64177, minus: 63828,
+  utensils: 65194, bus: 62224, capsules: 62295, book: 62088, gamepad: 63205, tshirt: 65109, box: 62134,
+  "sack-dollar": 64391, laptop: 63607, "arrows-repeat": 61892, "arrow-up-right": 61876, "arrow-down-left": 61834,
 } as const;
 
 export type NomeIcone = keyof typeof GLIFOS;

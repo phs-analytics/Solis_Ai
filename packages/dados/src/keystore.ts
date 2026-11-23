@@ -31,6 +31,18 @@ export async function salvarTema(tema: PreferenciaTema): Promise<void> {
   else await SecureStore.setItemAsync(TEMA_ID, tema);
 }
 
+const PRIVACIDADE_ID = "solis_privacidade_v1";
+
+/** Modo privacidade da tela inicial (valores escondidos). Fora do cofre, só um liga/desliga. */
+export async function lerPrivacidade(): Promise<boolean> {
+  return (await SecureStore.getItemAsync(PRIVACIDADE_ID)) === "1";
+}
+
+export async function salvarPrivacidade(ativo: boolean): Promise<void> {
+  if (ativo) await SecureStore.setItemAsync(PRIVACIDADE_ID, "1");
+  else await SecureStore.deleteItemAsync(PRIVACIDADE_ID);
+}
+
 /** Consentimento para enviar tickers à brapi.dev (LGPD). Desligado por padrão. */
 export async function lerConsentimentoCotacoes(): Promise<boolean> {
   return (await SecureStore.getItemAsync(COTACOES_ID)) === "1";

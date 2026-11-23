@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { Directions, GestureDetector, useFlingGesture, useSimultaneousGestures, useTapGesture } from "react-native-gesture-handler";
 import { Texto as Text } from "../components/Texto";
 import Animated, { Easing, ZoomIn, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { Icone } from "../components/Icone";
@@ -27,8 +28,10 @@ const Z_PUXADA: number = 40, Z_RECUO: number = 15;
  * Baralho de 3 cartões, na mesma ordem do seletor. O cartão da aba ativa fica na frente e o da próxima
  * aba espia logo atrás (ordem circular). Trocar de aba puxa o cartão de trás para a frente.
  */
-export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto, selo, assentar }: {
+export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto, selo, assentar, aoTrocar }: {
   width: number; frente: Props; cartoes: Props[]; ativo: number; fase: string; aberto: boolean;
+  /** Se informado, deslizar para os lados ou tocar no baralho troca o cartão da frente (ex.: contas na tela inicial). */
+  aoTrocar?: (indice: number) => void;
   /** Texto do selo de confirmação (ex.: "Conta ativa"); fica numa camada acima de todo o baralho. */
   selo?: string | null;
   /** true na tela final: tira qualquer camada residual de uma troca de cartão interrompida. */
@@ -36,9 +39,16 @@ export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto, se
 }) {
   const n = cartoes.length;
   const h = width / PROPORCAO;
-  return (
-    <View style={{ width, alignItems: "center" }}>
-      <View style={{ width, height: h }}>
+  const ir = (d: number) => aoTrocar?.((ativo + d + n) % n);
+  const esquerda = useFlingGesture({ direction: Directions.LEFT, runOnJS: true, enabled: !!aoTrocar && n > 1, onActivate: () => ir(1) });
+  const direita = useFlingGesture({ direction: Directions.RIGHT, runOnJS: true, enabled: !!aoTrocar && n > 1, onActivate: () => ir(-1) });
+  const toque = useTapGesture({ runOnJS: true, enabled: !!aoTrocar && n > 1, onActivate: () => ir(1) });
+  const gestos = useSimultaneousGestures(esquerda, direita, toque);
+  const pilha = (
+      <View style={{ width, height: h }} accessible={!!aoTrocar} accessibilityRole={aoTrocar ? "adjustable" : undefined}
+        accessibilityLabel={aoTrocar ? `Conta ${ativo + 1} de ${n}. Deslize para os lados para trocar.` : undefined}
+        accessibilityActions={aoTrocar ? [{ name: "increment" }, { name: "decrement" }] : undefined}
+        onAccessibilityAction={(e) => ir(e.nativeEvent.actionName === "increment" ? 1 : -1)}>
         {cartoes.map((cartao, i) => {
           const slot = (i - ativo + n) % n;
           return <CartaoDeck key={i} width={width} slot={slot} fase={fase} aberto={aberto} assentar={!!assentar} props={slot === 0 ? frente : cartao} />;
@@ -50,7 +60,11 @@ export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto, se
           </Animated.View>
         )}
       </View>
-      <View style={{ flexDirection: "row", gap: 5, marginTop: 14, opacity: aberto ? 1 : 0 }}>
+  );
+  return (
+    <View style={{ width, alignItems: "center" }}>
+      {aoTrocar ? <GestureDetector gesture={gestos}>{pilha}</GestureDetector> : pilha}
+      <View style={{ flexDirection: "row", gap: 5, marginTop: 14, opacity: aberto && n > 1 ? 1 : 0 }}>
         {cartoes.map((_, i) => (
           <View key={i} style={{ height: 5, width: i === ativo ? 16 : 5, borderRadius: 3, backgroundColor: i === ativo ? c.primario : "rgba(255,255,255,0.25)" }} />
         ))}
@@ -60,9 +74,9 @@ export function WalletCardDeck({ width, frente, cartoes, ativo, fase, aberto, se
 }
 
 function CartaoDeck({ width, slot, fase, aberto, assentar, props }: { width: number; slot: number; fase: string; aberto: boolean; assentar: boolean; props: Props }) {
-  const inicio = slot > 0 && !aberto ? { x: 0, s: 1, o: 0 } : SLOTS[slot]!;
+  const inicio = (slot > 0 && !aberto) || slot > 2 ? { x: slot > 2 ? 30 : 0, s: slot > 2 ? 0.88 : 1, o: 0 } : SLOTS[slot]!;
   const x = useSharedValue(inicio.x), y = useSharedValue(0), r = useSharedValue(0), s = useSharedValue(inicio.s);
-  const o = useSharedValue<number>(inicio.o), z = useSharedValue<number>(SLOTS[slot]!.z), giro = useSharedValue(0);
+  const o = useSharedValue<number>(inicio.o), z = useSharedValue<number>(SLOTS[Math.min(slot, 2)]!.z - Math.max(0, slot - 2)), giro = useSharedValue(0);
   const slotAnterior = useRef(slot);
 
   // Reposiciona sempre que o slot muda. Cada atribuição interrompe a animação anterior a partir do valor atual,
@@ -70,9 +84,10 @@ function CartaoDeck({ width, slot, fase, aberto, assentar, props }: { width: num
   useEffect(() => {
     const de = slotAnterior.current;
     slotAnterior.current = slot;
-    const a = SLOTS[slot]!;
-    const oculto = !aberto && slot > 0;
-    const fx = oculto ? 0 : a.x, fs = oculto ? 1 : a.s, fo = oculto ? 0 : a.o, zFinal = a.z;
+    // Com mais de 3 contas, as de trás esperam escondidas atrás do 3º cartão.
+    const a = SLOTS[Math.min(slot, 2)]!;
+    const oculto = (!aberto && slot > 0) || slot > 2;
+    const fx = !aberto && slot > 0 ? 0 : a.x, fs = !aberto && slot > 0 ? 1 : a.s, fo = oculto ? 0 : a.o, zFinal = a.z - Math.max(0, slot - 2);
 
     if (de === slot) { // só abriu ou fechou o baralho
       x.value = withSpring(fx, MOLA_DECK); s.value = withSpring(fs, MOLA_DECK);
@@ -106,7 +121,7 @@ function CartaoDeck({ width, slot, fase, aberto, assentar, props }: { width: num
   }, [slot, aberto]);
 
   // Na tela final, cada cartão volta para 10/20/30 e nada fica com o 40 ou o 15 de uma troca interrompida.
-  useEffect(() => { if (assentar) z.value = SLOTS[slot]!.z; }, [assentar, slot]);
+  useEffect(() => { if (assentar) z.value = SLOTS[Math.min(slot, 2)]!.z - Math.max(0, slot - 2); }, [assentar, slot]);
 
   // O que o cartão mostra. Quando o baralho passa do perfil para a conta, o da frente vira com um giro.
   const [exibido, setExibido] = useState(props);

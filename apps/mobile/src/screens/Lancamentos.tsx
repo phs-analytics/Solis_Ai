@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, View, FlatList, Pressable } from "react-native";
 import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import { SafeScreen } from "../components/SafeScreen";
@@ -7,9 +7,10 @@ import { useBanco } from "../contexto/BancoContext";
 import { listarLancamentos } from "@solis/dados";
 import type { Lancamento, FiltroLancamentos } from "@solis/dados";
 import { formatarDinheiro } from "../utils/dinheiro";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParams } from "../navigation";
+import type { RootStackParams, TabParams } from "../navigation";
 
 type Periodo = "30d" | "7d" | "60d";
 const PERIODOS: { label: string; valor: Periodo }[] = [
@@ -28,6 +29,10 @@ export function Lancamentos() {
   const [busca, setBusca] = useState("");
   const [periodo, setPeriodo] = useState<Periodo>("30d");
   const [carregando, setCarregando] = useState(false);
+  const busca$ = useRef<React.ComponentRef<typeof TextInput>>(null);
+  // A lupa da Home abre esta aba já com o cursor na busca.
+  const focarBusca = useRoute<RouteProp<TabParams, "Lancamentos">>().params?.focarBusca;
+  useEffect(() => { if (focarBusca) setTimeout(() => busca$.current?.focus(), 250); }, [focarBusca]);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -59,6 +64,7 @@ export function Lancamentos() {
       {/* Busca */}
       <View style={[s.buscaContainer, { marginHorizontal: tema.spacing.lg }]}>
         <TextInput
+          ref={busca$}
           style={[s.busca, { backgroundColor: c.superficie, color: c.texto, borderColor: c.borda }]}
           placeholder="Buscar lançamentos…"
           placeholderTextColor={c.textoSuave}

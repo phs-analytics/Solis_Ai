@@ -7,20 +7,22 @@ import { useBanco } from "../contexto/BancoContext";
 import { criarLancamento, listarContas, listarCategorias, garantirCategoriasPadrao } from "@solis/dados";
 import type { Conta, Categoria, TipoLancamento } from "@solis/dados";
 import { parseDinheiro } from "../utils/dinheiro";
+import type { RootStackParams } from "../navigation";
 
 type Tipo = TipoLancamento;
 
-export function NovoLancamento({ onSalvo }: { onSalvo?: () => void }) {
+export function NovoLancamento({ onSalvo, inicial }: { onSalvo?: () => void; inicial?: RootStackParams["NovoLancamento"] }) {
   const tema = useTema();
   const c = tema.cores;
   const banco = useBanco();
 
-  const [tipo, setTipo] = useState<Tipo>("despesa");
-  const [valor, setValor] = useState("");
-  const [descricao, setDescricao] = useState("");
+  // A Home abre esta tela já preenchida (ações rápidas e "Registrar" de uma previsão).
+  const [tipo, setTipo] = useState<Tipo>(inicial?.tipo ?? "despesa");
+  const [valor, setValor] = useState(inicial?.valorCentavos ? (inicial.valorCentavos / 100).toFixed(2).replace(".", ",") : "");
+  const [descricao, setDescricao] = useState(inicial?.descricao ?? "");
   const [data, setData] = useState(new Date().toISOString().slice(0, 10));
-  const [contaId, setContaId] = useState<string | null>(null);
-  const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  const [contaId, setContaId] = useState<string | null>(inicial?.contaId ?? null);
+  const [categoriaId, setCategoriaId] = useState<string | null>(inicial?.categoriaId ?? null);
   const [contas, setContas] = useState<Conta[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [salvando, setSalvando] = useState(false);

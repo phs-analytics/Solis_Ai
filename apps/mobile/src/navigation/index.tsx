@@ -29,14 +29,16 @@ export type RootStackParams = {
   Acesso: { entrar?: boolean } | undefined;
   App: undefined;
   NovaConta: undefined;
-  NovoLancamento: undefined;
+  NovoLancamento: {
+    tipo?: "despesa" | "receita" | "transferencia"; descricao?: string; valorCentavos?: number; categoriaId?: string; contaId?: string;
+  } | undefined;
   Importacao: undefined;
   ConexaoBancaria: undefined;
 };
 
 export type TabParams = {
   Inicio: undefined;
-  Lancamentos: undefined;
+  Lancamentos: { focarBusca?: number } | undefined;
   Metas: undefined;
   Chat: undefined;
   Investimentos: undefined;
@@ -118,7 +120,7 @@ export function AppNavigator() {
                 {({ navigation }) => <NovaConta onSalvo={() => navigation.goBack()} />}
               </Stack.Screen>
               <Stack.Screen name="NovoLancamento" options={{ headerShown: true, title: "Novo lançamento" }}>
-                {({ navigation }) => <NovoLancamento onSalvo={() => navigation.goBack()} />}
+                {({ navigation, route }) => <NovoLancamento onSalvo={() => navigation.goBack()} inicial={route.params} />}
               </Stack.Screen>
               <Stack.Screen name="Importacao" component={Importacao} options={{ headerShown: true, title: "Importar extrato" }} />
               <Stack.Screen name="ConexaoBancaria" component={ConexaoBancaria} options={{ headerShown: true, title: "Conexão bancária" }} />

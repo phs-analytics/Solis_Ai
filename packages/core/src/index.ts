@@ -8,3 +8,4 @@ export * from './pluggy/index.js';
 export * from './senha.js';
 export * from './perfil.js';
 export * from './pronomes.js';
+export * from './recorrencia.js';
