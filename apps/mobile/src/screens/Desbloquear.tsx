@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { View, StyleSheet } from "react-native";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import { registrarTentativaErrada, resetarTentativas, verificarBloqueio, apagarTudo } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { entrar, SenhaErrada } from "../contexto/sessao";
 import { SafeScreen } from "../components/SafeScreen";
-import { useTema } from "../theme";
+import { tipo, useTema } from "../theme";
+import { BotaoCTA } from "../onboarding/componentes";
 
 const MAX_TENTATIVAS = 5;
 
@@ -46,9 +48,9 @@ export function Desbloquear({ aoAbrir, aoApagado }: { aoAbrir: (b: Banco) => voi
   return (
     <SafeScreen>
       <View style={s.container}>
-        <Text style={[s.titulo, { color: c.texto }]} accessibilityRole="header">Boas-vindas de volta</Text>
-        <Text style={{ color: c.textoSuave, fontSize: 15, lineHeight: 22 }}>Digite sua senha para abrir o Solis.</Text>
-        <Text style={{ color: foco ? c.primario : c.textoSuave, fontSize: 13, fontWeight: "500", marginTop: 24 }}>Senha</Text>
+        <Text style={{ ...tipo.display(30), color: c.texto }} accessibilityRole="header">Boas-vindas de volta</Text>
+        <Text style={{ ...tipo.corpo(15), color: c.textoSuave, marginTop: 8 }}>Digite sua senha para abrir o Solis.</Text>
+        <Text style={{ ...tipo.corpo(13, "medium"), color: foco ? c.primario : c.textoSuave, marginTop: 24 }}>Senha</Text>
         <TextInput
           style={[s.input, { color: c.texto, borderBottomColor: foco ? c.primario : c.borda }]}
           secureTextEntry
@@ -60,30 +62,18 @@ export function Desbloquear({ aoAbrir, aoApagado }: { aoAbrir: (b: Banco) => voi
           autoFocus
           accessibilityLabel="Senha mestra"
         />
-        {erro ? <Text style={{ color: c.erro, fontSize: 13 }} accessibilityLiveRegion="polite">{erro}</Text> : null}
+        {erro ? <Text style={{ ...tipo.corpo(13), color: c.erro, marginTop: 8 }} accessibilityLiveRegion="polite">{erro}</Text> : null}
       </View>
       <View style={s.rodape}>
-        <Pressable
-          style={[s.botao, { backgroundColor: ativo ? c.primario : c.borda }]}
-          onPress={desbloquear}
-          disabled={!ativo}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !ativo }}
-        >
-          {carregando
-            ? <ActivityIndicator color={c.sobrePrimario} />
-            : <Text style={[s.botaoTexto, { color: ativo ? c.sobrePrimario : c.textoSuave }]}>Entrar</Text>}
-        </Pressable>
+        <BotaoCTA texto="Entrar" onPress={desbloquear} desativado={!ativo} carregando={carregando}
+          cores={{ fundo: c.primario, texto: c.sobrePrimario, fundoOff: c.borda, textoOff: c.textoSuave }} />
       </View>
     </SafeScreen>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 48, gap: 8 },
-  titulo: { fontSize: 30, fontWeight: "800", letterSpacing: -0.6, lineHeight: 36 },
+  container: { flex: 1, paddingHorizontal: 20, paddingTop: 48 },
   input: { borderBottomWidth: 1.5, paddingTop: 6, paddingBottom: 10, fontSize: 17 },
   rodape: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 },
-  botao: { paddingVertical: 17, borderRadius: 14, alignItems: "center" },
-  botaoTexto: { fontWeight: "700", fontSize: 16 },
 });

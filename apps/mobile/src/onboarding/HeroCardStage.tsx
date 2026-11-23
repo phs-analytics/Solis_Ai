@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import Animated, {
   Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming,
 } from "react-native-reanimated";
@@ -7,6 +8,7 @@ import { Icone } from "../components/Icone";
 import { AnimatedNumber, BORDA_FINA, MOLA, NUM, c } from "./componentes";
 import { PROPORCAO, WalletCard } from "./WalletCard";
 import { CARDS, SOBRA, SOBRA_ROTULO, VALORES } from "./onboardingConfig";
+import { TextoAnimado } from "../components/Texto";
 
 type Pose = { x: number; y: number; r: number; s: number; o: number };
 type Id = "banco" | "dinheiro" | "cartao" | "meta";
@@ -119,7 +121,7 @@ function Operador({ simbolo, x, y, visivel }: { simbolo: string; x: number; y: n
   const o = useSharedValue(0);
   useEffect(() => { o.value = withDelay(visivel ? 250 : 0, withTiming(visivel ? 1 : 0, { duration: 200 })); }, [visivel]);
   const estilo = useAnimatedStyle(() => ({ opacity: o.value }));
-  return <Animated.Text style={[st.operador, { left: x - 8, top: y - 12 }, estilo]}>{simbolo}</Animated.Text>;
+  return <TextoAnimado style={[st.operador, { left: x - 8, top: y - 12 }, estilo]}>{simbolo}</TextoAnimado>;
 }
 
 export function HeroCardStage({ passo, simulou, W, H }: { passo: number; simulou: boolean; W: number; H: number }) {

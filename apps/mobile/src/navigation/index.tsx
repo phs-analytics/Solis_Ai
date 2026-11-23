@@ -2,15 +2,17 @@ import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Text } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import { lerPrefs, lerCredenciaisPluggy, sincronizarPluggy } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { useTema } from "../theme";
+import { FAMILIA } from "../theme/fontes";
 import { Icone, type NomeIcone } from "../components/Icone";
 import { BancoProvider } from "../contexto/BancoContext";
 import { Splash } from "../screens/Splash";
 import { Onboarding } from "../screens/Onboarding";
 import { Desbloquear } from "../screens/Desbloquear";
+import { RestaurarBackup } from "../screens/RestaurarBackup";
 import { Home } from "../screens/Home";
 import { Lancamentos } from "../screens/Lancamentos";
 import { Metas } from "../screens/Metas";
@@ -24,7 +26,7 @@ import { ConexaoBancaria } from "../screens/ConexaoBancaria";
 
 export type RootStackParams = {
   Splash: undefined;
-  Acesso: undefined;
+  Acesso: { entrar?: boolean } | undefined;
   App: undefined;
   NovaConta: undefined;
   NovoLancamento: undefined;
@@ -72,7 +74,7 @@ function Tabs() {
         },
         tabBarActiveTintColor: c.tabAtiva,
         tabBarInactiveTintColor: c.tabInativa,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", marginBottom: 2 },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: FAMILIA.inter.semibold, marginBottom: 2 },
         tabBarIcon: ({ focused, color }) => (
           <TabIcon nome={route.name} focado={focused} cor={color} />
         ),
@@ -108,7 +110,7 @@ export function AppNavigator() {
   return (
     <BancoProvider value={banco}>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator screenOptions={{ headerShown: false, headerTitleStyle: { fontFamily: FAMILIA.jakarta.semibold } }}>
           {banco ? (
             <>
               <Stack.Screen name="App" component={Tabs} />
@@ -125,9 +127,12 @@ export function AppNavigator() {
             <>
               <Stack.Screen name="Splash" component={Splash} />
               <Stack.Screen name="Acesso">
-                {() =>
+                {({ route }) =>
                   configurado ? (
                     <Desbloquear aoAbrir={setBanco} aoApagado={() => setConfigurado(false)} />
+                  ) : route.params?.entrar ? (
+                    // "Já tem acesso? Entrar" sem senha neste celular: só dá para restaurar um backup.
+                    <RestaurarBackup aoAbrir={setBanco} />
                   ) : (
                     <Onboarding aoConcluir={setBanco} />
                   )

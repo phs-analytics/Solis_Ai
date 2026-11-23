@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, Text, View, FlatList, Pressable, TextInput } from "react-native";
+import { StyleSheet, View, FlatList, Pressable } from "react-native";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import { SafeScreen } from "../components/SafeScreen";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";

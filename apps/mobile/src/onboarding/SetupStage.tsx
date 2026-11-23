@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { Text, View, useWindowDimensions } from "react-native";
+import { View, useWindowDimensions } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { Icone, type NomeIcone } from "../components/Icone";
 import { BORDA_FINA, MOLA, c } from "./componentes";

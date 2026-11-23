@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Alert, ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import { autenticarPluggy, listarContasPluggy } from "@solis/core";
 import {
   lerCredenciaisPluggy, salvarCredenciaisPluggy, apagarCredenciaisPluggy, sincronizarPluggy, ultimaSyncPluggy,

@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator, Alert, FlatList, Pressable, RefreshControl,
-  ScrollView, StyleSheet, Text, View,
-} from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import { SafeScreen } from "../components/SafeScreen";
 import { Icone } from "../components/Icone";
 import { useTema } from "../theme";

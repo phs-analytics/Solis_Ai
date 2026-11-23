@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { View, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { OCUPACOES, PERFIL_VAZIO, calcularIdade, classificarInvestidor, flexaoDe, papelInvestidor } from "@solis/core";
 import type { Flexao } from "@solis/core";

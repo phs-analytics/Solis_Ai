@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View, TextInput, Pressable, Alert, ScrollView } from "react-native";
+import { StyleSheet, View, Pressable, Alert, ScrollView } from "react-native";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import { SafeScreen } from "../components/SafeScreen";
 import { Icone, type NomeIcone } from "../components/Icone";
 import { useTema } from "../theme";

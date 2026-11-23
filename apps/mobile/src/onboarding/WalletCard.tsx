@@ -1,11 +1,13 @@
 import React, { useEffect, useRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   Easing, FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming,
 } from "react-native-reanimated";
 import { Icone, type NomeIcone } from "../components/Icone";
 import { AnimatedNumber, MOLA, NUM } from "./componentes";
+import { TextoAnimado } from "../components/Texto";
 
 // Gradientes de 135° com a paleta do Solis (Abyssal, Blue Fantastic, Truffle) e dois tons para o fundo do deck.
 export const VARIANTES = {
@@ -104,7 +106,7 @@ export function WalletCard(p: WalletCardProps) {
 
           <View>
             {p.isBalanceHidden
-              ? <Animated.Text entering={FadeIn.duration(200)} style={[st.saldo, NUM, pequeno && { fontSize: 15 }]}>R$ ••••••</Animated.Text>
+              ? <TextoAnimado entering={FadeIn.duration(200)} style={[st.saldo, NUM, pequeno && { fontSize: 15 }]}>R$ ••••••</TextoAnimado>
               : <AnimatedNumber key={p.recontar ?? 0} centavos={p.balance} negativo={p.negativo} inicial={p.contarAoRevelar && revelou ? 0 : undefined}
                   duracao={900} style={[st.saldo, pequeno && { fontSize: 15 }]} />}
             <Text style={[st.sub, pequeno && { fontSize: 7 }]}>{p.subtitle.toUpperCase()}</Text>

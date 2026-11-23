@@ -4,7 +4,8 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Switch } from "react-native";
+import { View, Pressable, StyleSheet, Alert, ActivityIndicator, Switch } from "react-native";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as DocumentPicker from "expo-document-picker";
 import { avaliarSenha } from "@solis/core";

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 import { Directions, GestureDetector, useFlingGesture, useSimultaneousGestures } from "react-native-gesture-handler";
 import { BentoCard, BotaoCTA, BotaoTopo, BrilhoAmbiente, MOLA, RegraCard, SegmentedProgressBar, c } from "./componentes";
 import { HeroCardStage } from "./HeroCardStage";
 import { NOTA_REGRAS, PASSOS, REGRAS } from "./onboardingConfig";
+import { TextoAnimado } from "../components/Texto";
 
 const ATRASO_SIMULACAO = 600;
 
@@ -68,13 +70,13 @@ export function OnboardingContainer({ aoTerminar }: { aoTerminar: () => void }) 
             </View>
           )}
           {p.legenda && (!p.simula || simulou) && (
-            <Animated.Text key={`l${passo}`} entering={FadeIn.delay(p.simula ? 450 : 200).duration(300)} style={st.legenda}>{p.legenda}</Animated.Text>
+            <TextoAnimado key={`l${passo}`} entering={FadeIn.delay(p.simula ? 450 : 200).duration(300)} style={st.legenda}>{p.legenda}</TextoAnimado>
           )}
 
           {passo === total - 1 && (
             <View style={{ gap: 8, marginTop: 14 }}>
               {REGRAS.map((r, i) => <RegraCard key={r.titulo} {...r} indice={i} />)}
-              <Animated.Text entering={FadeIn.delay(650)} style={[st.legenda, { marginTop: 6 }]}>{NOTA_REGRAS}</Animated.Text>
+              <TextoAnimado entering={FadeIn.delay(650)} style={[st.legenda, { marginTop: 6 }]}>{NOTA_REGRAS}</TextoAnimado>
             </View>
           )}
         </ScrollView>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle } from "react-native";
+import { Pressable, StyleSheet, View, type StyleProp, type TextStyle } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import Animated, {
   FadeInDown, ZoomIn, interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from "react-native-reanimated";
@@ -109,16 +110,22 @@ export function RegraCard({ icone, cor, titulo, tags, indice }: {
 }
 
 /** Botão principal com retorno de toque (encolhe 2%). */
-export function BotaoCTA({ texto, onPress, desativado, carregando }: { texto: string; onPress: () => void; desativado?: boolean; carregando?: boolean }) {
+export type CoresBotao = { fundo: string; texto: string; fundoOff: string; textoOff: string };
+
+/** `cores` deixa usar o botão fora do onboarding (que é sempre escuro), por exemplo no Desbloqueio, que segue o tema. */
+export function BotaoCTA({ texto, onPress, desativado, carregando, cores }: {
+  texto: string; onPress: () => void; desativado?: boolean; carregando?: boolean; cores?: CoresBotao;
+}) {
+  const k = cores ?? { fundo: c.primario, texto: c.sobrePrimario, fundoOff: c.borda, textoOff: c.textoSuave };
   const escala = useSharedValue(1);
   const estilo = useAnimatedStyle(() => ({ transform: [{ scale: escala.value }] }));
   const ativo = !desativado && !carregando;
   return (
     <Pressable onPress={onPress} disabled={!ativo}
-      onPressIn={() => { escala.value = withSpring(0.98, MOLA); }} onPressOut={() => { escala.value = withSpring(1, MOLA); }}
+      onPressIn={() => { escala.value = withSpring(0.97, MOLA); }} onPressOut={() => { escala.value = withSpring(1, MOLA); }}
       accessibilityRole="button" accessibilityState={{ disabled: !ativo, busy: !!carregando }}>
-      <Animated.View style={[s.cta, { backgroundColor: ativo ? c.primario : c.borda }, estilo]}>
-        <Text style={{ color: ativo ? c.sobrePrimario : c.textoSuave, fontSize: 16, fontWeight: "700" }}>{carregando ? "Um momento…" : texto}</Text>
+      <Animated.View style={[s.cta, { backgroundColor: ativo ? k.fundo : k.fundoOff }, estilo]}>
+        <Text style={{ color: ativo ? k.texto : k.textoOff, fontSize: 16, fontWeight: "700" }}>{carregando ? "Um momento…" : texto}</Text>
       </Animated.View>
     </Pressable>
   );
@@ -161,7 +168,7 @@ export const s = StyleSheet.create({
   bentoValor: { color: c.texto, fontSize: 20, fontWeight: "800", marginTop: 4, letterSpacing: -0.3 },
   regra: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: c.superficie, borderRadius: 16, borderWidth: 1, borderColor: BORDA_FINA, padding: 12 },
   regraIcone: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  cta: { height: 54, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  cta: { height: 54, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   redondo: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.08)", alignItems: "center", justifyContent: "center" },
   sobre: { position: "absolute" },
 });

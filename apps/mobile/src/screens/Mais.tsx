@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, View, Pressable } from "react-native";
+import { Alert, Linking, ScrollView, StyleSheet, Switch, View, Pressable } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import * as Sharing from "expo-sharing";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";

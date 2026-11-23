@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet, Text, View, TextInput, Pressable, ScrollView, Switch, Alert,
-} from "react-native";
+import { StyleSheet, View, Pressable, ScrollView, Switch, Alert } from "react-native";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import { SafeScreen } from "../components/SafeScreen";
 import { useTema } from "../theme";
 import { useBanco } from "../contexto/BancoContext";

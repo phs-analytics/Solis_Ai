@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, Text, View, ScrollView, Pressable, RefreshControl } from "react-native";
+import { StyleSheet, View, ScrollView, Pressable, RefreshControl } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParams } from "../navigation";

@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  FlatList, KeyboardAvoidingView, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
-} from "react-native";
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import { SafeScreen } from "../components/SafeScreen";
 import { Icone } from "../components/Icone";
 import { useTema } from "../theme";

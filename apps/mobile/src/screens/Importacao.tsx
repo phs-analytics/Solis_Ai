@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View, Pressable, ScrollView, Alert } from "react-native";
+import { StyleSheet, View, Pressable, ScrollView, Alert } from "react-native";
+import { Texto as Text } from "../components/Texto";
 import * as FileSystem from "expo-file-system/legacy";
 import * as DocumentPicker from "expo-document-picker";
 import { SafeScreen } from "../components/SafeScreen";
