@@ -24,6 +24,12 @@ const POR_TIPO: Record<string, { icone: NomeIcone; cor: string }> = {
   transferencia: { icone: "exchange", cor: "#5B6B7E" },
 };
 
+/** Cor da categoria, a mesma do ícone (barra de gastos por categoria, legenda). */
+export function corCategoria(id: string | null | undefined): string {
+  if (id === "outros") return "#7D8790";
+  return (id && POR_ID[id]?.cor) || "#55606B";
+}
+
 export function CategoryIcon({ categoriaId, tipo, tamanho = 42, recorrente }: {
   categoriaId: string | null | undefined; tipo?: string; tamanho?: number; recorrente?: boolean;
 }) {

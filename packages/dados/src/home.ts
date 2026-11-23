@@ -1,11 +1,13 @@
-import { DIAS_PERIODO, detectarRecorrentes, normalizarDescricao, serieSaldo, temHistoricoSuficiente } from "@solis/core";
-import type { PeriodoSaldo, Previsao } from "@solis/core";
+import { DIAS_PERIODO, detectarRecorrentes, gastosDiarios, gastosPorCategoria, normalizarDescricao, serieSaldo, temHistoricoSuficiente } from "@solis/core";
+import type { FatiaCategoria, PeriodoSaldo, Previsao } from "@solis/core";
 import type { Banco } from "./vault.js";
 import { listarContas, saldoConta } from "./repositorios/contas.js";
 import type { TipoConta } from "./repositorios/contas.js";
 import { listarLancamentos } from "./repositorios/lancamentos.js";
 import type { TipoLancamento } from "./repositorios/lancamentos.js";
 import { listarRecorrentes } from "./repositorios/recorrentes.js";
+import { listarCategorias } from "./repositorios/categorias.js";
+import { listarMetas } from "./repositorios/metas.js";
 
 export type PrevisaoHome = Previsao & { origem: "detectada" | "cadastrada" };
 
@@ -17,6 +19,12 @@ export type ResumoHome = {
   ultimos: { id: string; descricao: string; valorCentavos: number; data: string; tipo: TipoLancamento; categoriaId: string | null; contaNome: string }[];
   previsoes: PrevisaoHome[];
   historicoSuficiente: boolean;
+  /** Onde o dinheiro foi nos últimos 30 dias (top 4 + outros), já com o nome da categoria. */
+  categorias: (FatiaCategoria & { nome: string })[];
+  /** Gasto de cada um dos últimos 7 dias (centavos positivos), do mais antigo ao de hoje. */
+  diario7: { data: string; centavos: number }[];
+  /** A meta ativa mais antiga, para o anel de progresso. */
+  meta: { id: string; nome: string; alvoCentavos: number; atualCentavos: number; pct: number } | null;
 };
 
 /** Data local (não UTC), para "hoje" não virar amanhã à noite. */
@@ -32,10 +40,12 @@ const somarDias = (iso: string, n: number) => {
 
 /** Tudo o que a tela inicial mostra, numa leitura do banco local. Nada sai do aparelho. */
 export async function montarHome(banco: Banco, hoje = hojeLocal()): Promise<ResumoHome> {
-  const [contas, ano, recorrentes] = await Promise.all([
+  const [contas, ano, recorrentes, categorias, metas] = await Promise.all([
     listarContas(banco),
     listarLancamentos(banco, { periodo: { de: somarDias(hoje, -DIAS_PERIODO["1A"]), ate: hoje } }),
     listarRecorrentes(banco),
+    listarCategorias(banco),
+    listarMetas(banco),
   ]);
   const saldos = await Promise.all(contas.map((c) => saldoConta(banco, c.id)));
   const saldoTotal = saldos.reduce((s, v) => s + v, 0);
@@ -82,16 +92,25 @@ export async function montarHome(banco: Banco, hoje = hojeLocal()): Promise<Resu
   const previsoes = [...cadastradas, ...detectadas.filter((p) => !jaCadastradas.has(p.chave)).map((p) => ({ ...p, origem: "detectada" as const }))]
     .sort((a, b) => a.dataPrevista.localeCompare(b.dataPrevista));
 
+  const saidas = ano.map((l) => ({ data: l.data, centavos: l.valorCentavos, categoriaId: l.categoriaId, tipo: l.tipo }));
+  const nomeCategoria = new Map(categorias.map((c) => [c.id, c.nome]));
+  const m = metas[0];
+
   return {
     contas: contas.map((c, i) => ({ id: c.id, nome: c.nome, tipo: c.tipo, saldoCentavos: saldos[i]! })),
     saldoTotal,
     series,
     fluxo30,
-    ultimos: ano.slice(0, 5).map((l) => ({
+    ultimos: ano.slice(0, 30).map((l) => ({
       id: l.id, descricao: l.descricao, valorCentavos: l.valorCentavos, data: l.data, tipo: l.tipo,
       categoriaId: l.categoriaId, contaNome: nomeConta.get(l.contaId) ?? "",
     })),
     previsoes,
     historicoSuficiente: temHistoricoSuficiente(historico, hoje),
+    categorias: gastosPorCategoria(saidas, hoje).map((f) => ({
+      ...f, nome: f.categoriaId === "outros" ? "Outros" : f.categoriaId ? nomeCategoria.get(f.categoriaId) ?? "Sem categoria" : "Sem categoria",
+    })),
+    diario7: gastosDiarios(saidas, hoje),
+    meta: m ? { id: m.id, nome: m.nome, alvoCentavos: m.alvoCentavos, atualCentavos: m.atualCentavos, pct: m.alvoCentavos > 0 ? Math.min(1, m.atualCentavos / m.alvoCentavos) : 0 } : null,
   };
 }
