@@ -37,7 +37,8 @@ export function Desbloquear({ aoAbrir, aoApagado }: { aoAbrir: (b: Banco) => voi
         aoApagado();
         return;
       }
-      setErro(`Senha errada. Restam ${MAX_TENTATIVAS - n} tentativas antes de apagar os dados.`);
+      const resta = MAX_TENTATIVAS - n;
+      setErro(`Senha errada. ${resta === 1 ? "Resta 1 tentativa" : `Restam ${resta} tentativas`} antes de apagar os dados.`);
     } finally {
       setCarregando(false);
     }
