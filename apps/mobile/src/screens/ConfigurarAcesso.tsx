@@ -145,7 +145,7 @@ export function ConfigurarAcesso({ aoAbrir, pessoais = [] }: Props) {
         accessibilityRole="button"
         accessibilityState={{ disabled: !podeContinuar }}
       >
-        {carregando ? <ActivityIndicator color="#fff" /> : <Text style={[s.botaoTexto, dark && { color: "#0A1628" }]}>Criar senha e concluir</Text>}
+        {carregando ? <ActivityIndicator color={c.sobrePrimario} /> : <Text style={[s.botaoTexto, { color: c.sobrePrimario }]}>Criar senha e concluir</Text>}
       </Pressable>
 
       <Pressable style={s.secundario} onPress={restaurar} disabled={carregando} accessibilityRole="button"

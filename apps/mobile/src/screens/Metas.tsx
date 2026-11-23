@@ -57,7 +57,7 @@ export function Metas() {
         <Pressable style={[s.botaoNovo, { backgroundColor: c.primario }]}
           onPress={() => setMostrarForm(!mostrarForm)}
           accessibilityRole="button" accessibilityLabel="Nova meta">
-          <Text style={{ color: "#fff", fontSize: 20, lineHeight: 24 }}>{mostrarForm ? "×" : "+"}</Text>
+          <Text style={{ color: c.sobrePrimario, fontSize: 20, lineHeight: 24 }}>{mostrarForm ? "×" : "+"}</Text>
         </Pressable>
       </View>
 
@@ -74,7 +74,7 @@ export function Metas() {
             value={prazo} onChangeText={setPrazo} accessibilityLabel="Prazo" />
           <Pressable style={[s.botaoSalvar, { backgroundColor: c.primario }]} onPress={salvarMeta}
             accessibilityRole="button" accessibilityLabel="Criar meta">
-            <Text style={{ color: "#fff", fontWeight: "700" }}>Criar</Text>
+            <Text style={{ color: c.sobrePrimario, fontWeight: "700" }}>Criar</Text>
           </Pressable>
         </View>
       )}

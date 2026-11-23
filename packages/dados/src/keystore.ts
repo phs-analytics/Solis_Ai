@@ -17,6 +17,20 @@ const SALT_ID_BIO = "solis_salt_bio_v1";
 const PREFS_ID = "solis_prefs_v1";
 const COTACOES_ID = "solis_cotacoes_online_v1";
 
+export type PreferenciaTema = "sistema" | "claro" | "escuro";
+const TEMA_ID = "solis_tema_v1";
+
+/** Fora do cofre: o tema precisa valer antes do desbloqueio. Padrão: seguir o celular. */
+export async function lerTema(): Promise<PreferenciaTema> {
+  const v = await SecureStore.getItemAsync(TEMA_ID);
+  return v === "claro" || v === "escuro" ? v : "sistema";
+}
+
+export async function salvarTema(tema: PreferenciaTema): Promise<void> {
+  if (tema === "sistema") await SecureStore.deleteItemAsync(TEMA_ID);
+  else await SecureStore.setItemAsync(TEMA_ID, tema);
+}
+
 /** Consentimento para enviar tickers à brapi.dev (LGPD). Desligado por padrão. */
 export async function lerConsentimentoCotacoes(): Promise<boolean> {
   return (await SecureStore.getItemAsync(COTACOES_ID)) === "1";

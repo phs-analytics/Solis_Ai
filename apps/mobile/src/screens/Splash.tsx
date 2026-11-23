@@ -48,13 +48,12 @@ export function Splash({ navigation }: Props) {
   );
 }
 
-const VERDE = "#2ECC71";
-const VERDE_ESCURO = "#1A6B4A";
+const DESTAQUE = "#FFB162"; // Burning Flame
 
 const s = StyleSheet.create({
   fundo: {
     flex: 1,
-    backgroundColor: "#0A1628",
+    backgroundColor: "#1B2632",
   },
   conteudo: {
     flex: 1,
@@ -70,7 +69,7 @@ const s = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: VERDE,
+    backgroundColor: DESTAQUE,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -78,18 +77,18 @@ const s = StyleSheet.create({
   logoLetra: {
     fontSize: 36,
     fontWeight: "800",
-    color: "#0A1628",
+    color: "#1B2632",
   },
   logoNome: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#EEE9DF",
     letterSpacing: 1,
   },
   tagline: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#EEE9DF",
     textAlign: "center",
     lineHeight: 40,
     letterSpacing: -0.5,
@@ -100,7 +99,7 @@ const s = StyleSheet.create({
     gap: 12,
   },
   botaoPrimario: {
-    backgroundColor: VERDE,
+    backgroundColor: DESTAQUE,
     paddingVertical: 16,
     borderRadius: 50,
     alignItems: "center",
@@ -108,7 +107,7 @@ const s = StyleSheet.create({
   botaoPrimarioTexto: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#0A1628",
+    color: "#1B2632",
   },
   botaoSecundario: {
     paddingVertical: 14,
@@ -117,6 +116,6 @@ const s = StyleSheet.create({
   botaoSecundarioTexto: {
     fontSize: 15,
     fontWeight: "500",
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(238,233,223,0.75)",
   },
 });

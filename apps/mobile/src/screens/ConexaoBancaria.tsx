@@ -100,7 +100,7 @@ export function ConexaoBancaria() {
           Para trazer seus lançamentos automaticamente, o Solis usa a sua conta gratuita do Meu Pluggy.
         </Text>
         <Pressable style={[s.botao, { backgroundColor: c.primario }]} onPress={() => setEtapa("form")} accessibilityRole="button">
-          <Text style={s.botaoTexto}>Tenho login no Meu Pluggy</Text>
+          <Text style={[s.botaoTexto, { color: c.sobrePrimario }]}>Tenho login no Meu Pluggy</Text>
         </Pressable>
         <Pressable style={[s.botao, { backgroundColor: c.superficie }]} onPress={() => setEtapa("cadastro")} accessibilityRole="button">
           <Text style={{ color: c.primario, fontWeight: "700", fontSize: 16 }}>Cadastrar no Meu Pluggy</Text>
@@ -126,7 +126,7 @@ export function ConexaoBancaria() {
           </Pressable>
         ))}
         <Pressable style={[s.botao, { backgroundColor: c.primario }]} onPress={() => setEtapa("form")} accessibilityRole="button">
-          <Text style={s.botaoTexto}>Já tenho os dados, continuar</Text>
+          <Text style={[s.botaoTexto, { color: c.sobrePrimario }]}>Já tenho os dados, continuar</Text>
         </Pressable>
         <Pressable style={s.botao} onPress={() => setEtapa("escolha")} accessibilityRole="button">
           <Text style={{ color: c.textoSuave, fontWeight: "600" }}>Voltar</Text>
@@ -170,7 +170,7 @@ export function ConexaoBancaria() {
       ) : (
         <View style={{ gap: 10, marginTop: 20 }}>
           <Pressable style={[s.botao, { backgroundColor: c.primario }]} onPress={salvar} accessibilityRole="button">
-            <Text style={s.botaoTexto}>Testar e salvar</Text>
+            <Text style={[s.botaoTexto, { color: c.sobrePrimario }]}>Testar e salvar</Text>
           </Pressable>
           {conectado && (
             <>

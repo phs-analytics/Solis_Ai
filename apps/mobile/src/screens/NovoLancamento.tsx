@@ -79,7 +79,7 @@ export function NovoLancamento({ onSalvo }: { onSalvo?: () => void }) {
               style={[s.chip, { borderColor: c.borda, backgroundColor: tipo === t.valor ? c.primario : c.superficie }]}
               onPress={() => setTipo(t.valor)}
               accessibilityRole="radio" accessibilityState={{ checked: tipo === t.valor }}>
-              <Text style={{ color: tipo === t.valor ? "#fff" : c.textoSuave, fontWeight: "600", fontSize: 13 }}>
+              <Text style={{ color: tipo === t.valor ? c.sobrePrimario : c.textoSuave, fontWeight: "600", fontSize: 13 }}>
                 {t.label}
               </Text>
             </Pressable>
@@ -128,7 +128,7 @@ export function NovoLancamento({ onSalvo }: { onSalvo?: () => void }) {
               style={[s.chip, { borderColor: c.borda, backgroundColor: contaId === ct.id ? c.primario : c.superficie }]}
               onPress={() => setContaId(ct.id)}
               accessibilityRole="radio" accessibilityState={{ checked: contaId === ct.id }}>
-              <Text style={{ color: contaId === ct.id ? "#fff" : c.textoSuave, fontWeight: "600", fontSize: 13 }}>
+              <Text style={{ color: contaId === ct.id ? c.sobrePrimario : c.textoSuave, fontWeight: "600", fontSize: 13 }}>
                 {ct.nome}
               </Text>
             </Pressable>
@@ -143,7 +143,7 @@ export function NovoLancamento({ onSalvo }: { onSalvo?: () => void }) {
               style={[s.chip, { borderColor: c.borda, backgroundColor: categoriaId === cat.id ? c.primario : c.superficie }]}
               onPress={() => setCategoriaId(cat.id)}
               accessibilityRole="radio" accessibilityState={{ checked: categoriaId === cat.id }}>
-              <Text style={{ color: categoriaId === cat.id ? "#fff" : c.textoSuave, fontSize: 13 }}>
+              <Text style={{ color: categoriaId === cat.id ? c.sobrePrimario : c.textoSuave, fontSize: 13 }}>
                 {cat.icone} {cat.nome}
               </Text>
             </Pressable>
@@ -158,7 +158,7 @@ export function NovoLancamento({ onSalvo }: { onSalvo?: () => void }) {
           accessibilityRole="button"
           accessibilityLabel="Salvar lançamento"
         >
-          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+          <Text style={{ color: c.sobrePrimario, fontWeight: "700", fontSize: 16 }}>
             {salvando ? "Salvando…" : "Salvar"}
           </Text>
         </Pressable>

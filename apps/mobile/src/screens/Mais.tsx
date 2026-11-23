@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Linking, StyleSheet, Switch, Text, View, Pressable } from "react-native";
+import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, View, Pressable } from "react-native";
 import * as Sharing from "expo-sharing";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
-  lerConsentimentoCotacoes, salvarConsentimentoCotacoes, exportarBackup, limparBackupTemporario,
+  lerConsentimentoCotacoes, salvarConsentimentoCotacoes, exportarBackup, limparBackupTemporario, lerTema, salvarTema,
 } from "@solis/dados";
+import type { PreferenciaTema } from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
 import { Icone } from "../components/Icone";
-import { useTema } from "../theme";
+import { useTema, aplicarPreferenciaTema } from "../theme";
+
+const OPCOES_TEMA: [PreferenciaTema, string][] = [["sistema", "Do celular"], ["claro", "Claro"], ["escuro", "Escuro"]];
 import { modeloExiste, baixarModelo, removerModelo } from "../ia/llm";
 import type { RootStackParams } from "../navigation";
 
@@ -70,10 +73,19 @@ export function Mais() {
 
   const [cotacoesOnline, setCotacoesOnline] = useState(false);
 
+  const [temaEscolhido, setTemaEscolhido] = useState<PreferenciaTema>("sistema");
+
   useEffect(() => {
     setStatusIA(modeloExiste() ? "ativo" : "inativo");
     lerConsentimentoCotacoes().then(setCotacoesOnline).catch(() => {});
+    lerTema().then(setTemaEscolhido).catch(() => {});
   }, []);
+
+  function escolherTema(v: PreferenciaTema) {
+    setTemaEscolhido(v);
+    aplicarPreferenciaTema(v);
+    salvarTema(v).catch(() => {});
+  }
 
   function alternarCotacoes(ativo: boolean) {
     setCotacoesOnline(ativo);
@@ -135,6 +147,7 @@ export function Mais() {
 
   return (
     <SafeScreen>
+      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
       <View style={[s.cabecalho, { paddingHorizontal: tema.spacing.lg }]}>
         <Text style={[tema.font.titulo, { color: c.texto }]}>Mais</Text>
       </View>
@@ -158,12 +171,12 @@ export function Mais() {
         {statusIA === "inativo" || statusIA === "erro" ? (
           <Pressable style={[s.botaoIA, { backgroundColor: c.primario }]} onPress={ativarIA}
             accessibilityRole="button" accessibilityLabel="Ativar IA avançada">
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>Ativar</Text>
+            <Text style={{ color: c.sobrePrimario, fontWeight: "700", fontSize: 13 }}>Ativar</Text>
           </Pressable>
         ) : statusIA === "ativo" ? (
           <Pressable style={[s.botaoIA, { backgroundColor: c.erro }]} onPress={desativarIA}
             accessibilityRole="button" accessibilityLabel="Remover modelo da IA">
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>Remover</Text>
+            <Text style={{ color: c.sobrePrimario, fontWeight: "700", fontSize: 13 }}>Remover</Text>
           </Pressable>
         ) : null}
       </View>
@@ -177,6 +190,25 @@ export function Mais() {
         </View>
         <Switch value={cotacoesOnline} onValueChange={alternarCotacoes}
           accessibilityLabel="Buscar cotações online" />
+      </View>
+
+      <View style={[s.blocoIA, { backgroundColor: c.superficie, borderColor: c.borda, marginHorizontal: tema.spacing.lg, marginTop: 12, flexDirection: "column", alignItems: "stretch" }]}>
+        <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>Aparência</Text>
+        <Text style={[tema.font.legenda, { color: c.textoSuave, marginTop: 2 }]}>
+          Por padrão o Solis segue o modo claro ou escuro do seu celular.
+        </Text>
+        <View style={[s.segmento, { backgroundColor: c.fundo, borderColor: c.borda }]} accessibilityRole="radiogroup">
+          {OPCOES_TEMA.map(([v, rotulo]) => {
+            const on = temaEscolhido === v;
+            return (
+              <Pressable key={v} onPress={() => escolherTema(v)}
+                style={[s.segItem, on && { backgroundColor: c.primario }]}
+                accessibilityRole="radio" accessibilityState={{ selected: on }}>
+                <Text style={{ color: on ? c.sobrePrimario : c.texto, fontWeight: on ? "700" : "500", fontSize: 14 }}>{rotulo}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <View style={{ paddingHorizontal: tema.spacing.lg, gap: 2, marginTop: 16 }}>
@@ -201,6 +233,7 @@ export function Mais() {
           </Pressable>
         ))}
       </View>
+      </ScrollView>
     </SafeScreen>
   );
 }
@@ -212,6 +245,8 @@ const s = StyleSheet.create({
     padding: 16, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, marginBottom: 4,
   },
   botaoIA: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  segmento: { flexDirection: "row", borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 3, marginTop: 12 },
+  segItem: { flex: 1, minHeight: 40, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   barraFundo: { height: 4, borderRadius: 2, overflow: "hidden" },
   barraPreenchida: { height: 4, borderRadius: 2 },
   linha: {

@@ -6,8 +6,10 @@ import { lerPerfil, salvarPerfil } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
 import { Icone } from "../components/Icone";
-import { useTema } from "../theme";
+import { ForcarTema, temaEscuro, useTema } from "../theme";
 import { ConfigurarAcesso } from "./ConfigurarAcesso";
+import { OnboardingContainer } from "../onboarding/OnboardingContainer";
+import { LiveAccountSetup } from "../onboarding/LiveAccountSetup";
 
 type Opcao = { v: string; t: string };
 const op = (...itens: [string, string][]): Opcao[] => itens.map(([v, t]) => ({ v, t }));
@@ -82,7 +84,19 @@ function mascaraData(t: string): string {
   return [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join("/");
 }
 
+/** Fluxo inteiro, sempre no tema escuro: tour → perfil → senha → primeira conta → pronto. */
 export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void }) {
+  const [tourVisto, setTourVisto] = useState(false);
+  return (
+    <ForcarTema value={temaEscuro}>
+      {tourVisto
+        ? <PerfilOnboarding aoConcluir={aoConcluir} />
+        : <SafeScreen><OnboardingContainer aoTerminar={() => setTourVisto(true)} /></SafeScreen>}
+    </ForcarTema>
+  );
+}
+
+function PerfilOnboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void }) {
   const tema = useTema();
   const c = tema.cores;
   const [passo, setPasso] = useState(0);
@@ -91,6 +105,7 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
   const [generoOutro, setGeneroOutro] = useState("");
   const [pronomeOutro, setPronomeOutro] = useState("");
   const [pronto, setPronto] = useState<{ banco: Banco; perfil: Perfil } | null>(null);
+  const [contaFeita, setContaFeita] = useState(false);
   const progresso = useRef(new Animated.Value(0)).current;
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
@@ -154,6 +169,14 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
 
   const largura = progresso.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] });
 
+  if (pronto && !contaFeita) {
+    return (
+      <SafeScreen>
+        <LiveAccountSetup banco={pronto.banco} aoTerminar={() => setContaFeita(true)} />
+      </SafeScreen>
+    );
+  }
+
   if (pronto) {
     const perfil = pronto.perfil;
     return (
@@ -194,7 +217,7 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
         <View style={s.rodape}>
           <Pressable style={[s.botaoPrincipal, { backgroundColor: c.primario }]} onPress={() => aoConcluir(pronto.banco)}
             accessibilityRole="button">
-            <Text style={[s.botaoTextoCheio, tema.dark && { color: "#0A1628" }]}>Ir para o início →</Text>
+            <Text style={[s.botaoTextoCheio, { color: c.sobrePrimario }]}>Ir para o início →</Text>
           </Pressable>
         </View>
       </SafeScreen>
@@ -311,7 +334,7 @@ export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void 
               accessibilityRole="button"
               accessibilityState={{ disabled: !valido }}
             >
-              <Text style={[s.botaoTextoCheio, !valido ? { color: c.textoSuave } : tema.dark && { color: "#1A0929" }]}>Continuar</Text>
+              <Text style={[s.botaoTextoCheio, !valido ? { color: c.textoSuave } : { color: c.sobrePrimario }]}>Continuar</Text>
             </Pressable>
           </View>
         )}
@@ -387,7 +410,7 @@ function Chips({ opcoes, sel, aoTocar, lista }: { opcoes: Opcao[]; sel: string[]
             accessibilityRole="checkbox"
             accessibilityState={{ checked: ativo }}
           >
-            <Text style={{ color: ativo ? (tema.dark ? "#1A0929" : "#fff") : c.texto, fontWeight: "600", fontSize: 14 }}>{o.t}</Text>
+            <Text style={{ color: ativo ? c.sobrePrimario : c.texto, fontWeight: "600", fontSize: 14 }}>{o.t}</Text>
           </Pressable>
         );
       })}

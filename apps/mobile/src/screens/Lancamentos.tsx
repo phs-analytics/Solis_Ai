@@ -51,7 +51,7 @@ export function Lancamentos() {
           accessibilityRole="button"
           accessibilityLabel="Novo lançamento"
         >
-          <Text style={{ color: "#fff", fontSize: 20, lineHeight: 24 }}>+</Text>
+          <Text style={{ color: c.sobrePrimario, fontSize: 20, lineHeight: 24 }}>+</Text>
         </Pressable>
       </View>
 
@@ -82,7 +82,7 @@ export function Lancamentos() {
             accessibilityState={{ checked: periodo === p.valor }}
             accessibilityLabel={`Filtrar por ${p.label}`}
           >
-            <Text style={{ color: periodo === p.valor ? "#fff" : c.textoSuave, fontSize: 13, fontWeight: "600" }}>
+            <Text style={{ color: periodo === p.valor ? c.sobrePrimario : c.textoSuave, fontSize: 13, fontWeight: "600" }}>
               {p.label}
             </Text>
           </Pressable>

@@ -106,7 +106,7 @@ export function Importacao() {
           <Pressable style={[s.botao, { backgroundColor: c.primario, marginTop: 24 }]}
             onPress={() => { setEtapa("selecionar"); setPreview([]); }}
             accessibilityRole="button" accessibilityLabel="Importar outro arquivo">
-            <Text style={{ color: "#fff", fontWeight: "700" }}>Importar outro</Text>
+            <Text style={{ color: c.sobrePrimario, fontWeight: "700" }}>Importar outro</Text>
           </Pressable>
         </View>
       </SafeScreen>
@@ -138,7 +138,7 @@ export function Importacao() {
                 style={[s.chip, { borderColor: c.borda, backgroundColor: contaId === ct.id ? c.primario : c.superficie }]}
                 onPress={() => setContaId(ct.id)}
                 accessibilityRole="radio" accessibilityState={{ checked: contaId === ct.id }}>
-                <Text style={{ color: contaId === ct.id ? "#fff" : c.textoSuave, fontWeight: "600", fontSize: 13 }}>{ct.nome}</Text>
+                <Text style={{ color: contaId === ct.id ? c.sobrePrimario : c.textoSuave, fontWeight: "600", fontSize: 13 }}>{ct.nome}</Text>
               </Pressable>
             ))}
           </View>
@@ -159,7 +159,7 @@ export function Importacao() {
 
           <Pressable style={[s.botao, { backgroundColor: c.primario, marginTop: 24 }]}
             onPress={confirmarImportacao} accessibilityRole="button" accessibilityLabel="Confirmar importação">
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>Importar {novos.length} lançamento{novos.length !== 1 ? "s" : ""}</Text>
+            <Text style={{ color: c.sobrePrimario, fontWeight: "700", fontSize: 16 }}>Importar {novos.length} lançamento{novos.length !== 1 ? "s" : ""}</Text>
           </Pressable>
           <Pressable style={[s.botao, { backgroundColor: c.superficie, marginTop: 10 }]}
             onPress={() => setEtapa("selecionar")} accessibilityRole="button" accessibilityLabel="Cancelar">

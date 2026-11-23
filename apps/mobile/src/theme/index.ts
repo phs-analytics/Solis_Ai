@@ -1,4 +1,11 @@
-import { useColorScheme } from "react-native";
+import { createContext, useContext } from "react";
+import { Appearance, useColorScheme } from "react-native";
+import type { PreferenciaTema } from "@solis/dados";
+
+/** Sobrepõe o tema do sistema só dentro do app; "sistema" volta a seguir o celular. */
+export function aplicarPreferenciaTema(p: PreferenciaTema) {
+  Appearance.setColorScheme(p === "claro" ? "light" : p === "escuro" ? "dark" : "auto");
+}
 
 const base = {
   radius: { sm: 8, md: 16, lg: 24 },
@@ -15,19 +22,20 @@ export const temaClaro = {
   ...base,
   dark: false,
   cores: {
-    fundo: "#FDF4FF",
-    superficie: "#FFFFFF",
-    primario: "#C2286B",   // Hot Rose
-    primarioSuave: "#FCEEF6",
-    texto: "#25104D",      // Dark Amethyst
-    textoSuave: "#7A4E6E",
-    borda: "#EDD5F0",
-    erro: "#DC2626",
-    sucesso: "#16A34A",
-    aviso: "#FAB940",      // Sunflower Gold
-    tabBar: "#FFFFFF",
-    tabAtiva: "#C2286B",
-    tabInativa: "#B08099",
+    fundo: "#EEE9DF",      // Palladian
+    superficie: "#FBF8F2",
+    primario: "#A35139",   // Truffle Trouble
+    sobrePrimario: "#FFFFFF",
+    primarioSuave: "#F7EBE3",
+    texto: "#1B2632",      // Abyssal Anchorfish Blue
+    textoSuave: "#55606B",
+    borda: "#C9C1B1",      // Oatmeal
+    erro: "#B3261E",
+    sucesso: "#276B43",
+    aviso: "#8A5210",      // Burning Flame escurecido: o #FFB162 não tem contraste como texto no claro
+    tabBar: "#FBF8F2",
+    tabAtiva: "#A35139",
+    tabInativa: "#7D8790",
     statusBar: "dark-content" as const,
   },
 };
@@ -36,19 +44,20 @@ export const temaEscuro = {
   ...base,
   dark: true,
   cores: {
-    fundo: "#1A0929",      // Deep Amethyst
-    superficie: "#2D1442",
-    primario: "#FAB940",   // Sunflower Gold
-    primarioSuave: "#2D1E04",
-    texto: "#F7D9FC",      // Lavender Veil
-    textoSuave: "#B08099",
-    borda: "#3D1E52",
-    erro: "#F85149",
-    sucesso: "#2ECC71",
-    aviso: "#FAB940",
-    tabBar: "#2D1442",
-    tabAtiva: "#FAB940",
-    tabInativa: "#6E4E7A",
+    fundo: "#1B2632",      // Abyssal Anchorfish Blue
+    superficie: "#2C3B4D", // Blue Fantastic
+    primario: "#FFB162",   // Burning Flame
+    sobrePrimario: "#1B2632",
+    primarioSuave: "#3A3127",
+    texto: "#EEE9DF",      // Palladian
+    textoSuave: "#A9A293",
+    borda: "#3A4B5F",
+    erro: "#F59580",
+    sucesso: "#7BC79A",
+    aviso: "#FFB162",
+    tabBar: "#2C3B4D",
+    tabAtiva: "#FFB162",
+    tabInativa: "#8C96A3",
     statusBar: "light-content" as const,
   },
 };
@@ -59,7 +68,12 @@ export type Tema = Omit<typeof temaClaro, "cores"> & {
   cores: Omit<typeof temaClaro.cores, "statusBar"> & { statusBar: StatusBarStyle };
 };
 
+// Permite que um trecho do app (ex.: o onboarding) use sempre um tema, ignorando o do celular.
+const TemaForcado = createContext<Tema | null>(null);
+export const ForcarTema = TemaForcado.Provider;
+
 export function useTema(): Tema {
   const esquema = useColorScheme();
-  return esquema === "dark" ? temaEscuro : temaClaro;
+  const forcado = useContext(TemaForcado);
+  return forcado ?? (esquema === "dark" ? temaEscuro : temaClaro);
 }

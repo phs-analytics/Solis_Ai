@@ -64,8 +64,8 @@ export function NovaConta({ onSalvo }: { onSalvo?: () => void }) {
               style={[s.chip, { borderColor: c.borda, backgroundColor: tipo === t.valor ? c.primario : c.superficie }]}
               onPress={() => setTipo(t.valor)}
               accessibilityRole="radio" accessibilityState={{ checked: tipo === t.valor }}>
-              <Icone nome={t.icone} tamanho={14} cor={tipo === t.valor ? "#fff" : c.textoSuave} />
-              <Text style={{ color: tipo === t.valor ? "#fff" : c.textoSuave, fontWeight: "600" }}>{t.label}</Text>
+              <Icone nome={t.icone} tamanho={14} cor={tipo === t.valor ? c.sobrePrimario : c.textoSuave} />
+              <Text style={{ color: tipo === t.valor ? c.sobrePrimario : c.textoSuave, fontWeight: "600" }}>{t.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -88,7 +88,7 @@ export function NovaConta({ onSalvo }: { onSalvo?: () => void }) {
           accessibilityRole="button"
           accessibilityLabel="Criar conta"
         >
-          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+          <Text style={{ color: c.sobrePrimario, fontWeight: "700", fontSize: 16 }}>
             {salvando ? "Criando…" : "Criar conta"}
           </Text>
         </Pressable>

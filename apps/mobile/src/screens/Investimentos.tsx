@@ -156,7 +156,7 @@ function CarteiraView({ resumo, cotacoes, onAtualizar, onArquivar, tema, c }: Ca
       ListHeaderComponent={() => (
         <View style={[s.card, { backgroundColor: c.primario, margin: 16, marginBottom: 8 }]}>
           <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>Valor total</Text>
-          <Text style={{ color: "#fff", fontSize: 28, fontWeight: "800", marginTop: 2 }}>
+          <Text style={{ color: c.sobrePrimario, fontSize: 28, fontWeight: "800", marginTop: 2 }}>
             {formatarDinheiro(resumo.totalInvestidoCentavos)}
           </Text>
           <View style={{ flexDirection: "row", marginTop: 8, gap: 16 }}>

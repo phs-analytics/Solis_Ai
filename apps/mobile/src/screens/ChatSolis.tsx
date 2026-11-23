@@ -131,7 +131,7 @@ export function ChatSolis() {
                 )}
                 <Text style={[
                   tema.font.corpo,
-                  { color: m.origem === "usuario" ? "#fff" : c.texto, lineHeight: 22 },
+                  { color: m.origem === "usuario" ? c.sobrePrimario : c.texto, lineHeight: 22 },
                 ]}>
                   {m.texto}
                 </Text>
@@ -169,7 +169,7 @@ export function ChatSolis() {
             onPress={() => enviar(input)}
             disabled={carregando || !input.trim()}
             accessibilityRole="button" accessibilityLabel="Enviar pergunta">
-            <Text style={{ color: "#fff", fontWeight: "800", fontSize: 18 }}>↑</Text>
+            <Text style={{ color: c.sobrePrimario, fontWeight: "800", fontSize: 18 }}>↑</Text>
           </Pressable>
         </View>
 
