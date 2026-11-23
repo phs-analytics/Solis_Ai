@@ -10,6 +10,7 @@ const GLIFOS = {
   "angle-small-left": 61780, "angle-small-right": 61781,
   "cross-small": 62713, "credit-card": 62705, "shopping-cart": 64513, "arrow-small-up": 61855,
   "arrow-small-down": 61852, equals: 62948, coins: 62614, wallet: 65243, "plane-alt": 64143,
+  lock: 63709, "shield-check": 64480, user: 65186, eye: 62971, "eye-crossed": 62968,
 } as const;
 
 export type NomeIcone = keyof typeof GLIFOS;

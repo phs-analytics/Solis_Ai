@@ -33,11 +33,13 @@ function PilulaProgresso({ ativa, feita }: { ativa: boolean; feita: boolean }) {
 }
 
 /** Valor em reais que rola do número anterior até o novo, sem trepidar (algarismos de largura fixa). */
-export function AnimatedNumber({ centavos, style, negativo, duracao = 700 }: {
+export function AnimatedNumber({ centavos, style, negativo, duracao = 700, inicial }: {
   centavos: number; style?: StyleProp<TextStyle>; negativo?: boolean; duracao?: number;
+  /** Valor de onde começar a contar ao aparecer (ex.: 0 para revelar o saldo contando). */
+  inicial?: number;
 }) {
-  const [mostrado, setMostrado] = useState(centavos);
-  const anterior = useRef(centavos);
+  const [mostrado, setMostrado] = useState(inicial ?? centavos);
+  const anterior = useRef(inicial ?? centavos);
   useEffect(() => {
     const de = anterior.current, para = centavos, t0 = Date.now();
     anterior.current = centavos;

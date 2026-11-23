@@ -1,15 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Animated, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { PERFIL_VAZIO, calcularIdade, classificarInvestidor } from "@solis/core";
 import type { Perfil, PerfilInvestidor } from "@solis/core";
-import { lerPerfil, salvarPerfil } from "@solis/dados";
+import { atualizarConta, criarConta, lerPerfil, salvarPerfil } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
 import { Icone } from "../components/Icone";
 import { ForcarTema, temaEscuro, useTema } from "../theme";
 import { ConfigurarAcesso } from "./ConfigurarAcesso";
 import { OnboardingContainer } from "../onboarding/OnboardingContainer";
-import { LiveAccountSetup } from "../onboarding/LiveAccountSetup";
+import { BotaoCTA, BotaoTopo, BrilhoAmbiente, MOLA, SegmentedProgressBar } from "../onboarding/componentes";
+import { Cascata, ResumoCard, SetupStage } from "../onboarding/SetupStage";
+import type { WalletCardProps } from "../onboarding/WalletCard";
+import { CONTA_INICIAL, PRONTO, SETUP_ROTULOS } from "../onboarding/onboardingConfig";
+import { formatarDinheiro, parseDinheiro } from "../utils/dinheiro";
 
 type Opcao = { v: string; t: string };
 const op = (...itens: [string, string][]): Opcao[] => itens.map(([v, t]) => ({ v, t }));
@@ -87,16 +92,26 @@ function mascaraData(t: string): string {
 /** Fluxo inteiro, sempre no tema escuro: tour → perfil → senha → primeira conta → pronto. */
 export function Onboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void }) {
   const [tourVisto, setTourVisto] = useState(false);
+  // O setup fica montado mesmo ao voltar para o tour, para não perder o que já foi preenchido.
   return (
     <ForcarTema value={temaEscuro}>
-      {tourVisto
-        ? <PerfilOnboarding aoConcluir={aoConcluir} />
-        : <SafeScreen><OnboardingContainer aoTerminar={() => setTourVisto(true)} /></SafeScreen>}
+      {!tourVisto && <SafeScreen><OnboardingContainer aoTerminar={() => setTourVisto(true)} /></SafeScreen>}
+      <View style={{ flex: 1, display: tourVisto ? "flex" : "none" }}>
+        <PerfilOnboarding aoConcluir={aoConcluir} aoVoltarTour={() => setTourVisto(false)} />
+      </View>
     </ForcarTema>
   );
 }
 
-function PerfilOnboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void }) {
+// Passos do setup: 0–4 perguntas do perfil, 5 senha, 6 primeira conta, 7 tudo pronto.
+const P_SENHA = 5, P_CONTA = 6, P_PRONTO = 7, TOTAL_SETUP = 8;
+
+function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/).filter(Boolean);
+  return ((partes[0]?.[0] ?? "") + (partes.length > 1 ? partes[partes.length - 1]![0] : "")).toUpperCase();
+}
+
+function PerfilOnboarding({ aoConcluir, aoVoltarTour }: { aoConcluir: (banco: Banco) => void; aoVoltarTour: () => void }) {
   const tema = useTema();
   const c = tema.cores;
   const [passo, setPasso] = useState(0);
@@ -105,15 +120,19 @@ function PerfilOnboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void }
   const [generoOutro, setGeneroOutro] = useState("");
   const [pronomeOutro, setPronomeOutro] = useState("");
   const [pronto, setPronto] = useState<{ banco: Banco; perfil: Perfil } | null>(null);
-  const [contaFeita, setContaFeita] = useState(false);
-  const progresso = useRef(new Animated.Value(0)).current;
+  const [forca, setForca] = useState(0);
+  const [tipoIdx, setTipoIdx] = useState(0);
+  const [contaNome, setContaNome] = useState("");
+  const [contaSaldo, setContaSaldo] = useState("");
+  const [contaId, setContaId] = useState<string | null>(null);
+  const [salvandoConta, setSalvandoConta] = useState(false);
+  const [brilhos, setBrilhos] = useState(0);
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
-  const total = ETAPAS.length;
-  useEffect(() => {
-    Animated.timing(progresso, { toValue: pronto ? 1 : (passo + 1) / total, duration: 400, useNativeDriver: false }).start();
-    scroll.current?.scrollTo({ y: 0, animated: false });
-  }, [passo, pronto]);
+  useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [passo]);
+  // Senha forte faz a luz passar pelo cartão; o "Tudo pronto" também.
+  useEffect(() => { if (forca === 1) setBrilhos((n) => n + 1); }, [forca]);
+  useEffect(() => { if (passo === P_PRONTO) setBrilhos((n) => n + 1); }, [passo]);
 
   const set = <K extends keyof Perfil>(k: K, v: Perfil[K]) => setP((x) => ({ ...x, [k]: v }));
   const alternar = (k: "atividades" | "objetivosVida" | "dificuldades" | "horarios" | "experiencia", v: string) =>
@@ -139,13 +158,19 @@ function PerfilOnboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void }
     !!p.ritmo,
     !!p.controleFinancas && !!p.objetivoFinanceiro && !!p.reacaoQueda && p.experiencia.length > 0,
     !!p.disciplina,
-    false,
-  ][passo];
+  ][passo] ?? false;
 
   function continuar() {
     if (!valido) return;
     if (passo === 0) set("nascimento", paraISO(dataBR));
     setPasso(passo + 1);
+  }
+
+  // Depois da senha o cofre já existe: da conta não se volta; do "Tudo pronto" volta-se para editar a conta.
+  const podeVoltar = passo !== P_CONTA;
+  function voltar() {
+    if (passo === 0) aoVoltarTour();
+    else setPasso(passo - 1);
   }
 
   async function aoAbrir(banco: Banco, restaurado: boolean) {
@@ -157,7 +182,7 @@ function PerfilOnboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void }
       perfilInvestidor: classificarInvestidor(p),
       concluidoEm: new Date().toISOString(),
     };
-    // Backup restaurado já traz o perfil do aparelho antigo.
+    // Backup restaurado já traz o perfil e as contas do aparelho antigo.
     const existente = restaurado ? await lerPerfil(banco) : null;
     if (existente) {
       aoConcluir(banco);
@@ -165,181 +190,229 @@ function PerfilOnboarding({ aoConcluir }: { aoConcluir: (banco: Banco) => void }
     }
     await salvarPerfil(banco, final);
     setPronto({ banco, perfil: final });
+    setPasso(P_CONTA);
   }
 
-  const largura = progresso.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] });
+  const tipo = CONTA_INICIAL.tipos[tipoIdx]!;
+  const saldoCentavos = parseDinheiro(contaSaldo) ?? 0;
 
-  if (pronto && !contaFeita) {
-    return (
-      <SafeScreen>
-        <LiveAccountSetup banco={pronto.banco} aoTerminar={() => setContaFeita(true)} />
-      </SafeScreen>
-    );
+  async function concluirConta() {
+    if (!pronto || !contaNome.trim()) return;
+    setSalvandoConta(true);
+    try {
+      const dados = { nome: contaNome.trim(), tipo: tipo.v, saldoInicialCentavos: saldoCentavos };
+      if (contaId) await atualizarConta(pronto.banco, contaId, dados);
+      else setContaId((await criarConta(pronto.banco, { ...dados, moeda: "BRL" })).id);
+      setPasso(P_PRONTO);
+    } catch {
+      Alert.alert("Não deu para salvar a conta", "Tente de novo, ou crie depois pela tela inicial.");
+    } finally {
+      setSalvandoConta(false);
+    }
   }
 
-  if (pronto) {
-    const perfil = pronto.perfil;
-    return (
-      <SafeScreen>
-        <View style={[s.topoBar]}>
-          <View style={[s.barraFundo, { backgroundColor: c.primario, flex: 1 }]}>
-            <View style={[s.barra, { width: "100%", backgroundColor: c.primario }]} />
-          </View>
-        </View>
-        <View style={{ alignItems: "center", paddingTop: 32, paddingHorizontal: 24 }}>
-          <View style={[s.iconeEtapa, { backgroundColor: c.primarioSuave, width: 72, height: 72, borderRadius: 36 }]}>
-            <Icone nome="party-horn" tamanho={32} cor={c.primario} />
-          </View>
-          <Text style={[s.titulo, { color: c.texto, textAlign: "center", marginTop: 16 }]} accessibilityRole="header">
-            Tudo pronto,{"\n"}{perfil.apelido.trim()}!
-          </Text>
-        </View>
-        <ScrollView contentContainerStyle={[s.fim, { paddingTop: 16 }]}>
-          <Text style={[s.desc, { color: c.textoSuave, textAlign: "center" }]}>
-            Seu perfil está configurado. A partir de agora, o Solis organiza tudo pensando em você.
-          </Text>
-          <View style={[s.cartaoDestaque, { backgroundColor: c.primarioSuave, borderColor: c.primario }]}>
-            <Text style={{ color: c.textoSuave, fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>Perfil de investidor</Text>
-            <Text style={{ color: c.primario, fontSize: 28, fontWeight: "800", marginTop: 4 }}>
-              {NOME_PERFIL[perfil.perfilInvestidor ?? "conservador"]}
-            </Text>
-            <Text style={{ color: c.textoSuave, fontSize: 12, marginTop: 4 }}>
-              Só uma informação sobre como você lida com risco. Não é recomendação de investimento.
-            </Text>
-          </View>
-          <View style={[s.cartao, { backgroundColor: c.superficie, borderColor: c.borda }]}>
-            <Text style={{ color: c.textoSuave, fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>Seu foco agora</Text>
-            <Text style={{ color: c.texto, fontSize: 17, fontWeight: "700", marginTop: 4 }}>
-              {OBJ_FIN.find((o) => o.v === perfil.objetivoFinanceiro)?.t}
-            </Text>
-          </View>
-        </ScrollView>
-        <View style={s.rodape}>
-          <Pressable style={[s.botaoPrincipal, { backgroundColor: c.primario }]} onPress={() => aoConcluir(pronto.banco)}
-            accessibilityRole="button">
-            <Text style={[s.botaoTextoCheio, { color: c.sobrePrimario }]}>Ir para o início →</Text>
-          </Pressable>
-        </View>
-      </SafeScreen>
-    );
-  }
+  // ----- Cartão do palco: muda de conteúdo a cada passo, sem desmontar -----
+  const apelido = p.apelido.trim();
+  const naConta = passo >= P_CONTA;
+  const temConta = !!contaId;
+  const frente: Omit<WalletCardProps, "width"> = {
+    title: naConta ? (contaNome.trim() || tipo.exemplo.replace("Ex.: ", "")) : SETUP_ROTULOS.cartaoPerfil(apelido),
+    subtitle: naConta ? tipo.sub : passo === P_SENHA ? SETUP_ROTULOS.subSenha : SETUP_ROTULOS.subPerfil,
+    balance: naConta ? saldoCentavos : 0,
+    isBalanceHidden: passo === P_SENHA,
+    contarAoRevelar: true,
+    recontar: passo === P_PRONTO ? 1 : 0,
+    variant: naConta ? tipo.variante : "abyssal",
+    tipoIcon: naConta ? tipo.icone : "wallet",
+    holder: apelido || SETUP_ROTULOS.titularVazio,
+    triggerShimmer: brilhos,
+    triggerPulse: passo === P_SENHA ? 1 : 0,
+    protecao: passo === P_SENHA ? forca : 0,
+    selo: passo === P_PRONTO ? (temConta ? PRONTO.selo : PRONTO.seloSemConta) : null,
+    ...(passo === P_PRONTO ? { badgeIcon: "shield-check" as const }
+      : passo >= P_SENHA ? { badgeIcon: "lock" as const }
+      : iniciais(p.nomeCompleto) ? { badgeText: iniciais(p.nomeCompleto) } : { badgeIcon: "user" as const }),
+  };
 
-  const etapa = ETAPAS[passo]!;
+  const etapa = passo <= P_SENHA ? ETAPAS[passo]! : passo === P_CONTA
+    ? { titulo: CONTA_INICIAL.titulo, desc: CONTA_INICIAL.texto } : { titulo: PRONTO.titulo, desc: PRONTO.texto };
 
   return (
     <SafeScreen>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <BrilhoAmbiente />
         <View style={s.topoBar}>
-          <Pressable onPress={() => setPasso(passo - 1)} disabled={passo === 0} hitSlop={12} style={s.voltar}
-            accessibilityRole="button" accessibilityLabel="Voltar" accessibilityState={{ disabled: passo === 0 }}>
-            {passo > 0 && <Icone nome="angle-small-left" tamanho={24} cor={c.primario} />}
-          </Pressable>
-          <View style={[s.barraFundo, { backgroundColor: c.borda, flex: 1 }]}
-            accessibilityRole="progressbar" accessibilityLabel={`Etapa ${passo + 1} de ${total}`}
-            accessibilityValue={{ min: 0, max: total, now: passo + 1 }}>
-            <Animated.View style={[s.barra, { width: largura, backgroundColor: c.primario }]} />
-          </View>
-          <Text style={{ color: c.textoSuave, fontSize: 12, fontWeight: "600", minWidth: 28, textAlign: "right" }}>
-            {passo + 1}/{total}
+          <View style={{ width: 36 }}>{podeVoltar && <BotaoTopo voltar onPress={voltar} />}</View>
+          <SegmentedProgressBar total={TOTAL_SETUP} atual={passo} />
+          <Text style={{ color: c.textoSuave, fontSize: 12, fontWeight: "600", width: 36, textAlign: "right", fontVariant: ["tabular-nums"] }}>
+            {passo + 1}/{TOTAL_SETUP}
           </Text>
         </View>
 
+        <SetupStage compacto={passo >= 1 && passo <= 4} frente={frente} chave={naConta ? tipo.v : "perfil"}
+          indice={tipoIdx} deckAberto={naConta} />
+
         <ScrollView ref={scroll} contentContainerStyle={s.conteudo} keyboardShouldPersistTaps="handled">
-          <View style={s.cabecalhoConteudo}>
-            <Text style={[s.titulo, { color: c.texto }]} accessibilityRole="header">{etapa.titulo}</Text>
-            <Text style={[s.desc, { color: c.textoSuave }]}>{etapa.desc}</Text>
+          <View key={passo}>
+            <Cascata>
+              <Text style={[s.titulo, { color: c.texto }]} accessibilityRole="header">
+                {passo === P_PRONTO && apelido ? `Tudo pronto, ${apelido}!` : etapa.titulo}
+              </Text>
+              <Text style={[s.desc, { color: c.textoSuave, marginTop: 8 }]}>{etapa.desc}</Text>
+
+              {passo === 0 && (
+                <>
+                  <Campo rotulo="Nome completo" valor={p.nomeCompleto} aoMudar={(v) => set("nomeCompleto", v)} autoCapitalize="words" />
+                  <Campo rotulo="Como quer ser chamado(a)?" dica="Apelido ou nome social" valor={p.apelido}
+                    aoMudar={(v) => set("apelido", v)} autoCapitalize="words" />
+                  <Campo rotulo="Data de nascimento" dica="DD/MM/AAAA" valor={dataBR} aoMudar={(v) => setDataBR(mascaraData(v))}
+                    teclado="number-pad" />
+                  {dataBR.length === 10 && (idade === null || idade > 120) && <Aviso cor={c.erro}>Confira a data, parece que algo não bate.</Aviso>}
+                  {idade !== null && idade < 13 && <Aviso cor={c.erro}>O Solis é para quem tem 13 anos ou mais.</Aviso>}
+                  {idade !== null && idade >= 13 && idade < 18 && (
+                    <Aviso cor={c.aviso}>Como você tem menos de 18, combine com um responsável antes de usar.</Aviso>
+                  )}
+                  <Pergunta texto="Quais pronomes você usa?" ajuda="Pode marcar mais de um. A Solis AI vai falar com você assim." />
+                  <Chips opcoes={PRONOMES} sel={p.pronomes} aoTocar={alternarPronome} />
+                  {p.pronomes.includes("outro") && (
+                    <Campo rotulo="Escreva seus pronomes" dica="Ex.: ile/dile" valor={pronomeOutro} aoMudar={setPronomeOutro} autoCapitalize="none" />
+                  )}
+                  <Pergunta texto="Gênero" />
+                  <Chips opcoes={GENEROS} sel={[p.genero]} aoTocar={(v) => set("genero", p.genero === v ? "" : v)} />
+                  {p.genero === "outro" && <Campo rotulo="Como você se identifica?" dica="Escreva do seu jeito" valor={generoOutro} aoMudar={setGeneroOutro} />}
+                </>
+              )}
+
+              {passo === 1 && (
+                <>
+                  <Pergunta texto="Como você trabalha hoje?" />
+                  <Chips opcoes={TRABALHO} sel={[p.trabalho]} aoTocar={(v) => set("trabalho", v)} lista />
+                  <Pergunta texto="Quanto entra por mês, em média?" ajuda="Somando tudo o que você recebe." />
+                  <Chips opcoes={RENDA} sel={[p.faixaRenda]} aoTocar={(v) => set("faixaRenda", v)} lista />
+                </>
+              )}
+
+              {passo === 2 && (
+                <>
+                  <Pergunta texto="O que ocupa o seu dia e o seu tempo livre?" />
+                  <Chips opcoes={ATIVIDADES} sel={p.atividades} aoTocar={(v) => alternar("atividades", v)} />
+                  <Pergunta texto="Como é a sua rotina?" />
+                  <Chips opcoes={RITMO} sel={[p.ritmo]} aoTocar={(v) => set("ritmo", v)} />
+                  <Pergunta texto="O que você mais quer agora?" />
+                  <Chips opcoes={OBJ_VIDA} sel={p.objetivosVida} aoTocar={(v) => alternar("objetivosVida", v)} />
+                </>
+              )}
+
+              {passo === 3 && (
+                <>
+                  <Pergunta texto="Como você lida com seu dinheiro hoje?" />
+                  <Chips opcoes={CONTROLE} sel={[p.controleFinancas]} aoTocar={(v) => set("controleFinancas", v)} lista />
+                  <Pergunta texto="Qual é o seu principal objetivo com dinheiro?" />
+                  <Chips opcoes={OBJ_FIN} sel={[p.objetivoFinanceiro]} aoTocar={(v) => set("objetivoFinanceiro", v as Perfil["objetivoFinanceiro"])} lista />
+                  <Pergunta texto="Seu dinheiro guardado caiu 10% num mês. O que você faz?" />
+                  <Chips opcoes={REACAO} sel={[p.reacaoQueda]} aoTocar={(v) => set("reacaoQueda", v as Perfil["reacaoQueda"])} lista />
+                  <Pergunta texto="Onde você já guardou ou investiu dinheiro?" ajuda="Pode marcar mais de uma." />
+                  <Chips opcoes={EXPERIENCIA} sel={p.experiencia} aoTocar={(v) => alternar("experiencia", v)} />
+                </>
+              )}
+
+              {passo === 4 && (
+                <>
+                  <Pergunta texto="Como está sua disciplina no dia a dia?" />
+                  <Chips opcoes={DISCIPLINA} sel={[p.disciplina]} aoTocar={(v) => set("disciplina", v)} lista />
+                  <Pergunta texto="O que mais atrapalha a sua rotina?" />
+                  <Chips opcoes={DIFICULDADES} sel={p.dificuldades} aoTocar={(v) => alternar("dificuldades", v)} />
+                  <Pergunta texto="Em que horário você rende mais?" />
+                  <Chips opcoes={HORARIOS} sel={p.horarios} aoTocar={(v) => alternar("horarios", v)} />
+                </>
+              )}
+
+              {passo === P_SENHA && (
+                <View style={{ marginTop: 20 }}>
+                  <ConfigurarAcesso aoAbrir={aoAbrir} aoMudarForca={setForca}
+                    pessoais={[...p.nomeCompleto.split(/\s+/), p.apelido, p.nascimento.slice(0, 4)]} />
+                </View>
+              )}
+
+              {passo === P_CONTA && (
+                <>
+                  <SeletorTipo indice={tipoIdx} aoEscolher={setTipoIdx} />
+                  <View style={s.grupo}>
+                    <CampoAgrupado rotulo="Nome" valor={contaNome} aoMudar={setContaNome} dica={tipo.exemplo} />
+                    <View style={s.divisor} />
+                    <CampoAgrupado rotulo="Saldo hoje (R$)" valor={contaSaldo} aoMudar={setContaSaldo} dica="0,00" teclado="decimal-pad" />
+                  </View>
+                  <Text style={{ color: c.textoSuave, fontSize: 12, marginTop: 10 }}>{CONTA_INICIAL.nota}</Text>
+                </>
+              )}
+            </Cascata>
+
+            {passo === P_PRONTO && pronto && (
+              <View style={{ marginTop: 12 }}>
+                <ResumoCard indice={0} icone="user" cor="#3E5269" rotulo="Perfil configurado" valor={pronto.perfil.nomeCompleto.trim()}
+                  detalhe={`Perfil de investidor: ${NOME_PERFIL[pronto.perfil.perfilInvestidor ?? "conservador"]}. Não é recomendação de investimento.`} />
+                <ResumoCard indice={1} icone="lock" cor="#2F5A45" rotulo="Segurança ativa" valor="Senha forte criada"
+                  detalhe="Seus dados ficam cifrados só neste celular." />
+                <ResumoCard indice={2} icone={temConta ? tipo.icone : "wallet"} cor="#7A3C29"
+                  rotulo={temConta ? "Primeira conta criada" : "Primeira conta"}
+                  valor={temConta ? `${contaNome.trim()} · ${formatarDinheiro(saldoCentavos)}` : "Você cria pela tela inicial"} />
+              </View>
+            )}
           </View>
-
-          {passo === 0 && (
-            <>
-              <Campo rotulo="Nome completo" valor={p.nomeCompleto} aoMudar={(v) => set("nomeCompleto", v)} autoCapitalize="words" />
-              <Campo rotulo="Como quer ser chamado(a)?" dica="Apelido ou nome social" valor={p.apelido}
-                aoMudar={(v) => set("apelido", v)} autoCapitalize="words" />
-              <Campo rotulo="Data de nascimento" dica="DD/MM/AAAA" valor={dataBR} aoMudar={(v) => setDataBR(mascaraData(v))}
-                teclado="number-pad" />
-              {dataBR.length === 10 && (idade === null || idade > 120) && <Aviso cor={c.erro}>Confira a data, parece que algo não bate.</Aviso>}
-              {idade !== null && idade < 13 && <Aviso cor={c.erro}>O Solis é para quem tem 13 anos ou mais.</Aviso>}
-              {idade !== null && idade >= 13 && idade < 18 && (
-                <Aviso cor={c.aviso}>Como você tem menos de 18, combine com um responsável antes de usar.</Aviso>
-              )}
-              <Pergunta texto="Quais pronomes você usa?" ajuda="Pode marcar mais de um. A Solis AI vai falar com você assim." />
-              <Chips opcoes={PRONOMES} sel={p.pronomes} aoTocar={alternarPronome} />
-              {p.pronomes.includes("outro") && (
-                <Campo rotulo="Escreva seus pronomes" dica="Ex.: ile/dile" valor={pronomeOutro} aoMudar={setPronomeOutro} autoCapitalize="none" />
-              )}
-              <Pergunta texto="Gênero" />
-              <Chips opcoes={GENEROS} sel={[p.genero]} aoTocar={(v) => set("genero", p.genero === v ? "" : v)} />
-              {p.genero === "outro" && <Campo rotulo="Como você se identifica?" dica="Escreva do seu jeito" valor={generoOutro} aoMudar={setGeneroOutro} />}
-            </>
-          )}
-
-          {passo === 1 && (
-            <>
-              <Pergunta texto="Como você trabalha hoje?" />
-              <Chips opcoes={TRABALHO} sel={[p.trabalho]} aoTocar={(v) => set("trabalho", v)} lista />
-              <Pergunta texto="Quanto entra por mês, em média?" ajuda="Somando tudo o que você recebe." />
-              <Chips opcoes={RENDA} sel={[p.faixaRenda]} aoTocar={(v) => set("faixaRenda", v)} lista />
-            </>
-          )}
-
-          {passo === 2 && (
-            <>
-              <Pergunta texto="O que ocupa o seu dia e o seu tempo livre?" />
-              <Chips opcoes={ATIVIDADES} sel={p.atividades} aoTocar={(v) => alternar("atividades", v)} />
-              <Pergunta texto="Como é a sua rotina?" />
-              <Chips opcoes={RITMO} sel={[p.ritmo]} aoTocar={(v) => set("ritmo", v)} />
-              <Pergunta texto="O que você mais quer agora?" />
-              <Chips opcoes={OBJ_VIDA} sel={p.objetivosVida} aoTocar={(v) => alternar("objetivosVida", v)} />
-            </>
-          )}
-
-          {passo === 3 && (
-            <>
-              <Pergunta texto="Como você lida com seu dinheiro hoje?" />
-              <Chips opcoes={CONTROLE} sel={[p.controleFinancas]} aoTocar={(v) => set("controleFinancas", v)} lista />
-              <Pergunta texto="Qual é o seu principal objetivo com dinheiro?" />
-              <Chips opcoes={OBJ_FIN} sel={[p.objetivoFinanceiro]} aoTocar={(v) => set("objetivoFinanceiro", v as Perfil["objetivoFinanceiro"])} lista />
-              <Pergunta texto="Seu dinheiro guardado caiu 10% num mês. O que você faz?" />
-              <Chips opcoes={REACAO} sel={[p.reacaoQueda]} aoTocar={(v) => set("reacaoQueda", v as Perfil["reacaoQueda"])} lista />
-              <Pergunta texto="Onde você já guardou ou investiu dinheiro?" ajuda="Pode marcar mais de uma." />
-              <Chips opcoes={EXPERIENCIA} sel={p.experiencia} aoTocar={(v) => alternar("experiencia", v)} />
-            </>
-          )}
-
-          {passo === 4 && (
-            <>
-              <Pergunta texto="Como está sua disciplina no dia a dia?" />
-              <Chips opcoes={DISCIPLINA} sel={[p.disciplina]} aoTocar={(v) => set("disciplina", v)} lista />
-              <Pergunta texto="O que mais atrapalha a sua rotina?" />
-              <Chips opcoes={DIFICULDADES} sel={p.dificuldades} aoTocar={(v) => alternar("dificuldades", v)} />
-              <Pergunta texto="Em que horário você rende mais?" />
-              <Chips opcoes={HORARIOS} sel={p.horarios} aoTocar={(v) => alternar("horarios", v)} />
-            </>
-          )}
-
-          {passo === 5 && (
-            <ConfigurarAcesso
-              aoAbrir={aoAbrir}
-              pessoais={[...p.nomeCompleto.split(/\s+/), p.apelido, p.nascimento.slice(0, 4)]}
-            />
-          )}
         </ScrollView>
 
-        {passo < total - 1 && (
+        {passo <= 4 && (
+          <View style={s.rodape}><BotaoCTA texto="Continuar" onPress={continuar} desativado={!valido} /></View>
+        )}
+        {passo === P_CONTA && (
           <View style={s.rodape}>
-            <Pressable
-              style={[s.botaoPrincipal, { backgroundColor: valido ? c.primario : c.borda }, !valido && s.semSombra]}
-              onPress={continuar}
-              disabled={!valido}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !valido }}
-            >
-              <Text style={[s.botaoTextoCheio, !valido ? { color: c.textoSuave } : { color: c.sobrePrimario }]}>Continuar</Text>
+            <BotaoCTA texto={CONTA_INICIAL.cta} onPress={concluirConta} desativado={!contaNome.trim()} carregando={salvandoConta} />
+            <Pressable onPress={() => setPasso(P_PRONTO)} style={{ padding: 12, alignItems: "center" }} accessibilityRole="button">
+              <Text style={{ color: c.textoSuave, fontWeight: "600" }}>{CONTA_INICIAL.pular}</Text>
             </Pressable>
           </View>
         )}
+        {passo === P_PRONTO && pronto && (
+          <View style={s.rodape}><BotaoCTA texto={PRONTO.cta} onPress={() => aoConcluir(pronto.banco)} /></View>
+        )}
       </KeyboardAvoidingView>
     </SafeScreen>
+  );
+}
+
+/** Seletor em pílula com indicador que desliza (mola do tour). */
+function SeletorTipo({ indice, aoEscolher }: { indice: number; aoEscolher: (i: number) => void }) {
+  const c = useTema().cores;
+  const [largura, setLargura] = useState(0);
+  const n = CONTA_INICIAL.tipos.length;
+  const pos = useSharedValue(indice);
+  useEffect(() => { pos.value = withSpring(indice, MOLA); }, [indice]);
+  const ind = useAnimatedStyle(() => ({ transform: [{ translateX: pos.value * (largura / n) }] }));
+  return (
+    <View style={[s.segmento, { backgroundColor: c.superficie }]} onLayout={(e) => setLargura(e.nativeEvent.layout.width - 8)} accessibilityRole="radiogroup">
+      {largura > 0 && <Reanimated.View style={[s.segIndicador, { width: largura / n, backgroundColor: c.primario }, ind]} />}
+      {CONTA_INICIAL.tipos.map((t, i) => (
+        <Pressable key={t.v} style={s.segItem} onPress={() => aoEscolher(i)} accessibilityRole="radio" accessibilityState={{ selected: i === indice }}>
+          <Icone nome={t.icone} tamanho={13} cor={i === indice ? c.sobrePrimario : c.textoSuave} />
+          <Text style={{ color: i === indice ? c.sobrePrimario : c.textoSuave, fontWeight: "700", fontSize: 13 }}>{t.t}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function CampoAgrupado({ rotulo, valor, aoMudar, dica, teclado }: {
+  rotulo: string; valor: string; aoMudar: (v: string) => void; dica: string; teclado?: "decimal-pad";
+}) {
+  const c = useTema().cores;
+  const [foco, setFoco] = useState(false);
+  return (
+    <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 }}>
+      <Text style={{ color: foco ? c.primario : c.textoSuave, fontSize: 12, fontWeight: "600" }}>{rotulo}</Text>
+      <TextInput value={valor} onChangeText={aoMudar} placeholder={dica} placeholderTextColor={c.textoSuave}
+        keyboardType={teclado ?? "default"} autoCapitalize={teclado ? "none" : "words"} onFocus={() => setFoco(true)} onBlur={() => setFoco(false)}
+        style={{ color: c.texto, fontSize: 17, paddingVertical: 6, fontVariant: ["tabular-nums"] }} accessibilityLabel={rotulo} />
+    </View>
   );
 }
 
@@ -419,14 +492,19 @@ function Chips({ opcoes, sel, aoTocar, lista }: { opcoes: Opcao[]; sel: string[]
 }
 
 const s = StyleSheet.create({
-  topoBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, gap: 12 },
+  topoBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4, gap: 12 },
+  grupo: { borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#2C3B4D", marginTop: 14 },
+  divisor: { height: StyleSheet.hairlineWidth, backgroundColor: "rgba(255,255,255,0.08)", marginLeft: 16 },
+  segmento: { flexDirection: "row", borderRadius: 50, padding: 4, marginTop: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  segIndicador: { position: "absolute", top: 4, bottom: 4, left: 4, borderRadius: 50 },
+  segItem: { flex: 1, minHeight: 40, flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "center" },
   voltar: { width: 32, height: 44, justifyContent: "center" },
   barraFundo: { height: 3, borderRadius: 2, overflow: "hidden" },
   barra: { height: 3, borderRadius: 2 },
   cabecalhoConteudo: { alignItems: "flex-start", marginBottom: 8, gap: 8 },
   iconeEtapa: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center" },
-  conteudo: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
-  titulo: { fontSize: 30, fontWeight: "800", letterSpacing: -0.6, lineHeight: 36 },
+  conteudo: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 },
+  titulo: { fontSize: 28, fontWeight: "800", letterSpacing: -0.6, lineHeight: 34 },
   desc: { fontSize: 15, lineHeight: 22 },
   input: { borderBottomWidth: 1.5, paddingHorizontal: 0, paddingTop: 6, paddingBottom: 10, fontSize: 17 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

@@ -1,4 +1,5 @@
 import type { NomeIcone } from "../components/Icone";
+import type { Variante } from "./WalletCard";
 
 // Todos os textos e valores do tour ficam aqui. Valores em centavos.
 // Os exemplos seguem o que o Solis faz de verdade: metas não tiram dinheiro das contas,
@@ -15,9 +16,9 @@ export const VALORES = {
 };
 
 export const CARDS = {
-  banco: { rotulo: "Banco", nome: "Conta principal", icone: "bank" as NomeIcone, cor: "#2F5DA8", corBrilho: "#4A78C4" },
-  dinheiro: { rotulo: "Dinheiro", nome: "Carteira", icone: "money-bill-wave" as NomeIcone, cor: "#2E7D52", corBrilho: "#43996A" },
-  cartao: { rotulo: "Cartão", nome: "Cartão de crédito", icone: "credit-card" as NomeIcone, cor: "#3A4B5F", corBrilho: "#4F627A" },
+  banco: { rotulo: "Conta corrente", nome: "Conta principal", icone: "bank" as NomeIcone, variante: "fantastic" as Variante, cor: "#2F5DA8" },
+  dinheiro: { rotulo: "Carteira", nome: "Dinheiro vivo", icone: "money-bill-wave" as NomeIcone, variante: "musgo" as Variante, cor: "#2E7D52" },
+  cartao: { rotulo: "Cartão de crédito", nome: "Fatura do mês", icone: "credit-card" as NomeIcone, variante: "truffle" as Variante, cor: "#3A4B5F" },
   meta: { nome: "Viagem", icone: "plane-alt" as NomeIcone },
 };
 
@@ -103,11 +104,27 @@ export const CONTA_INICIAL = {
   titulo: "Sua primeira conta",
   texto: "Comece pela conta que você mais usa. Dá para adicionar as outras depois.",
   tipos: [
-    { v: "corrente" as const, t: "Banco", icone: "bank" as NomeIcone, cor: CARDS.banco.cor, exemplo: "Ex.: Nubank, Caixa" },
-    { v: "poupanca" as const, t: "Poupança", icone: "piggy-bank" as NomeIcone, cor: "#7A5AA6", exemplo: "Ex.: Poupança Caixa" },
-    { v: "dinheiro" as const, t: "Dinheiro", icone: "money-bill-wave" as NomeIcone, cor: CARDS.dinheiro.cor, exemplo: "Ex.: Carteira" },
+    { v: "corrente" as const, t: "Banco", sub: "Conta corrente", variante: "fantastic" as Variante, icone: "bank" as NomeIcone, cor: CARDS.banco.cor, exemplo: "Ex.: Nubank, Caixa" },
+    { v: "poupanca" as const, t: "Reserva", sub: "Poupança", variante: "truffle" as Variante, icone: "piggy-bank" as NomeIcone, cor: "#7A5AA6", exemplo: "Ex.: Poupança Caixa" },
+    { v: "dinheiro" as const, t: "Carteira", sub: "Dinheiro vivo", variante: "musgo" as Variante, icone: "money-bill-wave" as NomeIcone, cor: CARDS.dinheiro.cor, exemplo: "Ex.: Carteira" },
   ],
   nota: "O saldo pode ser aproximado. Você corrige quando quiser.",
   cta: "Concluir",
   pular: "Fazer depois",
+};
+
+export const PRONTO = {
+  kicker: "Tudo certo",
+  titulo: "Tudo pronto!",
+  texto: "Seu Solis está montado do seu jeito. Agora é só usar, um dia de cada vez.",
+  selo: "Conta ativa",
+  seloSemConta: "Tudo certo",
+  cta: "Começar agora",
+};
+
+export const SETUP_ROTULOS = {
+  cartaoPerfil: (apelido: string) => (apelido ? `Carteira de ${apelido}` : "Sua carteira"),
+  subPerfil: "Carteira Solis",
+  subSenha: "Protegida por senha",
+  titularVazio: "Seu nome",
 };

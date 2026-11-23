@@ -5,6 +5,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Icone } from "../components/Icone";
 import { AnimatedNumber, BORDA_FINA, MOLA, NUM, c } from "./componentes";
+import { PROPORCAO, WalletCard } from "./WalletCard";
 import { CARDS, SOBRA, SOBRA_ROTULO, VALORES } from "./onboardingConfig";
 
 type Pose = { x: number; y: number; r: number; s: number; o: number };
@@ -65,19 +66,11 @@ function useCardPose(id: Id, passo: number, W: number, H: number) {
 function CardConta({ id, valor, negativo, passo, W, H }: { id: "banco" | "dinheiro" | "cartao"; valor: number; negativo?: boolean; passo: number; W: number; H: number }) {
   const estilo = useCardPose(id, passo, W, H);
   const info = CARDS[id];
-  const w = W * 0.5, h = w * 0.62;
+  const w = W * 0.56, h = w / PROPORCAO;
   return (
-    <Animated.View style={[st.card, { width: w, height: h, left: (W - w) / 2, top: (H - h) / 2, backgroundColor: info.cor }, estilo]}>
-      <View style={[st.brilho, { backgroundColor: info.corBrilho }]} />
-      <View style={st.marca}><Icone nome={info.icone} tamanho={w * 0.34} cor="rgba(255,255,255,0.10)" /></View>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        <Icone nome={info.icone} tamanho={12} cor="rgba(255,255,255,0.85)" />
-        <Text style={st.cardRotulo}>{info.rotulo.toUpperCase()}</Text>
-      </View>
-      <View>
-        <Text style={st.cardNome}>{info.nome}</Text>
-        <AnimatedNumber centavos={valor} negativo={negativo} style={st.cardValor} />
-      </View>
+    <Animated.View style={[{ position: "absolute", left: (W - w) / 2, top: (H - h) / 2 }, estilo]}>
+      <WalletCard width={w} title={info.nome} subtitle={info.rotulo} balance={valor} negativo={negativo}
+        variant={info.variante} badgeIcon="shield-check" tipoIcon={info.icone} holder="Exemplo" />
     </Animated.View>
   );
 }

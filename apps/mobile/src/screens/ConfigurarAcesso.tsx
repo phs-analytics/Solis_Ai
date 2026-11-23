@@ -13,14 +13,17 @@ import type { Banco } from "@solis/dados";
 import { entrar } from "../contexto/sessao";
 import { useTema } from "../theme";
 import { Icone } from "../components/Icone";
+import Animated, { ZoomIn } from "react-native-reanimated";
 
 interface Props {
   aoAbrir: (banco: Banco, restaurado: boolean) => void;
   /** Nome, apelido e ano de nascimento: não podem fazer parte da senha. */
   pessoais?: string[];
+  /** 0 a 1, conforme as regras da senha são cumpridas (o cartão do onboarding brilha com isso). */
+  aoMudarForca?: (forca: number) => void;
 }
 
-export function ConfigurarAcesso({ aoAbrir, pessoais = [] }: Props) {
+export function ConfigurarAcesso({ aoAbrir, pessoais = [], aoMudarForca }: Props) {
   const { cores: c, dark } = useTema();
   const [senha, setSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
@@ -37,6 +40,8 @@ export function ConfigurarAcesso({ aoAbrir, pessoais = [] }: Props) {
 
   const regras = avaliarSenha(senha, pessoais);
   const forte = regras.every((r) => r.ok);
+  const forca = regras.filter((r) => r.ok).length / regras.length;
+  useEffect(() => { aoMudarForca?.(forca); }, [forca]);
   const iguais = senha === confirmacao;
   const podeContinuar = forte && iguais && !carregando;
 
@@ -97,18 +102,21 @@ export function ConfigurarAcesso({ aoAbrir, pessoais = [] }: Props) {
           autoCorrect={false}
           accessibilityLabel="Senha"
         />
-        <Pressable onPress={() => setVer(!ver)} style={s.ver} accessibilityRole="button"
+        <Pressable onPress={() => setVer(!ver)} style={s.ver} hitSlop={8} accessibilityRole="button"
           accessibilityLabel={ver ? "Esconder senha" : "Mostrar senha"}>
-          <Text style={{ color: c.primario, fontWeight: "600" }}>{ver ? "Esconder" : "Mostrar"}</Text>
+          <Animated.View key={ver ? "v" : "o"} entering={ZoomIn.springify().stiffness(280).damping(26)}>
+            <Icone nome={ver ? "eye-crossed" : "eye"} tamanho={18} cor={c.primario} />
+          </Animated.View>
         </Pressable>
       </View>
 
       <View style={s.regras} accessibilityLiveRegion="polite">
         {regras.map((r) => (
-          <View key={r.id} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Icone nome={r.ok ? "check" : "circle-small"} tamanho={12} cor={r.ok ? c.sucesso : c.textoSuave} />
-            <Text style={{ color: r.ok ? c.sucesso : c.textoSuave, fontSize: 13 }}>{r.texto}</Text>
-          </View>
+          <Animated.View key={r.id + r.ok} entering={r.ok ? ZoomIn.springify().stiffness(280).damping(16) : undefined}
+            style={[s.pilula, r.ok ? { backgroundColor: "rgba(22,163,74,0.18)", borderColor: "rgba(22,163,74,0.6)" } : { borderColor: c.borda }]}>
+            <Icone nome={r.ok ? "check" : "circle-small"} tamanho={10} cor={r.ok ? "#4ADE80" : c.textoSuave} />
+            <Text style={{ color: r.ok ? "#4ADE80" : c.textoSuave, fontSize: 12, fontWeight: "600" }}>{r.texto}</Text>
+          </Animated.View>
         ))}
       </View>
 
@@ -161,9 +169,10 @@ const s = StyleSheet.create({
   campoSenha: { flexDirection: "row", alignItems: "center" },
   input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16 },
   ver: { position: "absolute", right: 14, padding: 6 },
-  regras: { gap: 4, paddingHorizontal: 4 },
+  regras: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  pilula: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: 50, paddingHorizontal: 10, paddingVertical: 5 },
   bio: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 14, padding: 14 },
-  botao: { paddingVertical: 16, borderRadius: 50, alignItems: "center", marginTop: 8 },
+  botao: { paddingVertical: 17, borderRadius: 14, alignItems: "center", marginTop: 8 },
   botaoTexto: { color: "#fff", fontWeight: "700", fontSize: 16 },
   secundario: { padding: 12, alignItems: "center" },
 });
