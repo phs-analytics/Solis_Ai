@@ -7,12 +7,12 @@ import type { Banco } from "@solis/dados";
 import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import { SafeScreen } from "../components/SafeScreen";
 import { entrar } from "../contexto/sessao";
-import { tipo, useTema } from "../theme";
+import { tipo, useTemaClassico } from "../theme";
 import { BotaoCTA } from "../onboarding/componentes";
 
 /** Para quem já tem um backup .solis e ainda não tem senha neste celular (Splash > "Já tem acesso? Entrar"). */
 export function RestaurarBackup({ aoAbrir }: { aoAbrir: (b: Banco) => void }) {
-  const { cores: c } = useTema();
+  const { cores: c } = useTemaClassico();
   const nav = useNavigation();
   const [senha, setSenha] = useState("");
   const [foco, setFoco] = useState(false);

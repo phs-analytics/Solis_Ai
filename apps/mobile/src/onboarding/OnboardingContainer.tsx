@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Texto as Text } from "../components/Texto";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
-import { Directions, GestureDetector, useFlingGesture, useSimultaneousGestures } from "react-native-gesture-handler";
+import { Directions, Gesture, GestureDetector } from "react-native-gesture-handler";
 import { BentoCard, BotaoCTA, BotaoTopo, BrilhoAmbiente, MOLA, RegraCard, SegmentedProgressBar, c } from "./componentes";
 import { HeroCardStage } from "./HeroCardStage";
 import { NOTA_REGRAS, PASSOS, REGRAS } from "./onboardingConfig";
@@ -29,9 +29,9 @@ export function OnboardingContainer({ aoTerminar }: { aoTerminar: () => void }) 
   const ir = (n: number) => { if (n >= 0 && n < total) setPasso(n); };
   const avancar = () => (passo === total - 1 ? aoTerminar() : ir(passo + 1));
 
-  const esquerda = useFlingGesture({ direction: Directions.LEFT, runOnJS: true, onActivate: avancar });
-  const direita = useFlingGesture({ direction: Directions.RIGHT, runOnJS: true, onActivate: () => ir(passo - 1) });
-  const gestos = useSimultaneousGestures(esquerda, direita);
+  const esquerda = Gesture.Fling().direction(Directions.LEFT).runOnJS(true).onStart(avancar);
+  const direita = Gesture.Fling().direction(Directions.RIGHT).runOnJS(true).onStart(() => ir(passo - 1));
+  const gestos = Gesture.Simultaneous(esquerda, direita);
 
   const W = width - 40;
   const H = Math.round(height * 0.38);

@@ -132,6 +132,9 @@ Commit: `28b6f07`.
 - Tag com hífen (`v0.9.0-beta`) sai como pré-lançamento. O build leva ~49 min, quase tudo no passo "Build do APK" (C++ do llama.rn/SQLCipher).
 - Pendente: testar no celular real o fluxo completo e a restauração; bloqueio por inatividade ainda não existe.
 
+## Identidade visual
+Paleta original do Solis (a das telas em `docs/telas-*.pdf`), claro e escuro seguindo o celular: claro Palladian `#EEE9DF` / Truffle `#A35139` / Abyssal `#1B2632`; escuro Abyssal `#1B2632` / Burning Flame `#FFB162` / Palladian `#EEE9DF`. Tokens só em `apps/mobile/src/theme/index.ts`; nenhuma cor fixa fora dele. Telas novas (Início em diante) usam `useTema()`: claro com fundo off-white `#F6F2EA` e cards brancos; escuro com fundo grafite `#0E0E13` e cards `#17171E`. Onboarding, desbloqueio, restaurar backup e criar senha ficam no visual clássico (`useTemaClassico()`, `temaClaro`/`temaEscuro`) e não mudam. Cores auxiliares neutras (`auxiliares`): preto `#000000`, branco `#FFFFFF`, off-white `#F6F2EA`. Cores de dados (receita, despesa, categorias) e de bancos seguem como semânticas.
+
 ## Estrutura
 ```
 Solis_V3/

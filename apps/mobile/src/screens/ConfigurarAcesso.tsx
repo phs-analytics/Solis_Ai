@@ -12,7 +12,7 @@ import { avaliarSenha } from "@solis/core";
 import { salvarSalt, gerarSalt, restaurarBackup } from "@solis/dados";
 import type { Banco } from "@solis/dados";
 import { entrar } from "../contexto/sessao";
-import { useTema } from "../theme";
+import { useTemaClassico } from "../theme";
 import { Icone } from "../components/Icone";
 import Animated, { ZoomIn } from "react-native-reanimated";
 
@@ -25,7 +25,7 @@ interface Props {
 }
 
 export function ConfigurarAcesso({ aoAbrir, pessoais = [], aoMudarForca }: Props) {
-  const { cores: c, dark } = useTema();
+  const { cores: c, dark } = useTemaClassico();
   const [senha, setSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
   const [ver, setVer] = useState(false);

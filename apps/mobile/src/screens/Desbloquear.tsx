@@ -5,13 +5,13 @@ import { registrarTentativaErrada, resetarTentativas, verificarBloqueio, apagarT
 import type { Banco } from "@solis/dados";
 import { entrar, SenhaErrada } from "../contexto/sessao";
 import { SafeScreen } from "../components/SafeScreen";
-import { tipo, useTema } from "../theme";
+import { tipo, useTemaClassico } from "../theme";
 import { BotaoCTA } from "../onboarding/componentes";
 
 const MAX_TENTATIVAS = 5;
 
 export function Desbloquear({ aoAbrir, aoApagado }: { aoAbrir: (b: Banco) => void; aoApagado: () => void }) {
-  const { cores: c } = useTema();
+  const { cores: c } = useTemaClassico();
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);

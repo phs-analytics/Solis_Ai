@@ -12,6 +12,7 @@ import { SafeScreen } from "../components/SafeScreen";
 import { Texto as Text } from "../components/Texto";
 import { Icone, type NomeIcone } from "../components/Icone";
 import { Tocavel } from "../components/Tocavel";
+import { NavIcone, type NomeNav } from "../components/NavIcone";
 import { CategoryIcon, corCategoria } from "../components/CategoryIcon";
 import { GraficoSaldo } from "../components/GraficoSaldo";
 import { AnelProgresso } from "../components/AnelProgresso";
@@ -26,6 +27,11 @@ const MOLA = { stiffness: 280, damping: 26 };
 const PERIODOS: PeriodoSaldo[] = ["7D", "1M", "3M", "6M", "1A"];
 const NOME_PERIODO: Record<PeriodoSaldo, string> = { "7D": "7 dias", "1M": "1 mês", "3M": "3 meses", "6M": "6 meses", "1A": "1 ano" };
 const OCULTO = "R$ ••••••";
+const MESES_CURTOS = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+// Dimensões do ticket de previsão
+const BIL_PERF_W = 10;
+const BIL_COTO_W = 68;
+const BIL_NOTCH_R = 7;
 const DIA_SEMANA = ["D", "S", "T", "Q", "Q", "S", "S"];
 type Cores = ReturnType<typeof useTema>["cores"];
 type Filtro = "todos" | "despesa" | "receita";
@@ -49,7 +55,6 @@ function diasDesde(iso: string): number {
   return Math.round((hoje.getTime() - new Date(`${iso}T12:00:00`).getTime()) / 86_400_000);
 }
 const grupoData = (iso: string) => { const d = diasDesde(iso); return d === 0 ? "HOJE" : d === 1 ? "ONTEM" : `${iso.slice(8, 10)}/${iso.slice(5, 7)}`; };
-const iniciais = (n: string) => n.trim().split(/\s+/).filter(Boolean).map((p, i, a) => (i === 0 || i === a.length - 1 ? p[0] : "")).join("").toUpperCase() || "S";
 const diaSemana = (iso: string) => DIA_SEMANA[new Date(`${iso}T12:00:00`).getDay()]!;
 
 export function Home() {
@@ -58,6 +63,10 @@ export function Home() {
   const banco = useBanco();
   const nav = useNavigation<NativeStackNavigationProp<RootStackParams>>();
   const reduzir = useReducedMotion();
+  const [toquePerfil, setToquePerfil] = useState(0);
+  // shortcut: o toque espera ~0,4 s antes de navegar, para a animação do ícone aparecer.
+  const [toques, setToques] = useState<Record<string, number>>({});
+  const tocar = (k: string) => setToques((t) => ({ ...t, [k]: (t[k] ?? 0) + 1 }));
   const { width } = useWindowDimensions();
 
   const [dados, setDados] = useState<ResumoHome | null>(null);
@@ -108,17 +117,6 @@ export function Home() {
   const abrirLancamento = (p: RootStackParams["NovoLancamento"]) => nav.navigate("NovoLancamento", p);
   const irAba = (screen: string, params?: object) => nav.navigate("App", { screen, params } as never);
 
-  const acoes: [string, NomeIcone, () => void][] = [
-    ["Transferir", "exchange", () => abrirLancamento({ tipo: "transferencia" })],
-    ["Solis AI", "sparkles", () => irAba("Chat")],
-    ["Metas", "bullseye", () => irAba("Metas")],
-    ["Investir", "chart-line-up", () => irAba("Investimentos")],
-    ["Importar", "file-invoice", () => nav.navigate("Importacao")],
-    ["Bancos", "bank", () => nav.navigate("ConexaoBancaria")],
-    ["Nova conta", "plus", () => nav.navigate("NovaConta")],
-    ["Lançamentos", "list", () => irAba("Lancamentos")],
-  ];
-
   const maxDia = Math.max(1, ...(dados?.diario7 ?? []).map((d) => d.centavos));
   const selecionado = diaSel ?? dados?.diario7[dados.diario7.length - 1]?.data ?? null;
   // Filtra entre os 30 últimos e mostra até 6, para "Receitas" não ficar vazio só porque o salário não é dos últimos dias.
@@ -138,57 +136,78 @@ export function Home() {
 
         {/* Cabeçalho: pílula do perfil e botões redondos */}
         <Animated.View key={`0-${entrada}`} entering={entra(0)} style={[s.linha, s.px]}>
-          <Tocavel onPress={() => irAba("Mais")} style={[s.perfil, { backgroundColor: c.superficie, borderColor: c.borda }]} accessibilityRole="button"
+          <Tocavel onPress={() => { setToquePerfil((n) => n + 1); setTimeout(() => irAba("Mais"), 420); }} style={s.perfil} accessibilityRole="button"
             accessibilityLabel={`Perfil de ${apelido}. ${saudacao(new Date().getHours()).replace("!", "")}`}>
-            <View style={[s.avatar, { backgroundColor: c.primarioSuave }]}>
-              <Text style={{ ...tipo.marca(13), color: c.primario }}>{iniciais(nome.completo || nome.apelido)}</Text>
+            <View style={[s.avatar, { backgroundColor: c.primario }]}>
+              <NavIcone nome="person" cor={c.sobrePrimario} tamanho={26} play={toquePerfil} />
             </View>
             <View style={{ marginLeft: 10, flexShrink: 1 }}>
               <Text style={{ ...tipo.corpo(11), lineHeight: 14, color: c.textoSuave }}>{saudacao(new Date().getHours()).replace("!", ",")}</Text>
-              <Text style={{ fontFamily: tipo.marca(15).fontFamily, fontSize: 15, lineHeight: 19, color: c.texto }} numberOfLines={1}>{apelido}</Text>
+              <Text style={{ fontFamily: tipo.marca(15).fontFamily, fontSize: 19, lineHeight: 24, color: c.texto }} numberOfLines={1}>{apelido}</Text>
             </View>
-            <Icone nome="angle-small-right" tamanho={16} cor={c.textoSuave} style={{ marginLeft: 6 }} />
           </Tocavel>
           <View style={{ flex: 1 }} />
-          <Tocavel onPress={alternarPrivacidade} style={[s.redondo, { backgroundColor: c.superficie, borderColor: c.borda }]}
+          <Tocavel onPress={() => { tocar("olho"); alternarPrivacidade(); }} style={[s.redondo, { backgroundColor: c.superficie, borderColor: c.borda }]}
             accessibilityRole="switch" accessibilityState={{ checked: oculto }} accessibilityLabel={oculto ? "Mostrar valores" : "Esconder valores"}>
-            <Icone nome={oculto ? "eye-crossed" : "eye"} tamanho={18} cor={c.texto} />
+            <NavIcone nome="eye" riscado={oculto} tamanho={18} cor={c.texto} play={toques.olho ?? 0} />
           </Tocavel>
-          <Tocavel onPress={() => irAba("Lancamentos", { focarBusca: Date.now() })}
+          <Tocavel onPress={() => { tocar("busca"); setTimeout(() => irAba("Lancamentos", { focarBusca: Date.now() }), 380); }}
             style={[s.redondo, { backgroundColor: c.superficie, borderColor: c.borda, marginLeft: 8 }]} accessibilityRole="button" accessibilityLabel="Buscar lançamentos">
-            <Icone nome="search" tamanho={18} cor={c.texto} />
+            <NavIcone nome="search" tamanho={18} cor={c.texto} play={toques.busca ?? 0} />
           </Tocavel>
         </Animated.View>
 
-        {/* Saldo, pílula e botões principais */}
+        {/* Card do saldo: valor, gastos por categoria, receitas e despesas */}
         <Animated.View key={`1-${entrada}`} entering={entra(1)} style={s.px}>
-          <Text style={{ ...tipo.corpo(14, "medium"), color: c.textoSuave }}>Saldo total</Text>
-          {oculto
-            ? <Text style={{ ...tipo.valor(40), letterSpacing: -1.2, color: c.texto, marginTop: 2 }} accessibilityLabel="Saldo oculto">{OCULTO}</Text>
-            : (
-              <Text style={{ ...tipo.valor(40), letterSpacing: -1.2, color: saldoRolando < 0 ? c.erro : c.texto, marginTop: 2 }} accessibilityLabel={`Saldo total: ${formatarDinheiro(dados?.saldoTotal ?? 0)}`}>
-                {textoSaldo.slice(0, virgula)}
-                <Text style={{ ...tipo.valor(40), letterSpacing: -1.2, color: c.textoSuave, opacity: 0.55 }}>{textoSaldo.slice(virgula)}</Text>
-              </Text>
+          <View style={[s.card, { backgroundColor: c.superficie, borderColor: c.borda, padding: 20, overflow: "hidden" }]}>
+            <LinearGradient pointerEvents="none" colors={[`${c.primario}33`, `${c.primario}00`]} start={{ x: 1, y: 0 }} end={{ x: 0.2, y: 0.8 }} style={StyleSheet.absoluteFill} />
+            <Text style={{ ...tipo.corpo(13, "medium"), color: c.textoSuave }}>Saldo atual</Text>
+            {oculto
+              ? <Text style={{ ...tipo.valor(38), letterSpacing: -1.2, color: c.texto, marginTop: 2 }} accessibilityLabel="Saldo oculto">{OCULTO}</Text>
+              : (
+                <Text style={{ ...tipo.valor(38), letterSpacing: -1.2, color: saldoRolando < 0 ? c.erro : c.texto, marginTop: 2 }} accessibilityLabel={`Saldo total: ${formatarDinheiro(dados?.saldoTotal ?? 0)}`}>
+                  {textoSaldo.slice(0, virgula)}
+                  <Text style={{ ...tipo.valor(38), letterSpacing: -1.2, color: c.textoSuave, opacity: 0.55 }}>{textoSaldo.slice(virgula)}</Text>
+                </Text>
+              )}
+            {(dados?.categorias.length ?? 0) > 0 && (
+              <>
+                <View style={s.segmentos} accessibilityLabel={`Gastos por categoria: ${dados!.categorias.map((f) => `${f.nome} ${f.pct} por cento`).join(", ")}`}>
+                  {dados!.categorias.map((f) => <View key={String(f.categoriaId)} style={{ flex: Math.max(f.pct, 3), backgroundColor: corCategoria(f.categoriaId) }} />)}
+                </View>
+                <View style={[s.linha, { flexWrap: "wrap", columnGap: 12, rowGap: 2, marginTop: 8 }]}>
+                  {dados!.categorias.slice(0, 4).map((f) => (
+                    <View key={String(f.categoriaId)} style={[s.linha, { gap: 5 }]}>
+                      <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: corCategoria(f.categoriaId) }} />
+                      <Text style={{ ...tipo.corpo(11), lineHeight: 16, color: c.textoSuave }}>{f.nome}</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
             )}
-          <View style={[s.pilulaInfo, { backgroundColor: c.superficie, borderColor: c.borda }]}
-            accessibilityLabel={`${sobra >= 0 ? "Sobrou" : "Faltou"} ${oculto ? "valor oculto" : formatarDinheiro(Math.abs(sobra))} neste mês`}>
-            <Icone nome={sobra >= 0 ? "arrow-trend-up" : "arrow-trend-down"} tamanho={12} cor={sobra >= 0 ? c.sucesso : c.erro} />
-            <Text style={{ ...tipo.corpo(12, "medium"), lineHeight: 16, color: c.texto }}>
-              {sobra >= 0 ? "Sobrou" : "Faltou"} {oculto ? OCULTO : formatarDinheiro(Math.abs(sobra))} neste mês
-            </Text>
+            <View style={[s.linha, { gap: 10, marginTop: 16 }]}>
+              {([["Receitas do mês", dados?.fluxo30.entradas ?? 0, "arrow-small-down", c.sucesso], ["Despesas do mês", dados?.fluxo30.saidas ?? 0, "arrow-small-up", c.erro]] as [string, number, NomeIcone, string][]).map(([r, v, ic, cor]) => (
+                <View key={r} style={[s.mini, { backgroundColor: c.fundo }]}>
+                  <View style={[s.linha, { gap: 6 }]}>
+                    <View style={[s.miniIcone, { backgroundColor: `${cor}2E` }]}><Icone nome={ic} tamanho={11} cor={cor} /></View>
+                    <Text style={{ ...tipo.corpo(11, "medium"), lineHeight: 15, color: c.textoSuave, flexShrink: 1 }} numberOfLines={1}>{r}</Text>
+                  </View>
+                  <Text style={{ ...tipo.valor(16, false), color: c.texto, marginTop: 4 }} numberOfLines={1} adjustsFontSizeToFit>{oculto ? OCULTO : formatarDinheiro(v)}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-          <View style={[s.linha, { gap: 12, marginTop: 18 }]}>
-            <Tocavel onPress={() => abrirLancamento({ tipo: "despesa" })} style={[s.botaoGrande, { backgroundColor: c.superficie, borderColor: c.borda, borderWidth: 1 }]}
-              accessibilityRole="button" accessibilityLabel="Novo lançamento: Despesa">
-              <Icone nome="arrow-small-up" tamanho={18} cor={c.texto} />
-              <Text style={{ ...tipo.botao(15), color: c.texto }}>Despesa</Text>
-            </Tocavel>
-            <Tocavel onPress={() => abrirLancamento({ tipo: "receita" })} style={[s.botaoGrande, { backgroundColor: c.primario }]}
-              accessibilityRole="button" accessibilityLabel="Novo lançamento: Receita">
-              <Icone nome="arrow-small-down" tamanho={18} cor={c.sobrePrimario} />
-              <Text style={{ ...tipo.botao(15), color: c.sobrePrimario }}>Receita</Text>
-            </Tocavel>
+          {/* Ações rápidas redondas */}
+          <View style={[s.linha, { justifyContent: "space-between", marginTop: 20 }]}>
+            {([["Despesa", "plus", () => abrirLancamento({ tipo: "despesa" })], ["Receita", "down", () => abrirLancamento({ tipo: "receita" })],
+              ["Transferir", "exchange", () => abrirLancamento({ tipo: "transferencia" })], ["Importar", "import", () => nav.navigate("Importacao")]] as [string, NomeNav, () => void][]).map(([r, ic, acao], i) => (
+              <Tocavel key={r} onPress={() => { tocar(r); setTimeout(acao, 380); }} style={s.acaoRedonda} accessibilityRole="button" accessibilityLabel={r === "Despesa" || r === "Receita" ? `Novo lançamento: ${r}` : r}>
+                <View style={[s.bolha, { backgroundColor: i === 0 ? c.primario : c.superficie, borderColor: i === 0 ? c.primario : c.borda }]}>
+                  <NavIcone nome={ic} tamanho={20} cor={i === 0 ? c.sobrePrimario : c.primario} play={toques[r] ?? 0} />
+                </View>
+                <Text style={{ ...tipo.corpo(12, "semibold"), lineHeight: 16, color: c.texto }}>{r}</Text>
+              </Tocavel>
+            ))}
           </View>
         </Animated.View>
 
@@ -234,42 +253,9 @@ export function Home() {
           )}
         </Animated.View>
 
-        {/* Ações rápidas: painel 4 x 2 */}
-        <Animated.View key={`4-${entrada}`} entering={entra(4)} style={s.px}>
-          <Text style={[s.tituloSecao, { color: c.texto, marginBottom: 12 }]} accessibilityRole="header">Ações rápidas</Text>
-          <View style={[s.painel, { backgroundColor: c.superficie, borderColor: c.borda }]}>
-            {acoes.map(([rotulo, ic, acao]) => (
-              <Tocavel key={rotulo} onPress={acao} style={s.acaoItem} accessibilityRole="button" accessibilityLabel={rotulo}>
-                <View style={[s.acaoIcone, { backgroundColor: rotulo === "Solis AI" ? c.primario : c.fundo }]}>
-                  <Icone nome={ic} tamanho={19} cor={rotulo === "Solis AI" ? c.sobrePrimario : c.texto} />
-                </View>
-                <Text style={{ ...tipo.corpo(12, "medium"), lineHeight: 16, color: c.textoSuave, textAlign: "center" }} numberOfLines={1}>{rotulo}</Text>
-              </Tocavel>
-            ))}
-          </View>
-        </Animated.View>
-
         {/* Estatísticas: gastos por categoria, meta e últimos 7 dias */}
         <Animated.View key={`5-${entrada}`} entering={entra(5)} style={[s.px, { gap: 12 }]}>
           <View style={[s.linha, { gap: 12, alignItems: "stretch" }]}>
-            <View style={[s.tile, { backgroundColor: c.superficie, borderColor: c.borda }]}>
-              <Text style={[s.rotuloTile, { color: c.textoSuave }]}>Gastos do mês</Text>
-              <Text style={{ ...tipo.valor(19), color: c.texto, marginTop: 6 }} numberOfLines={1} adjustsFontSizeToFit>{oculto ? OCULTO : formatarDinheiro(dados?.fluxo30.saidas ?? 0)}</Text>
-              {(dados?.categorias.length ?? 0) > 0 ? (
-                <>
-                  <View style={s.segmentos} accessibilityLabel={`Gastos por categoria: ${dados!.categorias.map((f) => `${f.nome} ${f.pct} por cento`).join(", ")}`}>
-                    {dados!.categorias.map((f) => <View key={String(f.categoriaId)} style={{ flex: Math.max(f.pct, 3), backgroundColor: corCategoria(f.categoriaId) }} />)}
-                  </View>
-                  {dados!.categorias.slice(0, 3).map((f) => (
-                    <View key={String(f.categoriaId)} style={[s.linha, { marginTop: 6, gap: 6 }]}>
-                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: corCategoria(f.categoriaId) }} />
-                      <Text style={{ ...tipo.corpo(11), lineHeight: 15, color: c.textoSuave, flex: 1 }} numberOfLines={1}>{f.nome}</Text>
-                      <Text style={{ ...tipo.corpo(11, "semibold"), lineHeight: 15, color: c.texto }}>{f.pct}%</Text>
-                    </View>
-                  ))}
-                </>
-              ) : <Text style={{ ...tipo.corpo(12), color: c.textoSuave, marginTop: 10 }}>Sem gastos nos últimos 30 dias.</Text>}
-            </View>
             <Tocavel onPress={() => irAba("Metas")} style={[s.tile, { backgroundColor: c.superficie, borderColor: c.borda }]} accessibilityRole="button"
               accessibilityLabel={dados?.meta ? `Meta ${dados.meta.nome}: ${Math.round(dados.meta.pct * 100)} por cento` : "Criar uma meta"}>
               <Text style={[s.rotuloTile, { color: c.textoSuave }]}>{dados?.meta ? "Meta" : "Metas"}</Text>
@@ -341,7 +327,7 @@ export function Home() {
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
               {(dados?.previsoes ?? []).slice(0, 8).map((p) => (
-                <CartaoPrevisao key={`${p.origem}-${p.chave}`} p={p} oculto={oculto} c={c} reduzir={reduzir}
+                <BilhetePrevisao key={`${p.origem}-${p.chave}`} p={p} oculto={oculto} c={c}
                   aoRegistrar={() => abrirLancamento({
                     tipo: p.centavos < 0 ? "despesa" : "receita", descricao: p.desc, valorCentavos: Math.abs(p.centavos),
                     categoriaId: p.categoriaId ?? undefined, contaId: p.contaId ?? undefined,
@@ -395,28 +381,56 @@ export function Home() {
   );
 }
 
-function CartaoPrevisao({ p, oculto, c, reduzir, aoRegistrar }: { p: PrevisaoHome; oculto: boolean; c: Cores; reduzir: boolean; aoRegistrar: () => void }) {
+function BilhetePrevisao({ p, oculto, c, aoRegistrar }: { p: PrevisaoHome; oculto: boolean; c: Cores; aoRegistrar: () => void }) {
   const valor = oculto ? OCULTO : `~${formatarDinheiro(Math.abs(p.centavos))}`;
-  const dia = Number(p.dataPrevista.slice(8, 10));
+  const dia = String(Number(p.dataPrevista.slice(8, 10))).padStart(2, "0");
+  const mes = MESES_CURTOS[Number(p.dataPrevista.slice(5, 7)) - 1] ?? "";
+  const atrasado = p.diasAte < 0;
+  const urgente = !atrasado && p.diasAte <= 3;
+  const corTempo = atrasado ? c.erro : urgente ? c.primario : c.textoSuave;
+  const bgCoto = atrasado ? `${c.erro}22` : urgente ? c.primarioSuave : c.superficie;
+  const bordaCoto = atrasado ? c.erro : urgente ? c.primario : c.borda;
+  const bgOK = atrasado || urgente ? bordaCoto : "transparent";
+  const corOK = atrasado || urgente ? c.sobrePrimario : c.textoSuave;
+
   return (
-    <View style={[s.previsao, { backgroundColor: c.superficie, borderColor: c.borda }]} accessible
-      accessibilityLabel={`Possível lançamento futuro: ${p.desc}, valor estimado ${oculto ? "oculto" : formatarDinheiro(Math.abs(p.centavos))}, ${quando(p.diasAte).toLowerCase()}. Toque em Registrar para confirmar`}
-      accessibilityActions={[{ name: "activate", label: "Registrar" }]} onAccessibilityAction={aoRegistrar}>
-      <View style={[s.linha, { justifyContent: "space-between" }]}>
-        <AnelProgresso valor={progressoCiclo(p.diasAte)} tamanho={48} espessura={5} cor={p.diasAte <= 3 ? c.primario : c.textoSuave} fundo={c.fundo} reduzirMovimento={reduzir}>
-          <CategoryIcon categoriaId={p.categoriaId} tipo={p.centavos < 0 ? "despesa" : "receita"} tamanho={30} recorrente />
-        </AnelProgresso>
-        <View style={[s.badge, { backgroundColor: p.diasAte <= 3 ? c.primarioSuave : c.fundo }]}>
-          <Text style={{ ...tipo.corpo(11, "semibold"), lineHeight: 14, color: p.diasAte <= 3 ? c.primario : c.textoSuave }}>{quando(p.diasAte)}</Text>
+    <Tocavel onPress={aoRegistrar} style={{ width: 224 }} accessible accessibilityRole="button"
+      accessibilityLabel={`Registrar: ${p.desc}, ${oculto ? "" : formatarDinheiro(Math.abs(p.centavos)) + ", "}${quando(p.diasAte).toLowerCase()}`}>
+      {/* Entalhes semicirculares nos cantos da perfuração (efeito de ticket rasgável) */}
+      <View pointerEvents="none" style={[s.entalhe, { left: 224 - BIL_COTO_W - BIL_PERF_W / 2 - BIL_NOTCH_R, top: -BIL_NOTCH_R, backgroundColor: c.fundo }]} />
+      <View pointerEvents="none" style={[s.entalhe, { left: 224 - BIL_COTO_W - BIL_PERF_W / 2 - BIL_NOTCH_R, bottom: -BIL_NOTCH_R, backgroundColor: c.fundo }]} />
+      <View style={s.bilhete}>
+        {/* Corpo: ícone + descrição + valor */}
+        <View style={[s.bilCorpo, { backgroundColor: c.superficie, borderColor: c.borda }]}>
+          <View style={[s.linha, { gap: 10, alignItems: "flex-start" }]}>
+            <CategoryIcon categoriaId={p.categoriaId} tipo={p.centavos < 0 ? "despesa" : "receita"} tamanho={34} recorrente />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ ...tipo.corpo(14, "semibold"), lineHeight: 19, color: c.texto }} numberOfLines={2}>{p.desc}</Text>
+              <Text style={{ ...tipo.corpo(11), lineHeight: 15, color: c.textoSuave, marginTop: 1 }}>
+                {p.origem === "cadastrada" ? "Fixo" : "Recorrente"}
+              </Text>
+            </View>
+          </View>
+          <Text style={{ ...tipo.valor(20, false), color: c.texto, marginTop: 10 }}>{valor}</Text>
+        </View>
+        {/* Perfuração pontilhada */}
+        <View style={s.bilPerf}>
+          {Array.from({ length: 7 }).map((_, i) => (
+            <View key={i} style={[s.bilFuro, { backgroundColor: c.borda }]} />
+          ))}
+        </View>
+        {/* Coto: data + botão de registrar */}
+        <View style={[s.bilCoto, { backgroundColor: bgCoto, borderColor: bordaCoto }]}>
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 2 }}>
+            <Text style={{ ...tipo.valor(26, false), color: corTempo, lineHeight: 30 }}>{dia}</Text>
+            <Text style={{ ...tipo.corpo(11, "semibold"), color: corTempo, letterSpacing: 0.5 }}>{mes}</Text>
+          </View>
+          <View style={[s.bilOK, { backgroundColor: bgOK, borderColor: bordaCoto }]}>
+            <Icone nome={atrasado || urgente ? "check" : "arrow-up-right"} tamanho={12} cor={corOK} />
+          </View>
         </View>
       </View>
-      <Text style={{ ...tipo.corpo(15, "semibold"), lineHeight: 20, color: c.texto, marginTop: 12 }} numberOfLines={1}>{p.desc}</Text>
-      <Text style={{ ...tipo.corpo(12), lineHeight: 17, color: c.textoSuave }} numberOfLines={1}>Dia {dia}{p.origem === "cadastrada" ? " • Fixo" : ""}</Text>
-      <Text style={{ ...tipo.valor(17, false), color: c.texto, marginTop: 6 }}>{valor}</Text>
-      <Tocavel onPress={aoRegistrar} style={[s.registrar, { backgroundColor: c.primario }]} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Registrar ${p.desc}`}>
-        <Text style={{ ...tipo.botao(13), color: c.sobrePrimario }}>Registrar</Text>
-      </Tocavel>
-    </View>
+    </Tocavel>
   );
 }
 
@@ -446,10 +460,14 @@ const s = StyleSheet.create({
   mx: { marginHorizontal: 20 },
   linha: { flexDirection: "row", alignItems: "center" },
   brilhoTopo: { position: "absolute", top: 0, left: 0, right: 0, height: 260 },
-  perfil: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 50, paddingLeft: 5, paddingRight: 12, paddingVertical: 5, minHeight: 48, maxWidth: "62%" },
-  avatar: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  perfil: { flexDirection: "row", alignItems: "center", minHeight: 48, maxWidth: "62%" },
+  avatar: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
   redondo: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   pilulaInfo: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderWidth: 1, borderRadius: 50, paddingHorizontal: 12, paddingVertical: 6, marginTop: 10 },
+  mini: { flex: 1, borderRadius: 16, padding: 12 },
+  miniIcone: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  acaoRedonda: { alignItems: "center", gap: 7, width: 74 },
+  bolha: { width: 58, height: 58, borderRadius: 29, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   botaoGrande: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 52, borderRadius: 16 },
   card: { borderRadius: 20, padding: 16, borderWidth: StyleSheet.hairlineWidth },
   badge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 50 },
@@ -470,8 +488,13 @@ const s = StyleSheet.create({
   dica: { borderRadius: 8, paddingHorizontal: 6, paddingVertical: 3, minWidth: 34, alignItems: "center" },
   aviso: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 16, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth },
   fechar: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-  previsao: { width: 224, borderRadius: 20, padding: 16, borderWidth: StyleSheet.hairlineWidth },
-  registrar: { height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", marginTop: 12 },
+  bilhete: { flexDirection: "row", width: 224 },
+  bilCorpo: { flex: 1, padding: 14, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderRightWidth: 0 },
+  bilPerf: { width: BIL_PERF_W, alignItems: "center", justifyContent: "space-around", paddingVertical: 12 },
+  bilFuro: { width: 4, height: 4, borderRadius: 2 },
+  bilCoto: { width: BIL_COTO_W, padding: 12, borderTopRightRadius: 20, borderBottomRightRadius: 20, borderWidth: StyleSheet.hairlineWidth, borderLeftWidth: 0, alignItems: "center", justifyContent: "space-between" },
+  entalhe: { position: "absolute", width: BIL_NOTCH_R * 2, height: BIL_NOTCH_R * 2, borderRadius: BIL_NOTCH_R, zIndex: 10 },
+  bilOK: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   chip: { borderWidth: 1, borderRadius: 50, paddingHorizontal: 14, minHeight: 36, justifyContent: "center" },
   item: { flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 64 },
 });

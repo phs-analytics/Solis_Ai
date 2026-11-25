@@ -85,12 +85,34 @@ export type Tema = Omit<typeof temaClaro, "cores"> & {
   cores: Omit<typeof temaClaro.cores, "statusBar"> & { statusBar: StatusBarStyle };
 };
 
+/** Cores auxiliares neutras, válidas nos dois temas (contraste máximo, ícones sobre cor, superfícies puras). */
+export const auxiliares = { preto: "#000000", branco: "#FFFFFF", offwhite: "#F6F2EA" } as const;
+
+/**
+ * Temas das telas novas (Início em diante): mesma paleta da marca, com fundo off-white no claro e grafite no escuro.
+ * `temaClaro`/`temaEscuro` acima são o visual clássico e ficam só em onboarding, desbloqueio, restauração e criação de senha.
+ */
+export const temaClaroNovo: Tema = {
+  ...temaClaro,
+  cores: { ...temaClaro.cores, fundo: auxiliares.offwhite, superficie: auxiliares.branco, borda: "#E4DDCF", tabBar: auxiliares.branco },
+};
+export const temaEscuroNovo: Tema = {
+  ...temaEscuro,
+  cores: { ...temaEscuro.cores, fundo: "#0E0E13", superficie: "#17171E", borda: "rgba(255, 255, 255, 0.08)", primarioSuave: "#2B2118", tabBar: "#1A1A22" },
+};
+
 // Permite que um trecho do app (ex.: o onboarding) use sempre um tema, ignorando o do celular.
 const TemaForcado = createContext<Tema | null>(null);
 export const ForcarTema = TemaForcado.Provider;
 
+/** Tema das telas novas. */
 export function useTema(): Tema {
   const esquema = useColorScheme();
-  const forcado = useContext(TemaForcado);
-  return forcado ?? (esquema === "dark" ? temaEscuro : temaClaro);
+  return useContext(TemaForcado) ?? (esquema === "dark" ? temaEscuroNovo : temaClaroNovo);
+}
+
+/** Visual clássico: use só em onboarding, desbloqueio, restaurar backup e criar senha. */
+export function useTemaClassico(): Tema {
+  const esquema = useColorScheme();
+  return useContext(TemaForcado) ?? (esquema === "dark" ? temaEscuro : temaClaro);
 }
