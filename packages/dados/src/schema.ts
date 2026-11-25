@@ -5,7 +5,7 @@
 
 import type { Banco } from "./vault.js";
 
-export const VERSAO_SCHEMA = 4;
+export const VERSAO_SCHEMA = 5;
 
 export async function inicializarSchema(banco: Banco): Promise<void> {
   await banco.withTransactionAsync(async () => {
@@ -25,6 +25,7 @@ export async function inicializarSchema(banco: Banco): Promise<void> {
     if (versaoAtual < 2) await migrar_v2(banco);
     if (versaoAtual < 3) await migrar_v3(banco);
     if (versaoAtual < 4) await migrar_v4(banco);
+    if (versaoAtual < 5) await migrar_v5(banco);
   });
 }
 
@@ -185,5 +186,22 @@ async function migrar_v4(banco: Banco): Promise<void> {
 
     INSERT INTO _migracoes (versao, aplicada_em)
     VALUES (4, datetime('now'));
+  `);
+}
+
+// ── Migração v5: histórico de depósitos e retiradas dos cofrinhos (metas) ──
+
+async function migrar_v5(banco: Banco): Promise<void> {
+  await banco.execAsync(`
+    CREATE TABLE IF NOT EXISTS metas_movimentos (
+      id              TEXT PRIMARY KEY,
+      meta_id         TEXT NOT NULL REFERENCES metas(id) ON DELETE CASCADE,
+      valor_centavos  INTEGER NOT NULL,
+      criado_em       TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_metas_mov_data ON metas_movimentos(criado_em);
+
+    INSERT INTO _migracoes (versao, aplicada_em)
+    VALUES (5, datetime('now'));
   `);
 }

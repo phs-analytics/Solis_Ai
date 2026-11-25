@@ -13,3 +13,5 @@ export type { CredenciaisPluggy } from "./pluggy/credenciais.js";
 export { sincronizarPluggy, ultimaSyncPluggy } from "./pluggy/sincronizar.js";
 export type { ResultadoSync } from "./pluggy/sincronizar.js";
 export type { ContextoFinanceiro } from "./ia/analisador.js";
+export { montarPainel, gerarRelatorioSemana, lerUltimoRelatorio, atualizarMemoriaSolis } from "./painel.js";
+export type { Painel, PainelConta, PainelCofrinhos, PainelCartao, Mov24, MovCartao } from "./painel.js";

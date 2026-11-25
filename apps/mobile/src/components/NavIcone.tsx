@@ -1,14 +1,14 @@
 import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
-  Easing, Extrapolation, interpolate, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming,
+  Easing, Extrapolation, cancelAnimation, interpolate, useAnimatedProps, useAnimatedStyle, useSharedValue, withRepeat, withTiming,
   type SharedValue,
 } from "react-native-reanimated";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 
-export type NomeNav = "home" | "card" | "goal" | "chart" | "ai" | "layers" | "person" | "eye" | "search" | "plus" | "down" | "exchange" | "import";
+export type NomeNav = "home" | "card" | "goal" | "chart" | "ai" | "layers" | "person" | "eye" | "search" | "plus" | "down" | "exchange" | "import" | "sync" | "receipt" | "export";
 
-type Props = { nome: NomeNav; cor: string; tamanho?: number; /** muda a cada toque: dispara a animação */ play: number; /** olho: mostra o risco */ riscado?: boolean };
+type Props = { nome: NomeNav; cor: string; tamanho?: number; /** muda a cada toque: dispara a animação */ play: number; /** olho: mostra o risco */ riscado?: boolean; /** sync: gira sem parar enquanto atualiza */ girando?: boolean };
 
 const APath = Animated.createAnimatedComponent(Path);
 const CASA = "M4 11l8-7 8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z";
@@ -29,7 +29,7 @@ function Camada({ t, estilo, children }: { t: number; estilo?: object; children:
   );
 }
 
-export function NavIcone({ nome, cor, tamanho = 20, play, riscado = false }: Props) {
+export function NavIcone({ nome, cor, tamanho = 20, play, riscado = false, girando = false }: Props) {
   const p = useSharedValue(1);
   useEffect(() => {
     if (!play) return;
@@ -39,12 +39,12 @@ export function NavIcone({ nome, cor, tamanho = 20, play, riscado = false }: Pro
   const Icone = ICONES[nome];
   return (
     <View style={{ width: tamanho, height: tamanho }}>
-      <Icone p={p} t={tamanho} cor={cor} riscado={riscado} />
+      <Icone p={p} t={tamanho} cor={cor} riscado={riscado} girando={girando} />
     </View>
   );
 }
 
-type IP = { p: SharedValue<number>; t: number; cor: string; riscado?: boolean };
+type IP = { p: SharedValue<number>; t: number; cor: string; riscado?: boolean; girando?: boolean };
 const traco = (cor: string) => ({ stroke: cor, strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" });
 const px = (t: number, x: number, y: number) => `${(x * t) / 24}px ${(y * t) / 24}px`;
 
@@ -270,7 +270,56 @@ function Importar({ p, t, cor }: IP) {
   );
 }
 
+function Sincronizar({ p, t, cor, girando }: IP) {
+  const volta = useSharedValue(0);
+  useEffect(() => {
+    if (girando) volta.value = withRepeat(withTiming(volta.value + 360, { duration: 1000, easing: Easing.linear }), -1);
+    else { cancelAnimation(volta); volta.value = withTiming(Math.ceil(volta.value / 360) * 360, { duration: 300 }); }
+  }, [girando, volta]);
+  const setas = useAnimatedStyle(() => ({ transform: [{ rotate: `${volta.value + i(p.value, [0, 0.75, 1], [0, 380, 360])}deg` }] }));
+  return (
+    <>
+      <Camada t={t} estilo={setas}><Path d="M19.5 10A7.8 7.8 0 0 0 5.6 7M4.5 14a7.8 7.8 0 0 0 13.9 3M5.2 3.5V7h3.5M18.8 20.5V17h-3.5" {...traco(cor)} /></Camada>
+      <Camada t={t}><Path d="M9 11l3-1.8 3 1.8zM9.8 11.5v2.6M12 11.5v2.6M14.2 11.5v2.6M9 15h6" {...traco(cor)} /></Camada>
+    </>
+  );
+}
+
+function Recibo({ p, t, cor }: IP) {
+  const k = t / 24;
+  const papel = useAnimatedStyle(() => ({
+    transformOrigin: "top",
+    transform: [{ scaleX: i(p.value, [0, 0.25, 0.5, 0.72, 1], [1, 1.24, 0.86, 1.08, 1]) }, { scaleY: i(p.value, [0, 0.25, 0.5, 0.72, 1], [1, 0.72, 1.14, 0.94, 1]) }],
+  }));
+  const cifrao = useAnimatedStyle(() => ({ transform: [{ translateY: i(p.value, [0, 0.25, 0.5, 1], [0, -2.5, 1, 0]) * k }, { scale: i(p.value, [0, 0.25, 0.5], [1, 0.8, 1]) }] }));
+  return (
+    <>
+      <Camada t={t} estilo={papel}><Path d="M6.5 3.5h11a1 1 0 0 1 1 1V20c-1 .8-2 .8-3 0s-2-.8-3 0-2 .8-3 0-2-.8-3 0V4.5a1 1 0 0 1 1-1z" {...traco(cor)} /></Camada>
+      <Camada t={t} estilo={cifrao}><Path d="M14 8.4c-.4-.7-1.1-1-1.9-1-1 0-1.8.6-1.8 1.4 0 1.9 3.8 1 3.8 2.9 0 .8-.8 1.4-1.9 1.4-.9 0-1.6-.4-2-1.1M12.1 6.2v1.2M12.1 13.1v1.2" {...traco(cor)} /></Camada>
+    </>
+  );
+}
+
+function Exportar({ p, t, cor }: IP) {
+  const k = t / 24;
+  const seta = useAnimatedStyle(() => ({
+    opacity: i(p.value, [0, 0.35, 0.36, 0.75], [1, 0, 0, 1]),
+    transform: [{ translateY: i(p.value, [0, 0.35, 0.36, 0.75, 1], [0, -9, 9, -1, 0]) * k }],
+  }));
+  const caixa = useAnimatedStyle(() => ({
+    transformOrigin: "bottom",
+    transform: [{ scaleX: i(p.value, [0, 0.6, 0.75, 1], [1, 1, 1.1, 1]) }, { scaleY: i(p.value, [0, 0.6, 0.75, 1], [1, 1, 0.9, 1]) }],
+  }));
+  return (
+    <>
+      <Camada t={t} estilo={caixa}><Path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" {...traco(cor)} /></Camada>
+      <Camada t={t} estilo={seta}><Path d="M12 15V3M7.5 7.5L12 3l4.5 4.5" {...traco(cor)} /></Camada>
+    </>
+  );
+}
+
 const ICONES: Record<NomeNav, (p: IP) => React.ReactElement> = {
   home: Casa, card: Cartao, goal: Meta, chart: Invest, ai: Brilho, layers: Camadas, person: Pessoa,
   eye: Olho, search: Lupa, plus: Mais, down: Baixo, exchange: Troca, import: Importar,
+  sync: Sincronizar, receipt: Recibo, export: Exportar,
 };

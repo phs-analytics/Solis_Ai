@@ -46,6 +46,7 @@ export async function depositar(banco: Banco, id: string, centavos: number): Pro
      WHERE id = ?`,
     [centavos, centavos, id]
   );
+  await banco.runAsync("INSERT INTO metas_movimentos (id, meta_id, valor_centavos, criado_em) VALUES (?, ?, ?, ?)", [uuid(), id, centavos, agora()]);
 }
 
 export async function excluirMeta(banco: Banco, id: string): Promise<void> {

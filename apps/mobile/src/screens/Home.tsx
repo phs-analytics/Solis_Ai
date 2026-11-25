@@ -1,24 +1,29 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Linking, RefreshControl, ScrollView, Share, StyleSheet, ToastAndroid, View, useWindowDimensions } from "react-native";
+import Svg, { Path } from "react-native-svg";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from "react-native-reanimated";
-import { progressoCiclo, saudacao, type PeriodoSaldo } from "@solis/core";
-import { lerPerfil, lerPrivacidade, montarHome, salvarPrivacidade } from "@solis/dados";
-import type { PrevisaoHome, ResumoHome, TipoConta } from "@solis/dados";
+import { progressoCiclo, saudacao, textoAnalise, type AnaliseSemana, type PeriodoSaldo } from "@solis/core";
+import { atualizarMemoriaSolis, gerarRelatorioSemana, lerCredenciaisPluggy, lerPerfil, lerPrivacidade, lerUltimoRelatorio, montarHome, montarPainel, salvarPrivacidade, sincronizarPluggy, ultimaSyncPluggy } from "@solis/dados";
+import type { Painel, PrevisaoHome, ResumoHome, TipoConta } from "@solis/dados";
 import type { RootStackParams } from "../navigation";
 import { SafeScreen } from "../components/SafeScreen";
 import { Texto as Text } from "../components/Texto";
 import { Icone, type NomeIcone } from "../components/Icone";
 import { Tocavel } from "../components/Tocavel";
 import { NavIcone, type NomeNav } from "../components/NavIcone";
+import { PopOut, medir, type Origem } from "../components/PopOut";
+import { ConteudoCartao, ConteudoCofrinhos, ConteudoConta } from "../components/PainelFontes";
+import { PassosAtualizacao, type Passo } from "../components/PassosAtualizacao";
+import { ReciboAnalise, type ReciboRef } from "../components/ReciboAnalise";
 import { CategoryIcon, corCategoria } from "../components/CategoryIcon";
 import { GraficoSaldo } from "../components/GraficoSaldo";
 import { AnelProgresso } from "../components/AnelProgresso";
 import { useNumeroRolando } from "../components/useNumeroRolando";
 import { useBanco } from "../contexto/BancoContext";
-import { tipo, useTema } from "../theme";
+import { auxiliares, tipo, useTema } from "../theme";
 import { formatarDinheiro } from "../utils/dinheiro";
 import { WalletCardDeck, larguraDeck } from "../onboarding/WalletCardDeck";
 import type { Variante, WalletCardProps } from "../onboarding/WalletCard";
@@ -35,6 +40,13 @@ const BIL_NOTCH_R = 7;
 const DIA_SEMANA = ["D", "S", "T", "Q", "Q", "S", "S"];
 type Cores = ReturnType<typeof useTema>["cores"];
 type Filtro = "todos" | "despesa" | "receita";
+type Pop = { tipo: "conta" | "cartao"; id: string } | { tipo: "cofrinho" | "atualizar" | "analise" | "exportar" };
+type Medivel = Parameters<typeof medir>[0];
+// Cores das marcas, só nos botões de envio.
+const COR_ZAP = "#25D366";
+const COR_TELE = "#2AABEE";
+const PATH_ZAP = "M12 2.5a9.4 9.4 0 0 0-8.1 14.2L2.6 21.4l4.8-1.3A9.4 9.4 0 1 0 12 2.5zm5.4 13.3c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.7-1.1-4.4-3.9-4.6-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.5.2.3.7 1.2 1.5 1.9 1 .9 1.9 1.2 2.2 1.3.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l2 .9c.3.1.4.2.5.3.1.2.1.7-.1 1.4z";
+const PATH_TELE = "M21.4 4.2 2.9 11.3c-1.3.5-1.2 1.2-.2 1.5l4.7 1.5 1.8 5.5c.2.6.4.8.8.8s.6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.5c.3-1.3-.5-1.8-1.3-1.4zM9 14.1l9.6-6.1c.5-.3.8-.1.4.2l-8 7.3-.3 3.3z";
 
 const CONTA_VISUAL: Record<TipoConta, { sub: string; variante: Variante; icone: NomeIcone }> = {
   corrente: { sub: "Conta bancária", variante: "fantastic", icone: "bank" },
@@ -117,6 +129,110 @@ export function Home() {
   const abrirLancamento = (p: RootStackParams["NovoLancamento"]) => nav.navigate("NovoLancamento", p);
   const irAba = (screen: string, params?: object) => nav.navigate("App", { screen, params } as never);
 
+  // ── Pop-outs: contas, cofrinhos, cartões e as ações rápidas ──
+  const [painel, setPainel] = useState<Painel | null>(null);
+  const [pop, setPop] = useState<Pop | null>(null);
+  const [popAberto, setPopAberto] = useState(false);
+  const [origem, setOrigem] = useState<Origem | null>(null);
+  const alvos = useRef<Record<string, Medivel | null>>({});
+  const marcar = (k: string) => (r: unknown) => { alvos.current[k] = r as Medivel | null; };
+  const [upd, setUpd] = useState<{ passos: Passo[]; soIA: boolean; fim: boolean; erro?: string } | null>(null);
+  const [analise, setAnalise] = useState<AnaliseSemana | null>(null);
+  const [impresso, setImpresso] = useState(false);
+  const [descartando, setDescartando] = useState(false);
+  const [relatorio, setRelatorio] = useState<AnaliseSemana | null>(null);
+  const recibo = useRef<ReciboRef>(null);
+  const { height } = useWindowDimensions();
+
+  useFocusEffect(useCallback(() => { montarPainel(banco).then(setPainel).catch(() => {}); }, [banco]));
+
+  async function abrir(k: string, p: Pop) {
+    setOrigem(await medir(alvos.current[k] ?? null));
+    setPop(p); setPopAberto(true);
+  }
+  const fechar = () => setPopAberto(false);
+
+  const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  async function atualizar() {
+    const cred = await lerCredenciaisPluggy().catch(() => null);
+    const ultima = cred ? await ultimaSyncPluggy(banco).catch(() => null) : null;
+    // A consulta automática ao Meu Pluggy é uma por dia; se já rodou, só o Solis AI relê os dados.
+    const consultar = !!cred && (!ultima || Date.now() - Date.parse(ultima) >= 86_400_000);
+    const passos: Passo[] = [
+      ...(consultar ? [
+        { grupo: "Meu Pluggy", rotulo: "Conectando ao Meu Pluggy", estado: "pend" as const, log: [] },
+        { grupo: "Meu Pluggy", rotulo: "Baixando lançamentos dos bancos", estado: "pend" as const, log: [] },
+        { grupo: "Meu Pluggy", rotulo: "Guardando no cofre do celular", estado: "pend" as const, log: [] },
+      ] : []),
+      { grupo: "Solis AI", rotulo: "Relendo os dados dos bancos", estado: "pend", log: [] },
+      { grupo: "Solis AI", rotulo: "Recalculando previsões e metas", estado: "pend", log: [] },
+      { grupo: "Solis AI", rotulo: "Atualizando a memória do Solis AI", estado: "pend", log: [] },
+    ];
+    setUpd({ passos, soIA: !consultar, fim: false });
+    const mexe = (i: number, p: Partial<Passo>, linha?: string) => setUpd((u) => u && ({
+      ...u, passos: u.passos.map((x, j) => (j === i ? { ...x, ...p, log: linha ? [...x.log, linha] : x.log } : x)),
+    }));
+    const etapa = async (i: number, linhas: string[], trabalho?: () => Promise<string[] | void>) => {
+      mexe(i, { estado: "run" });
+      for (const l of linhas) { await espera(320); mexe(i, {}, l); }
+      const extra = trabalho ? await trabalho() : undefined;
+      for (const l of extra ?? []) { await espera(260); mexe(i, {}, l); }
+      await espera(240); mexe(i, { estado: "done" });
+    };
+    try {
+      let i = 0;
+      if (consultar && cred) {
+        await etapa(i++, ["abrindo a conexão do Meu Pluggy", "credenciais lidas do cofre do celular"]);
+        await etapa(i++, ["GET /v2/transactions"], async () => {
+          const r = await sincronizarPluggy(banco, cred, { forcar: true });
+          return [`${r.contas} ${r.contas === 1 ? "conta lida" : "contas lidas"}`, `${r.novos} ${r.novos === 1 ? "lançamento novo" : "lançamentos novos"}`, "duplicados conferidos"];
+        });
+        await etapa(i++, ["cifrado com SQLCipher", "gravado"]);
+      }
+      await etapa(i++, ["últimos 14 dias", "nada sai do celular"]);
+      await etapa(i++, ["contas que se repetem", "ritmo de cada meta"], async () => { await carregar(); });
+      await etapa(i++, ["refazendo a análise da semana"], async () => { await atualizarMemoriaSolis(banco); setPainel(await montarPainel(banco)); return ["pronto"]; });
+      setUpd((u) => u && { ...u, fim: true });
+      ToastAndroid.show(consultar ? "Bancos atualizados e Solis AI em dia." : "Solis AI atualizou a memória com os dados de hoje.", ToastAndroid.SHORT);
+    } catch {
+      setUpd((u) => u && { ...u, fim: true, erro: "Não deu para concluir. Confira a internet e o Meu Pluggy em Mais." });
+    }
+  }
+  function tocarAtualizar() {
+    tocar("Atualizar");
+    if (upd && !upd.fim) abrir("acao-Atualizar", { tipo: "atualizar" });
+    else atualizar();
+  }
+
+  async function abrirAnalise() {
+    tocar("Análise");
+    const r = await gerarRelatorioSemana(banco);
+    setAnalise(r); setRelatorio(r); setImpresso(false); setDescartando(false);
+    abrir("acao-Análise", { tipo: "analise" });
+  }
+  function descartar() { setDescartando(true); recibo.current?.descartar(); }
+  function aoDescartar() { fechar(); ToastAndroid.show("Recibo guardado. Use Exportar para enviar.", ToastAndroid.SHORT); }
+
+  async function abrirExportar() {
+    tocar("Exportar");
+    setRelatorio(await lerUltimoRelatorio(banco).catch(() => null));
+    abrir("acao-Exportar", { tipo: "exportar" });
+  }
+  async function enviar(onde: "zap" | "tele" | "outro") {
+    if (!relatorio) return;
+    const t = textoAnalise(relatorio);
+    const url = onde === "zap" ? `whatsapp://send?text=${encodeURIComponent(t)}` : `tg://msg?text=${encodeURIComponent(t)}`;
+    // O texto vai direto para o app escolhido no celular; se ele não estiver instalado, abre a folha de compartilhar do Android.
+    if (onde !== "outro") { try { await Linking.openURL(url); return; } catch { /* cai na folha de compartilhar */ } }
+    await Share.share({ message: t }).catch(() => {});
+  }
+
+  const fontes = [
+    ...(painel?.contas ?? []).map((ct) => ({ k: `conta-${ct.id}`, nome: ct.nome, valor: oculto ? OCULTO : formatarDinheiro(ct.saldoCentavos), icone: CONTA_VISUAL[ct.tipo].icone, pop: { tipo: "conta", id: ct.id } as Pop })),
+    ...(painel?.cofrinhos ? [{ k: "cofrinhos", nome: "Cofrinhos", valor: oculto ? OCULTO : formatarDinheiro(painel.cofrinhos.totalCentavos), icone: "piggy-bank" as NomeIcone, pop: { tipo: "cofrinho" } as Pop }] : []),
+    ...(painel?.cartoes ?? []).map((ct) => ({ k: `cartao-${ct.id}`, nome: ct.nome, valor: oculto ? "Fatura R$ ••••" : `Fatura ${formatarDinheiro(ct.faturaCentavos)}`, icone: "credit-card" as NomeIcone, pop: { tipo: "cartao", id: ct.id } as Pop })),
+  ];
+
   const maxDia = Math.max(1, ...(dados?.diario7 ?? []).map((d) => d.centavos));
   const selecionado = diaSel ?? dados?.diario7[dados.diario7.length - 1]?.data ?? null;
   // Filtra entre os 30 últimos e mostra até 6, para "Receitas" não ficar vazio só porque o salário não é dos últimos dias.
@@ -197,16 +313,39 @@ export function Home() {
               ))}
             </View>
           </View>
-          {/* Ações rápidas redondas */}
-          <View style={[s.linha, { justifyContent: "space-between", marginTop: 20 }]}>
-            {([["Despesa", "plus", () => abrirLancamento({ tipo: "despesa" })], ["Receita", "down", () => abrirLancamento({ tipo: "receita" })],
-              ["Transferir", "exchange", () => abrirLancamento({ tipo: "transferencia" })], ["Importar", "import", () => nav.navigate("Importacao")]] as [string, NomeNav, () => void][]).map(([r, ic, acao], i) => (
-              <Tocavel key={r} onPress={() => { tocar(r); setTimeout(acao, 380); }} style={s.acaoRedonda} accessibilityRole="button" accessibilityLabel={r === "Despesa" || r === "Receita" ? `Novo lançamento: ${r}` : r}>
-                <View style={[s.bolha, { backgroundColor: i === 0 ? c.primario : c.superficie, borderColor: i === 0 ? c.primario : c.borda }]}>
-                  <NavIcone nome={ic} tamanho={20} cor={i === 0 ? c.sobrePrimario : c.primario} play={toques[r] ?? 0} />
+          {/* Contas, cofrinhos e cartões: o toque abre um pop-out com as últimas 24 h */}
+          {fontes.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20, marginTop: 14 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
+              {fontes.map((f) => (
+                <View key={f.k} ref={marcar(f.k)} collapsable={false}>
+                  <Tocavel onPress={() => abrir(f.k, f.pop)} style={[s.fonteChip, { backgroundColor: c.superficie, borderColor: c.borda }]}
+                    accessibilityRole="button" accessibilityLabel={`${f.nome}, ${f.valor}. Ver últimas 24 horas`}>
+                    <View style={[s.chipIc, { backgroundColor: c.primario }]}><Icone nome={f.icone} tamanho={16} cor={c.sobrePrimario} /></View>
+                    <View>
+                      <Text style={{ ...tipo.corpo(13, "semibold"), lineHeight: 17, color: c.texto }} numberOfLines={1}>{f.nome}</Text>
+                      <Text style={{ ...tipo.corpo(11.5), lineHeight: 15, color: c.textoSuave }} numberOfLines={1}>{f.valor}</Text>
+                    </View>
+                  </Tocavel>
                 </View>
-                <Text style={{ ...tipo.corpo(12, "semibold"), lineHeight: 16, color: c.texto }}>{r}</Text>
-              </Tocavel>
+              ))}
+            </ScrollView>
+          )}
+          {/* Ações rápidas: atualizar bancos, análise da semana e exportar o relatório */}
+          <View style={[s.linha, { justifyContent: "space-around", marginTop: 20 }]}>
+            {([
+              ["Atualizar", upd && !upd.fim ? "Atualizando" : "Atualizar", "sync", tocarAtualizar],
+              ["Análise", "Análise", "receipt", abrirAnalise],
+              ["Exportar", "Exportar", "export", abrirExportar],
+            ] as [string, string, NomeNav, () => void][]).map(([k, r, ic, acao], i) => (
+              <View key={k} ref={marcar(`acao-${k}`)} collapsable={false}>
+                <Tocavel onPress={acao} style={s.acaoRedonda} accessibilityRole="button"
+                  accessibilityLabel={k === "Atualizar" ? (upd && !upd.fim ? "Atualizando. Toque para ver as etapas" : "Atualizar bancos e Solis AI") : k === "Análise" ? "Análise da semana" : "Exportar o último relatório"}>
+                  <View style={[s.bolha, { backgroundColor: i === 0 ? c.primario : c.superficie, borderColor: i === 0 ? c.primario : c.borda }]}>
+                    <NavIcone nome={ic} tamanho={20} cor={i === 0 ? c.sobrePrimario : c.primario} play={toques[k] ?? 0} girando={k === "Atualizar" && !!upd && !upd.fim} />
+                  </View>
+                  <Text style={{ ...tipo.corpo(12, "semibold"), lineHeight: 16, color: c.texto }}>{r}</Text>
+                </Tocavel>
+              </View>
             ))}
           </View>
         </Animated.View>
@@ -377,6 +516,52 @@ export function Home() {
           ))}
         </Animated.View>
       </ScrollView>
+      <PopOut aberto={popAberto} origem={origem} aoFechar={fechar} semRolagem={pop?.tipo === "analise"}
+        titulo={pop?.tipo === "atualizar" ? "Atualização" : pop?.tipo === "analise" ? "Análise da semana" : pop?.tipo === "exportar" ? "Exportar relatório" : "Últimas 24 horas"}
+        rodape={
+          pop?.tipo === "atualizar" ? { texto: upd?.fim ? "Fechar" : "Continuar em segundo plano", acao: fechar }
+          : pop?.tipo === "analise" ? { texto: "Descartar", acao: descartar, desativado: !impresso || descartando }
+          : pop?.tipo === "exportar" && !relatorio ? { texto: "Gerar análise agora", acao: () => { fechar(); setTimeout(abrirAnalise, 350); } }
+          : { texto: "Fechar", acao: fechar }
+        }>
+        {pop?.tipo === "conta" && painel?.contas.find((x) => x.id === pop.id) && <ConteudoConta conta={painel.contas.find((x) => x.id === pop.id)!} oculto={oculto} />}
+        {pop?.tipo === "cofrinho" && painel?.cofrinhos && <ConteudoCofrinhos cof={painel.cofrinhos} oculto={oculto} />}
+        {pop?.tipo === "cartao" && painel?.cartoes.find((x) => x.id === pop.id) && <ConteudoCartao cartao={painel.cartoes.find((x) => x.id === pop.id)!} oculto={oculto} />}
+        {pop?.tipo === "atualizar" && upd && (
+          <PassosAtualizacao passos={upd.passos}
+            titulo={upd.erro ? "Atualização interrompida" : upd.fim ? "Tudo atualizado" : upd.soIA ? "Solis AI reanalisando" : "Atualizando seus bancos"}
+            sub={upd.erro ?? (upd.fim ? (upd.soIA ? "A consulta aos bancos de hoje já tinha sido feita" : "Bancos e memória do Solis AI em dia")
+              : `Etapa ${Math.min(upd.passos.filter((p) => p.estado === "done").length + 1, upd.passos.length)} de ${upd.passos.length}`)} />
+        )}
+        {pop?.tipo === "analise" && analise && (
+          <ReciboAnalise ref={recibo} analise={analise} oculto={oculto} alturaMax={Math.round(height * 0.46)} aoImprimir={() => setImpresso(true)} aoDescartar={aoDescartar} />
+        )}
+        {pop?.tipo === "exportar" && (relatorio ? (
+          <>
+            <View style={[s.exRel, { backgroundColor: c.fundo }]}>
+              <Text style={{ ...tipo.corpo(14, "semibold"), color: c.texto }}>Análise da semana · {relatorio.ate.split("-").reverse().join("/")}</Text>
+              <Text style={{ ...tipo.corpo(12), color: c.textoSuave }}>
+                Gastos de {oculto ? OCULTO : formatarDinheiro(relatorio.gastos)}, {relatorio.positivos.length} pontos positivos, {relatorio.atencao.length} de atenção e {relatorio.sugestoes.length} sugestões.
+              </Text>
+            </View>
+            <Text style={{ ...tipo.corpo(11, "semibold"), color: c.textoSuave, letterSpacing: 0.6 }}>ENVIAR POR</Text>
+            <View style={s.linha}>
+              {([["zap", "WhatsApp", COR_ZAP], ["tele", "Telegram", COR_TELE], ["outro", "Outros apps", c.primario]] as const).map(([k, r, cor]) => (
+                <Tocavel key={k} onPress={() => enviar(k)} style={[s.exBt, { borderColor: c.borda, backgroundColor: c.superficie }]} accessibilityRole="button" accessibilityLabel={`Enviar por ${r}`}>
+                  <View style={[s.exIc, { backgroundColor: cor }]}>
+                    {k === "outro" ? <NavIcone nome="export" tamanho={22} cor={auxiliares.branco} play={0} />
+                      : <Svg width={24} height={24} viewBox="0 0 24 24"><Path d={k === "zap" ? PATH_ZAP : PATH_TELE} fill={auxiliares.branco} /></Svg>}
+                  </View>
+                  <Text style={{ ...tipo.corpo(12, "semibold"), color: c.texto }}>{r}</Text>
+                </Tocavel>
+              ))}
+            </View>
+            <Text style={{ ...tipo.corpo(12), color: c.textoSuave }}>O relatório só sai do celular quando você envia, e só para a conversa que você escolher.</Text>
+          </>
+        ) : (
+          <Text style={{ ...tipo.corpo(14), color: c.textoSuave }}>O Solis AI ainda não fez uma análise. Gere a da semana e ela fica pronta para enviar.</Text>
+        ))}
+      </PopOut>
     </SafeScreen>
   );
 }
@@ -466,7 +651,12 @@ const s = StyleSheet.create({
   pilulaInfo: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderWidth: 1, borderRadius: 50, paddingHorizontal: 12, paddingVertical: 6, marginTop: 10 },
   mini: { flex: 1, borderRadius: 16, padding: 12 },
   miniIcone: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  acaoRedonda: { alignItems: "center", gap: 7, width: 74 },
+  acaoRedonda: { alignItems: "center", gap: 7, width: 84 },
+  fonteChip: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 9, paddingLeft: 9, paddingRight: 14, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, maxWidth: 220 },
+  chipIc: { width: 34, height: 34, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  exRel: { borderRadius: 16, padding: 14, gap: 4 },
+  exBt: { flex: 1, alignItems: "center", gap: 8, paddingVertical: 14, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, marginHorizontal: 4 },
+  exIc: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   bolha: { width: 58, height: 58, borderRadius: 29, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   botaoGrande: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 52, borderRadius: 16 },
   card: { borderRadius: 20, padding: 16, borderWidth: StyleSheet.hairlineWidth },
