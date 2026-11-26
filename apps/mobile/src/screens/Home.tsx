@@ -307,7 +307,7 @@ export function Home() {
                 <View key={r} style={[s.mini, { backgroundColor: c.fundo }]}>
                   <View style={[s.linha, { gap: 6 }]}>
                     <View style={[s.miniIcone, { backgroundColor: `${cor}2E` }]}><Icone nome={ic} tamanho={11} cor={cor} /></View>
-                    <Text style={{ ...tipo.corpo(11, "medium"), lineHeight: 15, color: c.textoSuave, flexShrink: 1 }} numberOfLines={1}>{r}</Text>
+                    <Text style={{ ...tipo.corpo(11, "medium"), lineHeight: 15, color: c.textoSuave, flexShrink: 1 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{r}</Text>
                   </View>
                   <Text style={{ ...tipo.valor(16, false), color: c.texto, marginTop: 4 }} numberOfLines={1} adjustsFontSizeToFit>{oculto ? OCULTO : formatarDinheiro(v)}</Text>
                 </View>
@@ -591,7 +591,7 @@ function BilhetePrevisao({ p, oculto, c, aoRegistrar }: { p: PrevisaoHome; ocult
           <View style={[s.linha, { gap: 10, alignItems: "flex-start" }]}>
             <CategoryIcon categoriaId={p.categoriaId} tipo={p.centavos < 0 ? "despesa" : "receita"} tamanho={34} recorrente />
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={{ ...tipo.corpo(14, "semibold"), lineHeight: 19, color: c.texto }} numberOfLines={2}>{p.desc}</Text>
+              <Text style={{ ...tipo.corpo(14, "semibold"), lineHeight: 19, minHeight: 38, color: c.texto }} numberOfLines={2}>{p.desc}</Text>
               <Text style={{ ...tipo.corpo(11), lineHeight: 15, color: c.textoSuave, marginTop: 1 }}>
                 {p.origem === "cadastrada" ? "Fixo" : "Recorrente"}
               </Text>

@@ -17,9 +17,9 @@ export function misturar(a: string, b: string, t: number): string {
 }
 
 /** Face "cartão físico": fosca, escura na cor do banco, fatura em destaque com centavos menores. */
-export function FaceCartao({ nome, cor, faturaCentavos, oculto, titular, diaFechamento, largura, style }: {
+export function FaceCartao({ nome, cor, faturaCentavos, oculto, titular, diaFechamento, largura, soTopo, style }: {
   nome: string; cor: string; faturaCentavos: number; oculto: boolean; titular: string; diaFechamento: number;
-  largura: number; style?: StyleProp<ViewStyle>;
+  largura: number; soTopo?: boolean; style?: StyleProp<ViewStyle>;
 }) {
   const valor = formatarDinheiro(faturaCentavos), v = valor.lastIndexOf(",");
   const branco = (o: number) => `rgba(255,255,255,${o})`;
@@ -37,6 +37,8 @@ export function FaceCartao({ nome, cor, faturaCentavos, oculto, titular, diaFech
           </Svg>
         </View>
       </View>
+      {/* dentro da carteira só o topo aparece; o resto vazaria acima da curva do bolso */}
+      {!soTopo && <>
       <Text style={{ ...tipo.corpo(11.5, "medium"), color: branco(0.72), marginTop: 10 }}>Fatura atual</Text>
       <Text style={{ ...tipo.valor(27), color: auxiliares.branco }} numberOfLines={1}>
         {oculto ? OCULTO : valor.slice(0, v)}
@@ -51,6 +53,7 @@ export function FaceCartao({ nome, cor, faturaCentavos, oculto, titular, diaFech
           <View style={[s.circ, { marginLeft: -9, backgroundColor: misturar(cor, auxiliares.branco, 0.45), opacity: 0.9 }]} />
         </View>
       </View>
+      </>}
     </View>
   );
 }

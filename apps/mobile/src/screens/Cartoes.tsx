@@ -25,7 +25,7 @@ const MOLA = { damping: 18, stiffness: 160 };
 const DIA = 86_400_000;
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const OCULTO = "R$ •••••";
-const ALTURA_PALCO: Record<Estado, number> = { carteira: 306, leque: 236, detalhe: 222 };
+const ALTURA_PALCO: Record<Estado, number> = { carteira: 346, leque: 236, detalhe: 222 };
 
 const diasAte = (data: string, hoje: string) => Math.round((Date.parse(hoje) - Date.parse(data)) / DIA);
 const somarDias = (data: string, n: number) => { const d = new Date(`${data}T12:00:00`); d.setDate(d.getDate() + n); return hojeLocal(d); };
@@ -149,7 +149,7 @@ export function Cartoes() {
   const corBolso = tema.dark ? cartaoFisico.bolsoEscuro : c.primario, corBolsoFim = tema.dark ? cartaoFisico.bolsoEscuroFim : misturar(c.primario, auxiliares.preto, 0.25);
   const totalFaturas = cartoes.reduce((s, k) => s + k.faturaCentavos, 0);
 
-  const face = (k: PainelCartao) => <FaceCartao nome={k.nome} cor={corBanco(k.nome)} faturaCentavos={k.faturaCentavos} oculto={oculto} titular={titular} diaFechamento={k.diaFechamento} largura={W} />;
+  const face = (k: PainelCartao) => <FaceCartao nome={k.nome} cor={corBanco(k.nome)} faturaCentavos={k.faturaCentavos} oculto={oculto} titular={titular} diaFechamento={k.diaFechamento} largura={W} soTopo={estado === "carteira"} />;
 
   // ── verso: anel por categoria; painel: gráfico por período ──
   const fatias: Fatia[] = useMemo(() => {
@@ -266,7 +266,7 @@ export function Cartoes() {
                 );
               })}
               <Animated.View pointerEvents={estado === "carteira" ? "auto" : "none"} style={[s.bolso, estiloBolso]}>
-                <Svg width={palcoL} height={180} viewBox="0 0 350 168" preserveAspectRatio="none" style={StyleSheet.absoluteFill}>
+                <Svg width={palcoL} height={204} viewBox="0 0 350 168" preserveAspectRatio="none" style={StyleSheet.absoluteFill}>
                   <Defs>
                     <Degrade id="bolso" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={corBolso} /><Stop offset="1" stopColor={corBolsoFim} /></Degrade>
                     <Degrade id="brilho" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={auxiliares.branco} stopOpacity={0.16} /><Stop offset="0.5" stopColor={auxiliares.branco} stopOpacity={0} /></Degrade>
@@ -276,9 +276,9 @@ export function Cartoes() {
                   <Path d="M10 36Q10 20 28 20C108 20 118 60 175 60S242 20 322 20Q340 20 340 36V142Q340 158 324 158H26Q10 158 10 142Z" fill="none" stroke={auxiliares.branco} strokeOpacity={0.42} strokeWidth={1.4} strokeDasharray="5 4" vectorEffect="non-scaling-stroke" />
                 </Svg>
                 <View style={s.bolsoC}>
-                  <Text style={{ ...tipo.corpo(12.5, "medium"), color: auxiliares.branco, opacity: 0.82 }}>Total das faturas atuais</Text>
-                  <Text style={{ ...tipo.valor(32), color: auxiliares.branco }}>{val(totalFaturas)}</Text>
-                  <View style={[s.entre, { marginTop: 12 }]}>
+                  <Text style={{ ...tipo.corpo(12.5, "medium"), color: auxiliares.branco, opacity: 0.82 }} numberOfLines={1}>Total das faturas atuais</Text>
+                  <Text style={{ ...tipo.valor(28), color: auxiliares.branco }} numberOfLines={1} adjustsFontSizeToFit>{val(totalFaturas)}</Text>
+                  <View style={[s.entre, { marginTop: 10 }]}>
                     <Tocavel onPress={() => irPara("leque")} style={s.pilulaBolso} accessibilityRole="button" accessibilityLabel="Minha Carteira, abrir os cartões">
                       <Text style={{ ...tipo.corpo(13, "semibold"), color: auxiliares.branco }}>Minha Carteira</Text>
                       <Icone nome="angle-small-right" tamanho={16} cor={auxiliares.branco} />
@@ -405,10 +405,11 @@ const s = StyleSheet.create({
   tag: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 99, maxWidth: 120 },
   secao: { ...tipo.valor(17, false) },
   costas: { position: "absolute", left: 0, right: 0, top: 74, height: 226, borderRadius: 28 },
-  bolso: { position: "absolute", left: 0, right: 0, top: 126, height: 180, zIndex: 40, elevation: 40 },
-  bolsoC: { flex: 1, justifyContent: "flex-end", paddingHorizontal: 22, paddingTop: 62, paddingBottom: 18 },
-  pilulaBolso: { flexDirection: "row", alignItems: "center", gap: 6, height: 40, paddingLeft: 18, paddingRight: 14, borderRadius: 99, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" },
-  olho: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" },
+  // costura do SVG vai de y=20..158 em 168: com 204 de altura o conteúdo cabe abaixo da curva, longe da linha
+  bolso: { position: "absolute", left: 0, right: 0, top: 126, height: 204, zIndex: 40, elevation: 40 },
+  bolsoC: { flex: 1, justifyContent: "flex-end", paddingHorizontal: 30, paddingBottom: 28 },
+  pilulaBolso: { flexDirection: "row", alignItems: "center", gap: 6, height: 36, paddingLeft: 18, paddingRight: 14, borderRadius: 99, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" },
+  olho: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" },
   verso: { borderRadius: 20, overflow: "hidden", paddingLeft: 16, paddingRight: 14, paddingTop: 14, paddingBottom: 22, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" },
   dicaVerso: { position: "absolute", left: 0, right: 0, bottom: 7, textAlign: "center", ...tipo.corpo(10, "medium"), color: "rgba(255,255,255,0.55)" },
   pontos: { flexDirection: "row", justifyContent: "center", gap: 6 },
