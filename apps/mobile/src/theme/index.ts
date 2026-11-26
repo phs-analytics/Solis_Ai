@@ -133,5 +133,13 @@ export function corBanco(nome: string): string {
   return CORES_RESERVA[h % CORES_RESERVA.length]!;
 }
 
+/** Cores de dados das classes de investimento (semânticas, iguais no claro e no escuro). */
+export const coresClasseAtivo = {
+  renda_fixa: "#11A85F", acao: "#1F5FAD", fii: "#9B3DD1", etf: "#F26A1B", cripto: "#D9A21B", outro: "#7A8290",
+} as const;
+
+/** Estrela de favorito no Mercado. */
+export const corFavorito = "#E0A21B";
+
 /** Base escura do cartão físico e da carteira (a cor do banco ou da marca é misturada sobre ela). */
 export const cartaoFisico = { fundo: "#0B0B10", fundoFim: "#07070A", versoFundo: "#141419", bolsoEscuro: "#2C2731", bolsoEscuroFim: "#1B181F" } as const;

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Alert, Linking, ScrollView, StyleSheet, Switch, View, Pressable } from "react-native";
-import { Texto as Text } from "../components/Texto";
+import { Texto as Text, Entrada as TextInput } from "../components/Texto";
 import * as Sharing from "expo-sharing";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
-  lerConsentimentoCotacoes, salvarConsentimentoCotacoes, exportarBackup, limparBackupTemporario, lerTema, salvarTema,
+  lerConsentimentoCotacoes, salvarConsentimentoCotacoes, lerChaveBrapi, salvarChaveBrapi, exportarBackup, limparBackupTemporario, lerTema, salvarTema,
 } from "@solis/dados";
 import type { PreferenciaTema } from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
@@ -72,13 +72,16 @@ export function Mais() {
   const [progresso, setProgresso] = useState(0); // 0–100
   const abortRef = React.useRef<AbortController | null>(null);
 
-  const [cotacoesOnline, setCotacoesOnline] = useState(false);
+  const [cotacoesOnline, setCotacoesOnline] = useState(true);
+  const [chaveBrapi, setChaveBrapi] = useState("");
+  const [chaveSalva, setChaveSalva] = useState(false);
 
   const [temaEscolhido, setTemaEscolhido] = useState<PreferenciaTema>("sistema");
 
   useEffect(() => {
     setStatusIA(modeloExiste() ? "ativo" : "inativo");
     lerConsentimentoCotacoes().then(setCotacoesOnline).catch(() => {});
+    lerChaveBrapi().then((k) => setChaveSalva(!!k)).catch(() => {});
     lerTema().then(setTemaEscolhido).catch(() => {});
   }, []);
 
@@ -86,6 +89,13 @@ export function Mais() {
     setTemaEscolhido(v);
     aplicarPreferenciaTema(v);
     salvarTema(v).catch(() => {});
+  }
+
+  async function guardarChaveBrapi() {
+    const v = chaveBrapi.trim();
+    await salvarChaveBrapi(v || null);
+    setChaveSalva(!!v); setChaveBrapi("");
+    Alert.alert(v ? "Chave salva" : "Chave removida", v ? "O histórico de qualquer ativo já aparece em Investimentos." : "O histórico volta a aparecer só para os ativos de teste da brapi.");
   }
 
   function alternarCotacoes(ativo: boolean) {
@@ -186,11 +196,28 @@ export function Mais() {
         <View style={{ flex: 1 }}>
           <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>Buscar cotações online</Text>
           <Text style={[tema.font.legenda, { color: c.textoSuave, marginTop: 2 }]}>
-            Envia os códigos dos seus ativos (ex.: PETR4) para a brapi.dev. Nenhum outro dado sai do aparelho.
+            Vem ligado. Envia só os códigos dos ativos (ex.: PETR4) e o que você busca para a brapi.dev. Nenhum outro dado sai do aparelho.
           </Text>
         </View>
         <Switch value={cotacoesOnline} onValueChange={alternarCotacoes}
           accessibilityLabel="Buscar cotações online" />
+      </View>
+
+      <View style={[s.blocoIA, { backgroundColor: c.superficie, borderColor: c.borda, marginHorizontal: tema.spacing.lg, marginTop: 12, flexDirection: "column", alignItems: "stretch" }]}>
+        <Text style={[tema.font.corpo, { color: c.texto, fontWeight: "700" }]}>Chave da brapi (opcional)</Text>
+        <Text style={[tema.font.legenda, { color: c.textoSuave, marginTop: 2 }]}>
+          {chaveSalva ? "Chave salva só neste celular. O histórico de qualquer ativo já aparece." : "Sem chave, o gráfico de histórico aparece só para PETR4, VALE3, ITUB4, MGLU3, MXRF11 e HGLG11. Crie uma chave grátis em brapi.dev e cole aqui."}
+        </Text>
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+          <TextInput value={chaveBrapi} onChangeText={setChaveBrapi} placeholder={chaveSalva ? "Nova chave (vazio remove)" : "Cole sua chave"}
+            placeholderTextColor={c.textoSuave} secureTextEntry autoCapitalize="none" autoCorrect={false}
+            style={{ flex: 1, height: 42, borderRadius: 10, borderWidth: 1, borderColor: c.borda, paddingHorizontal: 12, color: c.texto }}
+            accessibilityLabel="Chave da brapi" />
+          <Pressable onPress={guardarChaveBrapi} style={{ height: 42, paddingHorizontal: 14, borderRadius: 10, backgroundColor: c.primario, justifyContent: "center" }}
+            accessibilityRole="button" accessibilityLabel={chaveBrapi.trim() ? "Salvar chave" : "Remover chave"}>
+            <Text style={{ color: c.sobrePrimario, fontWeight: "700", fontSize: 13 }}>{chaveBrapi.trim() || !chaveSalva ? "Salvar" : "Remover"}</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={[s.blocoIA, { backgroundColor: c.superficie, borderColor: c.borda, marginHorizontal: tema.spacing.lg, marginTop: 12, flexDirection: "column", alignItems: "stretch" }]}>
