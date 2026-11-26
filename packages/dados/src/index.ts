@@ -1,6 +1,6 @@
 export { abrirBanco, fecharBanco, bancoCorrente, apagarBanco, registrarTentativaErrada, resetarTentativas, verificarBloqueio, gerarSalt, KDF_DEFAULTS } from "./vault.js";
 export type { KdfParams, Banco } from "./vault.js";
-export { salvarSalt, lerSalt, lerPrefs, removerChave, lerConsentimentoCotacoes, salvarConsentimentoCotacoes, lerTema, salvarTema, lerPrivacidade, salvarPrivacidade } from "./keystore.js";
+export { salvarSalt, lerSalt, lerPrefs, removerChave, lerConsentimentoCotacoes, salvarConsentimentoCotacoes, lerChaveBrapi, salvarChaveBrapi, lerTema, salvarTema, lerPrivacidade, salvarPrivacidade } from "./keystore.js";
 export type { PreferenciaTema } from "./keystore.js";
 export { inicializarSchema, VERSAO_SCHEMA } from "./schema.js";
 export { exportarBackup, restaurarBackup, limparBackupTemporario, apagarTudo } from "./backup.js";
@@ -13,5 +13,5 @@ export type { CredenciaisPluggy } from "./pluggy/credenciais.js";
 export { sincronizarPluggy, ultimaSyncPluggy } from "./pluggy/sincronizar.js";
 export type { ResultadoSync } from "./pluggy/sincronizar.js";
 export type { ContextoFinanceiro } from "./ia/analisador.js";
-export { montarPainel, gerarRelatorioSemana, lerUltimoRelatorio, atualizarMemoriaSolis } from "./painel.js";
+export { montarPainel, listarMovsConta, gerarRelatorioSemana, lerUltimoRelatorio, atualizarMemoriaSolis } from "./painel.js";
 export type { Painel, PainelConta, PainelCofrinhos, PainelCartao, Mov24, MovCartao } from "./painel.js";

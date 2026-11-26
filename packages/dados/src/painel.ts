@@ -101,3 +101,14 @@ export async function atualizarMemoriaSolis(banco: Banco, agora = new Date()): P
   await gerarRelatorioSemana(banco, agora);
   await banco.runAsync("INSERT OR REPLACE INTO configuracoes (chave, valor) VALUES (?, ?)", [CHAVE_MEMORIA, agora.toISOString()]);
 }
+
+/** Lançamentos de uma conta desde `desde` (AAAA-MM-DD, pela data do lançamento), mais novos primeiro. */
+export async function listarMovsConta(banco: Banco, contaId: string, desde: string): Promise<Mov24[]> {
+  const rows = await banco.getAllAsync<Record<string, unknown>>(
+    "SELECT id, descricao, valor_centavos, categoria_id, data FROM lancamentos WHERE conta_id = ? AND data >= ? ORDER BY data DESC, criado_em DESC LIMIT 300",
+    [contaId, desde]);
+  return rows.map((r) => ({
+    id: r.id as string, quando: r.data as string, descricao: (r.descricao as string) || "Sem descrição",
+    centavos: r.valor_centavos as number, categoriaId: (r.categoria_id as string | null) ?? null,
+  }));
+}

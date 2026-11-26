@@ -3,6 +3,7 @@ import { DatabaseSync } from "node:sqlite";
 import { inicializarSchema } from "../src/schema.js";
 import { sincronizarPluggy } from "../src/pluggy/sincronizar.js";
 import { saldoConta, listarContas } from "../src/repositorios/contas.js";
+import { listarAtivosPluggy } from "../src/repositorios/investimentos.js";
 import type { Banco } from "../src/vault.js";
 
 type Param = string | number | null;
@@ -26,9 +27,15 @@ function bancoReal(): Banco {
 
 const CRED = { clientId: "id", clientSecret: "s", itemIds: ["item1"] };
 
-function apiFalsa(transacoes: object[], falharTransacoes = false): typeof fetch {
+function apiFalsa(transacoes: object[], falharTransacoes = false, investimentos: object[] = []): typeof fetch {
   return (async (url: string) => {
     const corpo = url.endsWith("/auth")
+      ? { apiKey: "k" }
+      : url.includes("/investments")
+        ? { results: investimentos, totalPages: 1 }
+      : url.includes("/items/")
+        ? { connector: { name: "Nubank" } }
+      : url.endsWith("/auth")
       ? { apiKey: "k" }
       : url.includes("/accounts")
         ? { results: [{ id: "pc1", type: "BANK", name: "Conta Corrente", balance: 1000, currencyCode: "BRL", itemId: "item1" }], totalPages: 1 }
@@ -47,7 +54,7 @@ describe("sincronização Meu Pluggy", () => {
     const banco = bancoReal();
     await inicializarSchema(banco);
     const r = await sincronizarPluggy(banco, CRED, { fetch: apiFalsa([T1, T2, PEND]), agora: new Date("2026-11-18T10:00:00Z") });
-    expect(r).toEqual({ pulado: false, contas: 1, novos: 2 });
+    expect(r).toEqual({ pulado: false, contas: 1, novos: 2, investimentos: 0 });
     const [conta] = await listarContas(banco);
     expect(conta!.nome).toBe("Conta Corrente");
     expect(await saldoConta(banco, conta!.id)).toBe(100000);
@@ -69,5 +76,22 @@ describe("sincronização Meu Pluggy", () => {
     await inicializarSchema(banco);
     await expect(sincronizarPluggy(banco, CRED, { fetch: apiFalsa([], true) })).rejects.toThrow();
     expect(await listarContas(banco)).toEqual([]);
+  });
+
+  it("grava investimentos com banco, valor de hoje e preço médio, sem duplicar", async () => {
+    const banco = bancoReal();
+    await inicializarSchema(banco);
+    const cdb = { id: "i1", name: "CDB Nubank", code: null, type: "FIXED_INCOME", subtype: "CDB", balance: 864.1, amount: 870, amountOriginal: 800, quantity: null, issueDate: "2025-08-02T00:00:00Z", status: "ACTIVE" };
+    const fii = { id: "i2", name: "Maxi Renda", code: "MXRF11", type: "EQUITY", subtype: "REAL_ESTATE_FUND", balance: 383.2, amount: 383.2, amountOriginal: 404.8, quantity: 40, status: "ACTIVE" };
+    const r = await sincronizarPluggy(banco, CRED, { fetch: apiFalsa([], false, [cdb, fii]), agora: new Date("2026-11-18T10:00:00Z") });
+    expect(r.investimentos).toBe(2);
+    const lista = await listarAtivosPluggy(banco);
+    expect(lista.map((a) => [a.ticker, a.tipo, a.bancoNome, a.valorAtualCentavos, a.precoMedioCentavos, a.quantidade])).toEqual([
+      ["CDB Nubank", "renda_fixa", "Nubank", 86410, 80000, 1],
+      ["MXRF11", "fii", "Nubank", 38320, 1012, 40],
+    ]);
+    expect(lista[0]!.dataAplicacao).toBe("2025-08-02");
+    await sincronizarPluggy(banco, CRED, { forcar: true, fetch: apiFalsa([], false, [{ ...fii, status: "TOTAL_WITHDRAWAL" }, cdb]), agora: new Date("2026-11-19T10:00:00Z") });
+    expect((await listarAtivosPluggy(banco)).map((a) => a.ticker)).toEqual(["CDB Nubank"]);
   });
 });

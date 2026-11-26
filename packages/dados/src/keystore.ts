@@ -43,14 +43,26 @@ export async function salvarPrivacidade(ativo: boolean): Promise<void> {
   else await SecureStore.deleteItemAsync(PRIVACIDADE_ID);
 }
 
-/** Consentimento para enviar tickers à brapi.dev (LGPD). Desligado por padrão. */
+/** Cotações online (envia só códigos de ativos à brapi.dev). Ligado por padrão (decisão de 26/11/2026); desligar em Mais. */
 export async function lerConsentimentoCotacoes(): Promise<boolean> {
-  return (await SecureStore.getItemAsync(COTACOES_ID)) === "1";
+  return (await SecureStore.getItemAsync(COTACOES_ID)) !== "0";
 }
 
 export async function salvarConsentimentoCotacoes(ativo: boolean): Promise<void> {
-  if (ativo) await SecureStore.setItemAsync(COTACOES_ID, "1");
-  else await SecureStore.deleteItemAsync(COTACOES_ID);
+  await SecureStore.setItemAsync(COTACOES_ID, ativo ? "1" : "0");
+}
+
+const BRAPI_ID = "solis_brapi_v1";
+
+/** Chave pessoal (grátis) da brapi.dev, para histórico de qualquer ativo. Fica só no SecureStore. */
+export async function lerChaveBrapi(): Promise<string | null> {
+  return (await SecureStore.getItemAsync(BRAPI_ID)) || null;
+}
+
+export async function salvarChaveBrapi(chave: string | null): Promise<void> {
+  const v = chave?.trim();
+  if (v) await SecureStore.setItemAsync(BRAPI_ID, v, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+  else await SecureStore.deleteItemAsync(BRAPI_ID);
 }
 
 import type { KdfParams } from "./vault.js";

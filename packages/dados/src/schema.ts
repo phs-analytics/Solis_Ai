@@ -5,7 +5,7 @@
 
 import type { Banco } from "./vault.js";
 
-export const VERSAO_SCHEMA = 6;
+export const VERSAO_SCHEMA = 7;
 
 export async function inicializarSchema(banco: Banco): Promise<void> {
   await banco.withTransactionAsync(async () => {
@@ -27,6 +27,7 @@ export async function inicializarSchema(banco: Banco): Promise<void> {
     if (versaoAtual < 4) await migrar_v4(banco);
     if (versaoAtual < 5) await migrar_v5(banco);
     if (versaoAtual < 6) await migrar_v6(banco);
+    if (versaoAtual < 7) await migrar_v7(banco);
   });
 }
 
@@ -218,5 +219,21 @@ async function migrar_v6(banco: Banco): Promise<void> {
 
     INSERT INTO _migracoes (versao, aplicada_em)
     VALUES (6, datetime('now'));
+  `);
+}
+
+// ── Migração v7: investimentos vindos do Meu Pluggy e cofrinhos sincronizados do banco ──
+
+async function migrar_v7(banco: Banco): Promise<void> {
+  await banco.execAsync(`
+    ALTER TABLE ativos ADD COLUMN externo_id TEXT;
+    ALTER TABLE ativos ADD COLUMN banco_nome TEXT;
+    ALTER TABLE ativos ADD COLUMN valor_atual_centavos INTEGER;
+    ALTER TABLE ativos ADD COLUMN data_aplicacao TEXT;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_ativos_externo ON ativos(externo_id) WHERE externo_id IS NOT NULL;
+    ALTER TABLE metas ADD COLUMN externo_id TEXT;
+
+    INSERT INTO _migracoes (versao, aplicada_em)
+    VALUES (7, datetime('now'));
   `);
 }

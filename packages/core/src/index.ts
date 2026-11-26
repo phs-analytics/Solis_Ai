@@ -10,3 +10,4 @@ export * from './perfil.js';
 export * from './pronomes.js';
 export * from './recorrencia.js';
 export * from './resumo.js';
+export * from './tipoLancamento.js';

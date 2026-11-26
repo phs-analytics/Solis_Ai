@@ -12,6 +12,8 @@ export type Meta = {
   prazo: string | null;
   concluida: boolean;
   criadoEm: string;
+  /** true quando o cofrinho vem sincronizado do banco: aí o saldo é do banco e não aceita guardar/retirar à mão. */
+  doBanco: boolean;
 };
 
 export type MovimentoMeta = {
@@ -44,6 +46,7 @@ function mapear(r: Record<string, unknown>): Meta {
     prazo: r.prazo as string | null,
     concluida: (r.concluida as number) === 1,
     criadoEm: r.criado_em as string,
+    doBanco: r.externo_id != null,
   };
 }
 
@@ -64,7 +67,7 @@ export async function criarMeta(
   banco: Banco,
   dados: Pick<Meta, "nome" | "icone" | "cor" | "bancNome" | "descricao" | "alvoCentavos" | "prazo">
 ): Promise<Meta> {
-  const meta: Meta = { id: uuid(), ...dados, atualCentavos: 0, concluida: false, criadoEm: agora() };
+  const meta: Meta = { id: uuid(), ...dados, atualCentavos: 0, concluida: false, criadoEm: agora(), doBanco: false };
   await banco.runAsync(
     "INSERT INTO metas (id, nome, icone, cor, banco_nome, descricao, alvo_centavos, atual_centavos, prazo, concluida, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?)",
     [meta.id, meta.nome, meta.icone, meta.cor, meta.bancNome, meta.descricao, meta.alvoCentavos, meta.prazo, meta.criadoEm]

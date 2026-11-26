@@ -20,6 +20,11 @@ export type Ativo = {
   ativo: boolean;
   criadoEm: string;
   atualizadoEm: string;
+  /** Preenchidos quando o ativo vem do Meu Pluggy. */
+  externoId: string | null;
+  bancoNome: string | null;
+  valorAtualCentavos: number | null;
+  dataAplicacao: string | null;
 };
 
 type AtivoRow = {
@@ -33,6 +38,10 @@ type AtivoRow = {
   ativo: number;
   criado_em: string;
   atualizado_em: string;
+  externo_id?: string | null;
+  banco_nome?: string | null;
+  valor_atual_centavos?: number | null;
+  data_aplicacao?: string | null;
 };
 
 function rowParaAtivo(r: AtivoRow): Ativo {
@@ -47,7 +56,36 @@ function rowParaAtivo(r: AtivoRow): Ativo {
     ativo: r.ativo === 1,
     criadoEm: r.criado_em,
     atualizadoEm: r.atualizado_em,
+    externoId: r.externo_id ?? null,
+    bancoNome: r.banco_nome ?? null,
+    valorAtualCentavos: r.valor_atual_centavos ?? null,
+    dataAplicacao: r.data_aplicacao ?? null,
   };
+}
+
+/** Carteira do Meu Pluggy: só o que veio dos bancos conectados. */
+export async function listarAtivosPluggy(banco: Banco): Promise<Ativo[]> {
+  const rows = await banco.getAllAsync<AtivoRow>(
+    "SELECT * FROM ativos WHERE ativo = 1 AND externo_id IS NOT NULL ORDER BY COALESCE(valor_atual_centavos, 0) DESC"
+  );
+  return rows.map(rowParaAtivo);
+}
+
+const CHAVE_FAVORITOS = "mercado_favoritos";
+
+/** Códigos favoritados em Mercado (ex.: ["PETR4"]). Ficam no cofre, como lista JSON. */
+export async function lerFavoritosMercado(banco: Banco): Promise<string[]> {
+  const rows = await banco.getAllAsync<{ valor: string }>("SELECT valor FROM configuracoes WHERE chave = ?", [CHAVE_FAVORITOS]);
+  try {
+    const v = JSON.parse(rows[0]?.valor ?? "[]");
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function salvarFavoritosMercado(banco: Banco, codigos: string[]): Promise<void> {
+  await banco.runAsync("INSERT OR REPLACE INTO configuracoes (chave, valor) VALUES (?, ?)", [CHAVE_FAVORITOS, JSON.stringify([...new Set(codigos)])]);
 }
 
 export async function listarAtivos(banco: Banco): Promise<Ativo[]> {
@@ -59,7 +97,7 @@ export async function listarAtivos(banco: Banco): Promise<Ativo[]> {
 
 export async function criarAtivo(
   banco: Banco,
-  dados: Omit<Ativo, "id" | "ativo" | "criadoEm" | "atualizadoEm">
+  dados: Omit<Ativo, "id" | "ativo" | "criadoEm" | "atualizadoEm" | "externoId" | "bancoNome" | "valorAtualCentavos" | "dataAplicacao">
 ): Promise<Ativo> {
   const id = uuid();
   const agora = new Date().toISOString();
@@ -68,7 +106,7 @@ export async function criarAtivo(
      VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
     [id, dados.ticker.toUpperCase(), dados.nome, dados.tipo, dados.quantidade, dados.precoMedioCentavos, dados.moeda, agora, agora]
   );
-  return { ...dados, id, ticker: dados.ticker.toUpperCase(), ativo: true, criadoEm: agora, atualizadoEm: agora };
+  return { ...dados, id, ticker: dados.ticker.toUpperCase(), ativo: true, criadoEm: agora, atualizadoEm: agora, externoId: null, bancoNome: null, valorAtualCentavos: null, dataAplicacao: null };
 }
 
 export async function atualizarAtivo(

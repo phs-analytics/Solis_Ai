@@ -100,6 +100,55 @@ export async function listarTransacoesPluggy(
   return todas;
 }
 
+/** Investimento do GET /investments (docs.pluggy.ai/reference/investments-list). Muitos campos podem vir null. */
+export type InvestimentoPluggy = {
+  id: string;
+  name: string;
+  code?: string | null;
+  type: "FIXED_INCOME" | "SECURITY" | "MUTUAL_FUND" | "EQUITY" | "ETF" | "COE" | "OTHER";
+  subtype?: string | null;
+  balance: number;
+  amount: number;
+  amountOriginal?: number | null;
+  quantity?: number | null;
+  date?: string | null;
+  issueDate?: string | null;
+  status?: "ACTIVE" | "PENDING" | "TOTAL_WITHDRAWAL" | null;
+};
+
+export async function listarInvestimentosPluggy(apiKey: string, itemId: string, f: Fetch = fetch): Promise<InvestimentoPluggy[]> {
+  const todos: InvestimentoPluggy[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const q = new URLSearchParams({ itemId, page: String(page), pageSize: "500" });
+    const r = await chamar<{ results: InvestimentoPluggy[]; totalPages: number }>(f, `/investments?${q}`, {
+      headers: { "X-API-KEY": apiKey },
+    });
+    todos.push(...r.results);
+    if (page >= (r.totalPages || 1)) break;
+  }
+  return todos;
+}
+
+/** Nome do banco do item (connector.name), para mostrar de onde veio cada investimento. */
+export async function nomeBancoPluggy(apiKey: string, itemId: string, f: Fetch = fetch): Promise<string | null> {
+  try {
+    const r = await chamar<{ connector?: { name?: string | null } | null }>(f, `/items/${encodeURIComponent(itemId)}`, {
+      headers: { "X-API-KEY": apiKey },
+    });
+    return r.connector?.name ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Classe do Solis (CHECK da tabela ativos) a partir do tipo/subtipo da Pluggy. */
+export function tipoAtivoPluggy(i: Pick<InvestimentoPluggy, "type" | "subtype">): "acao" | "fii" | "etf" | "renda_fixa" | "cripto" | "outro" {
+  if (i.type === "FIXED_INCOME") return "renda_fixa";
+  if (i.type === "ETF" || i.subtype === "ETF_FUND") return "etf";
+  if (i.type === "EQUITY") return i.subtype === "REAL_ESTATE_FUND" ? "fii" : "acao";
+  return "outro";
+}
+
 /** Valor em centavos com o sinal do Solis: saída negativa, entrada positiva. */
 export function centavosTransacao(t: Pick<TransacaoPluggy, "amount" | "type">): number {
   const c = Math.round(Math.abs(t.amount) * 100);
