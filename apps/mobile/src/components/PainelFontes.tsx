@@ -1,8 +1,11 @@
-import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import type { PainelCartao, PainelCofrinhos, PainelConta, Mov24 } from "@solis/dados";
+import { hojeLocal, listarMovsConta } from "@solis/dados";
+import { inicioPeriodo, tipoLancamento } from "@solis/core";
+import { useBanco } from "../contexto/BancoContext";
 import { auxiliares, tipo, useTema } from "../theme";
 import { formatarDinheiro } from "../utils/dinheiro";
 import { Texto as Text } from "./Texto";
@@ -50,7 +53,7 @@ function Linha({ m, i, oculto, extra, icone }: { m: Mov24; i: number; oculto: bo
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={{ ...tipo.corpo(14, "medium"), color: c.texto }} numberOfLines={1}>{m.descricao}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Text style={{ ...tipo.corpo(12), color: c.textoSuave }}>{hora(m.quando)}</Text>
+          {!!m.quando && <Text style={{ ...tipo.corpo(12), color: c.textoSuave }}>{hora(m.quando)}</Text>}
           {extra}
         </View>
       </View>
@@ -82,19 +85,53 @@ function Saldo({ rotulo, valor, oculto }: { rotulo: string; valor: number; ocult
   );
 }
 
+const PERIODOS = [["hoje", "Hoje"], ["semana", "Semana"], ["mes", "Mês"], ["6m", "Últ. 6 meses"]] as const;
+type PeriodoConta = (typeof PERIODOS)[number][0];
+const diaMes = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+
+/** Pop-out do banco: saldo e lançamentos de hoje, da semana atual, do mês atual ou dos últimos 6 meses. */
 export function ConteudoConta({ conta, oculto }: { conta: PainelConta; oculto: boolean }) {
   const c = useTema().cores;
+  const banco = useBanco();
+  const [periodo, setPeriodo] = useState<PeriodoConta>("semana");
+  const [movs, setMovs] = useState<Mov24[] | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    setMovs(null);
+    listarMovsConta(banco, conta.id, inicioPeriodo(hojeLocal(), periodo)).then((m) => { if (vivo) setMovs(m); }).catch(() => vivo && setMovs([]));
+    return () => { vivo = false; };
+  }, [banco, conta.id, periodo]);
   return (
     <>
       <Cabecalho icone="bank" cor={c.primario} titulo={conta.nome} sub="Conta" />
       <Saldo rotulo="Saldo" valor={conta.saldoCentavos} oculto={oculto} />
-      <Resumo movs={conta.mov24} oculto={oculto} />
-      <Rotulo texto="Últimas 24 horas" i={3} />
-      <View>
-        {conta.mov24.length ? conta.mov24.map((m, i) => (
-          <Linha key={m.id} m={m} i={i + 4} oculto={oculto} icone={<CategoryIcon categoriaId={m.categoriaId} tipo={m.centavos > 0 ? "receita" : "despesa"} tamanho={36} />} />
-        )) : <Vazio i={4} />}
-      </View>
+      <Animated.View entering={entra(2)} style={s.periodos} accessibilityRole="tablist">
+        {PERIODOS.map(([k, r]) => {
+          const on = periodo === k;
+          return (
+            <Pressable key={k} onPress={() => setPeriodo(k)} style={[s.per, { borderColor: on ? c.texto : c.borda, backgroundColor: on ? c.texto : "transparent" }]}
+              accessibilityRole="tab" accessibilityState={{ selected: on }}>
+              <Text style={{ ...tipo.corpo(12, "semibold"), color: on ? c.fundo : c.textoSuave }} numberOfLines={1}>{r}</Text>
+            </Pressable>
+          );
+        })}
+      </Animated.View>
+      {movs === null ? <ActivityIndicator color={c.primario} style={{ paddingVertical: 16 }} /> : (
+        <>
+          <Resumo movs={movs} oculto={oculto} />
+          <View>
+            {movs.length ? movs.map((m, i) => (
+              <Linha key={m.id} m={{ ...m, quando: "" }} i={Math.min(i, 8) + 3} oculto={oculto}
+                extra={<Text style={{ ...tipo.corpo(12), color: c.textoSuave }} numberOfLines={1}>{tipoLancamento(m.descricao, m.centavos)} · {diaMes(m.quando)}</Text>}
+                icone={<CategoryIcon categoriaId={m.categoriaId} tipo={m.centavos > 0 ? "receita" : "despesa"} tamanho={36} />} />
+            )) : (
+              <Text style={{ ...tipo.corpo(13), color: c.textoSuave, textAlign: "center", paddingVertical: 12 }}>
+                Nenhum lançamento {periodo === "hoje" ? "hoje" : "neste período"}.
+              </Text>
+            )}
+          </View>
+        </>
+      )}
     </>
   );
 }
@@ -175,6 +212,8 @@ export function ConteudoCartao({ cartao, oculto, titular = "Você" }: { cartao: 
 }
 
 const s = StyleSheet.create({
+  periodos: { flexDirection: "row", gap: 6 },
+  per: { flex: 1, height: 32, borderRadius: 999, borderWidth: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
   tile: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   mini: { flex: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
   li: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },

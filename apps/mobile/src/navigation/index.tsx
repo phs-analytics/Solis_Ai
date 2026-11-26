@@ -42,7 +42,7 @@ export type RootStackParams = {
 
 export type TabParams = {
   Inicio: undefined;
-  Cartoes: undefined;
+  Cartoes: { cartaoId?: string; t?: number } | undefined;
   Metas: undefined;
   Investimentos: undefined;
   Chat: undefined;

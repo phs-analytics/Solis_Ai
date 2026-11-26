@@ -95,7 +95,8 @@ export function DetalheMeta({
 
   return (
     <Modal visible={visivel} animationType="slide" onRequestClose={aoFechar} statusBarTranslucent>
-      <View style={{ flex: 1, backgroundColor: "#0D1520" }}>
+      <ScrollView style={{ flex: 1, backgroundColor: "#0D1520" }} contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Header imersivo */}
         <View style={[s.header, { paddingTop: 56 }]}>
           {/* brilho radial simulado com círculo grande transparente */}
@@ -152,7 +153,11 @@ export function DetalheMeta({
             </View>
           </View>
 
-          <View style={s.acoes}>
+          {meta.doBanco ? (
+            <Text style={{ ...tipo.corpo(12), color: "rgba(255,255,255,0.65)", textAlign: "center", marginBottom: 20 }}>
+              Cofrinho do banco: o saldo vem da sua conta. Para guardar ou retirar, use o app do banco.
+            </Text>
+          ) : <View style={s.acoes}>
             <Pressable onPress={() => { setModoRetirada(false); setInputVisivel(true); }}
               style={[s.btnAcao, { backgroundColor: cor }]} accessibilityRole="button" accessibilityLabel="Guardar dinheiro">
               <Text style={{ ...tipo.corpo(13, "semibold"), color: auxiliares.branco }}>+ Guardar</Text>
@@ -161,7 +166,7 @@ export function DetalheMeta({
               style={[s.btnAcao, { backgroundColor: "rgba(255,255,255,0.12)" }]} accessibilityRole="button" accessibilityLabel="Retirar dinheiro">
               <Text style={{ ...tipo.corpo(13, "semibold"), color: auxiliares.branco }}>− Retirar</Text>
             </Pressable>
-          </View>
+          </View>}
         </View>
 
         {/* Painel inferior */}
@@ -199,7 +204,7 @@ export function DetalheMeta({
             </View>
           )}
 
-          <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+          <View style={{ paddingBottom: 40 }}>
             {movsFiltrados.length === 0 ? (
               <Text style={{ ...tipo.corpo(13), color: c.textoSuave, textAlign: "center", paddingTop: 24 }}>
                 {filtro === "dep" ? "Nenhum depósito" : filtro === "ret" ? "Nenhuma retirada" : "Nenhum lançamento"} ainda
@@ -207,9 +212,9 @@ export function DetalheMeta({
             ) : (
               movsFiltrados.map((m) => <LinhaMovimento key={m.id} m={m} oculto={oculto} />)
             )}
-          </ScrollView>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </Modal>
   );
 }
@@ -228,7 +233,7 @@ const s = StyleSheet.create({
   anelCentro: { alignItems: "center", justifyContent: "center" },
   miniCards: { flexDirection: "row", gap: 10, marginBottom: 12 },
   miniCard: { flex: 1, borderRadius: 12, padding: 12, gap: 2 },
-  painel: { flex: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 20 },
+  painel: { flexGrow: 1, minHeight: 360, zIndex: 2, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 20 },
   painelTopo: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   acoes: { flexDirection: "row", gap: 10, marginBottom: 20 },
   btnAcao: { flex: 1, borderRadius: 22, paddingVertical: 11, alignItems: "center" },

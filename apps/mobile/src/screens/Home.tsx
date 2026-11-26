@@ -518,11 +518,13 @@ export function Home() {
         </Animated.View>
       </ScrollView>
       <PopOut aberto={popAberto} origem={origem} aoFechar={fechar} semRolagem={pop?.tipo === "analise"}
-        titulo={pop?.tipo === "atualizar" ? "Atualização" : pop?.tipo === "analise" ? "Análise da semana" : pop?.tipo === "exportar" ? "Exportar relatório" : "Últimas 24 horas"}
+        titulo={pop?.tipo === "atualizar" ? "Atualização" : pop?.tipo === "analise" ? "Análise da semana" : pop?.tipo === "exportar" ? "Exportar relatório" : pop?.tipo === "conta" ? "Lançamentos da conta" : "Últimas 24 horas"}
         rodape={
           pop?.tipo === "atualizar" ? { texto: upd?.fim ? "Fechar" : "Continuar em segundo plano", acao: fechar }
           : pop?.tipo === "analise" ? { texto: "Descartar", acao: descartar, desativado: !impresso || descartando }
           : pop?.tipo === "exportar" && !relatorio ? { texto: "Gerar análise agora", acao: () => { fechar(); setTimeout(abrirAnalise, 350); } }
+          : pop?.tipo === "cartao" ? { texto: "Ver compras do cartão", acao: () => { const id = pop.id; fechar(); setTimeout(() => irAba("Cartoes", { cartaoId: id, t: Date.now() }), 300); } }
+          : pop?.tipo === "cofrinho" ? { texto: "Ver metas", acao: () => { fechar(); setTimeout(() => irAba("Metas"), 300); } }
           : { texto: "Fechar", acao: fechar }
         }>
         {pop?.tipo === "conta" && painel?.contas.find((x) => x.id === pop.id) && <ConteudoConta conta={painel.contas.find((x) => x.id === pop.id)!} oculto={oculto} />}

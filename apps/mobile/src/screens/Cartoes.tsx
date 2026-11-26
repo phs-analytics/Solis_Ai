@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { PanResponder, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import Svg, { Defs, LinearGradient as Degrade, Path, Stop } from "react-native-svg";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
 import { hojeLocal, lerPerfil, lerPrivacidade, listarComprasCartoes, montarPainel, salvarPrivacidade, type CompraCartao, type PainelCartao } from "@solis/dados";
 import { SafeScreen } from "../components/SafeScreen";
 import { Texto as Text, Entrada as TextInput } from "../components/Texto";
@@ -96,6 +96,16 @@ export function Cartoes() {
   }, [banco]);
   // o olho é o mesmo da Início: relê ao entrar na aba para as duas telas ficarem iguais
   useFocusEffect(useCallback(() => { carregar().catch(() => {}); }, [carregar]));
+  // vindo do pop-out da Início: abre a carteira já no detalhe daquele cartão
+  const rota = useRoute() as { params?: { cartaoId?: string; t?: number } };
+  const pedidoCartao = rota.params?.cartaoId, pedidoT = rota.params?.t;
+  useEffect(() => {
+    if (!pedidoCartao || !cartoes.length) return;
+    const i = cartoes.findIndex((k) => k.id === pedidoCartao);
+    if (i < 0) return;
+    setFoco(i); irPara("detalhe");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedidoCartao, pedidoT, cartoes.length]);
 
   const alternarOlho = () => { setOlhoToques((n) => n + 1); setOculto((o) => { salvarPrivacidade(!o).catch(() => {}); return !o; }); };
   const val = (v: number) => (oculto ? OCULTO : formatarDinheiro(v));
