@@ -88,6 +88,25 @@ export async function totalFatura(banco: Banco, faturaId: string): Promise<numbe
   return rows[0]?.total ?? 0;
 }
 
+export type CompraCartao = {
+  id: string; cartaoId: string; descricao: string; valorCentavos: number; data: string;
+  categoriaId: string | null; categoriaNome: string | null; parcela: string | null;
+};
+
+/** Compras de todos os cartões a partir de `desde` (AAAA-MM-DD), mais recentes primeiro. Valor sempre positivo. */
+export async function listarComprasCartoes(banco: Banco, desde: string): Promise<CompraCartao[]> {
+  const rows = await banco.getAllAsync<Record<string, unknown>>(
+    `SELECT l.id, f.cartao_id, l.descricao, l.valor_centavos, l.data, l.categoria_id, c.nome AS categoria_nome, l.parcela_atual, l.parcelas_total
+     FROM lancamentos_cartao l JOIN faturas f ON f.id = l.fatura_id LEFT JOIN categorias c ON c.id = l.categoria_id
+     WHERE l.data >= ? ORDER BY l.data DESC, l.id`, [desde]);
+  return rows.map((r) => ({
+    id: r.id as string, cartaoId: r.cartao_id as string, descricao: (r.descricao as string) || "Compra",
+    valorCentavos: Math.abs(r.valor_centavos as number), data: r.data as string,
+    categoriaId: (r.categoria_id as string | null) ?? null, categoriaNome: (r.categoria_nome as string | null) ?? null,
+    parcela: r.parcelas_total && (r.parcelas_total as number) > 1 ? `${r.parcela_atual as number}/${r.parcelas_total as number}` : null,
+  }));
+}
+
 export async function marcarFaturaPaga(banco: Banco, faturaId: string): Promise<void> {
   await banco.runAsync("UPDATE faturas SET pago = 1, pago_em = ? WHERE id = ?", [agora(), faturaId]);
 }

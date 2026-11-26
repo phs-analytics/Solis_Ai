@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { View } from "react-native";
-import Svg, { Circle, Defs, LinearGradient, Path, Stop } from "react-native-svg";
+import Svg, { Circle, Line, Path } from "react-native-svg";
 import Animated, { Easing, useAnimatedProps, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -34,8 +34,11 @@ function curva(ys: number[], w: number, h: number): string {
   return d;
 }
 
-export function GraficoSaldo({ pontos, largura, altura = 120, cor, reduzirMovimento, rotulo }: {
-  pontos: number[]; largura: number; altura?: number; cor: string; reduzirMovimento: boolean; rotulo: string;
+const AnimatedLine = Animated.createAnimatedComponent(Line);
+
+/** Linha fina sem área, ponto final vazado e guia tracejada até o chão (estilo "Statistics"). */
+export function GraficoSaldo({ pontos, largura, altura = 120, cor, fundoPonto, reduzirMovimento, rotulo }: {
+  pontos: number[]; largura: number; altura?: number; cor: string; fundoPonto: string; reduzirMovimento: boolean; rotulo: string;
 }) {
   const alvo = useMemo(() => preparar(pontos), [pontos]);
   const de = useSharedValue<number[]>(alvo), para = useSharedValue<number[]>(alvo), t = useSharedValue(1);
@@ -60,29 +63,23 @@ export function GraficoSaldo({ pontos, largura, altura = 120, cor, reduzirMovime
   };
   const w = largura - 10; // folga para o ponto final não ser cortado
   const linha = useAnimatedProps(() => ({ d: curva(ys(), w, altura) }));
-  const area = useAnimatedProps(() => ({ d: `${curva(ys(), w, altura)} L ${w} ${altura} L 0 ${altura} Z` }));
   const ultimoY = () => {
     "worklet";
     const v = ys()[N - 1]!;
     return MARGEM + (1 - v) * (altura - 2 * MARGEM);
   };
   const ponto = useAnimatedProps(() => ({ cy: ultimoY() }));
-  const halo = useAnimatedProps(() => ({ cy: ultimoY(), r: 5 + pulso.value * 9, opacity: 0.45 * (1 - pulso.value) }));
+  const halo = useAnimatedProps(() => ({ cy: ultimoY(), r: 7 + pulso.value * 8, opacity: 0.25 * (1 - pulso.value) }));
+  const guia = useAnimatedProps(() => ({ y1: ultimoY() + 8 }));
 
   if (!largura) return <View style={{ height: altura }} />;
   return (
     <View accessible accessibilityRole="image" accessibilityLabel={rotulo} style={{ height: altura }}>
       <Svg width={largura} height={altura}>
-        <Defs>
-          <LinearGradient id="degradeSaldo" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={cor} stopOpacity={0.32} />
-            <Stop offset="1" stopColor={cor} stopOpacity={0} />
-          </LinearGradient>
-        </Defs>
-        <AnimatedPath animatedProps={area} fill="url(#degradeSaldo)" />
-        <AnimatedPath animatedProps={linha} stroke={cor} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <AnimatedPath animatedProps={linha} stroke={cor} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <AnimatedLine animatedProps={guia} x1={w} x2={w} y2={altura} stroke={cor} strokeOpacity={0.45} strokeWidth={1.2} strokeDasharray="4 4" />
         <AnimatedCircle animatedProps={halo} cx={w} fill={cor} />
-        <AnimatedCircle animatedProps={ponto} cx={w} r={4.5} fill={cor} stroke="#FFFFFF" strokeWidth={2} />
+        <AnimatedCircle animatedProps={ponto} cx={w} r={6.5} fill={fundoPonto} stroke={cor} strokeWidth={2.6} />
       </Svg>
     </View>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -8,6 +8,8 @@ import { formatarDinheiro } from "../utils/dinheiro";
 import { Texto as Text } from "./Texto";
 import { Icone } from "./Icone";
 import { CategoryIcon, corCategoria } from "./CategoryIcon";
+import { FaceCartao } from "./cartoes/FaceCartao";
+import { corBanco } from "../theme";
 
 const OCULTO = "R$ ••••";
 const entra = (i: number) => FadeInDown.delay(80 + i * 45).springify().damping(18).stiffness(220);
@@ -135,20 +137,17 @@ export function ConteudoCofrinhos({ cof, oculto }: { cof: PainelCofrinhos; ocult
   );
 }
 
-export function ConteudoCartao({ cartao, oculto }: { cartao: PainelCartao; oculto: boolean }) {
+export function ConteudoCartao({ cartao, oculto, titular = "Você" }: { cartao: PainelCartao; oculto: boolean; titular?: string }) {
   const c = useTema().cores;
+  const [largura, setLargura] = useState(0);
   const pct = cartao.limiteCentavos > 0 ? Math.min(1, cartao.faturaCentavos / cartao.limiteCentavos) : 0;
   return (
     <>
-      <Animated.View entering={entra(0)}>
-        <LinearGradient colors={[c.primario, c.texto]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.plastico}>
-          <View style={s.chip} />
-          <Text style={{ ...tipo.corpo(11, "medium"), color: auxiliares.branco, opacity: 0.85 }}>Fatura atual · {cartao.nome}</Text>
-          <Text style={{ ...tipo.valor(26), color: auxiliares.branco }}>{oculto ? OCULTO : formatarDinheiro(cartao.faturaCentavos)}</Text>
-        </LinearGradient>
+      <Animated.View entering={entra(0)} onLayout={(e) => setLargura(e.nativeEvent.layout.width)}>
+        {largura > 0 && <FaceCartao nome={cartao.nome} cor={corBanco(cartao.nome)} faturaCentavos={cartao.faturaCentavos} oculto={oculto} titular={titular} diaFechamento={cartao.diaFechamento} largura={largura} />}
       </Animated.View>
       <Animated.View entering={entra(1)} style={{ gap: 6 }}>
-        <View style={[s.limite, { backgroundColor: c.fundo }]}><View style={{ width: `${pct * 100}%`, height: "100%", borderRadius: 4, backgroundColor: c.primario }} /></View>
+        <View style={[s.limite, { backgroundColor: c.fundo }]}><View style={{ width: `${pct * 100}%`, height: "100%", borderRadius: 4, backgroundColor: corBanco(cartao.nome) }} /></View>
         <Text style={{ ...tipo.corpo(12), color: c.textoSuave }}>
           {oculto ? "Limite oculto" : `${formatarDinheiro(cartao.faturaCentavos)} usados de ${formatarDinheiro(cartao.limiteCentavos)}`} · fecha dia {cartao.diaFechamento}
         </Text>

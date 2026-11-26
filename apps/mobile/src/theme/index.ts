@@ -116,3 +116,22 @@ export function useTemaClassico(): Tema {
   const esquema = useColorScheme();
   return useContext(TemaForcado) ?? (esquema === "dark" ? temaEscuro : temaClaro);
 }
+
+/** Cor de cada banco (identidade da marca), usada nos cartões. Banco desconhecido recebe uma cor fixa pelo nome. */
+const CORES_BANCO: Array<[RegExp, string]> = [
+  [/nubank|^nu\b/, "#9B3DD1"], [/inter/, "#F26A1B"], [/bradesco/, "#E0344F"], [/ita[uú]/, "#F28A1B"],
+  [/santander/, "#E3141B"], [/caixa/, "#1F5FAD"], [/banco do brasil|^bb\b/, "#2B4FA3"], [/c6/, "#2E2E33"],
+  [/picpay/, "#11A85F"], [/mercado ?pago/, "#0096D6"], [/neon/, "#0094C9"], [/next/, "#00A84F"],
+  [/pan\b/, "#0A5BD9"], [/sicoob|sicredi/, "#1F7A55"], [/black|platinum|infinite/, "#3A4B5F"],
+];
+const CORES_RESERVA = ["#A35139", "#3A4B5F", "#2E7D6B", "#6A5AA6", "#2F5DA8"];
+export function corBanco(nome: string): string {
+  const n = nome.toLowerCase();
+  const achou = CORES_BANCO.find(([r]) => r.test(n));
+  if (achou) return achou[1];
+  let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return CORES_RESERVA[h % CORES_RESERVA.length]!;
+}
+
+/** Base escura do cartão físico e da carteira (a cor do banco ou da marca é misturada sobre ela). */
+export const cartaoFisico = { fundo: "#0B0B10", fundoFim: "#07070A", versoFundo: "#141419", bolsoEscuro: "#2C2731", bolsoEscuroFim: "#1B181F" } as const;

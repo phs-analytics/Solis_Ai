@@ -93,7 +93,8 @@ export function Home() {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [diaSel, setDiaSel] = useState<string | null>(null);
 
-  useEffect(() => { lerPrivacidade().then(setOculto).catch(() => {}); }, []);
+  // relê ao voltar para a aba: o olho da carteira (Cartões) e o da Início ficam sempre iguais
+  useFocusEffect(useCallback(() => { lerPrivacidade().then(setOculto).catch(() => {}); }, []));
 
   const carregar = useCallback(async () => {
     setAtualizando(true);
@@ -267,7 +268,7 @@ export function Home() {
             accessibilityRole="switch" accessibilityState={{ checked: oculto }} accessibilityLabel={oculto ? "Mostrar valores" : "Esconder valores"}>
             <NavIcone nome="eye" riscado={oculto} tamanho={18} cor={c.texto} play={toques.olho ?? 0} />
           </Tocavel>
-          <Tocavel onPress={() => { tocar("busca"); setTimeout(() => irAba("Lancamentos", { focarBusca: Date.now() }), 380); }}
+          <Tocavel onPress={() => { tocar("busca"); setTimeout(() => nav.navigate("Lancamentos", { focarBusca: Date.now() }), 380); }}
             style={[s.redondo, { backgroundColor: c.superficie, borderColor: c.borda, marginLeft: 8 }]} accessibilityRole="button" accessibilityLabel="Buscar lançamentos">
             <NavIcone nome="search" tamanho={18} cor={c.texto} play={toques.busca ?? 0} />
           </Tocavel>
@@ -366,7 +367,7 @@ export function Home() {
               )}
             </View>
             <View style={{ marginTop: 12 }} onLayout={(e) => setLarguraGrafico(e.nativeEvent.layout.width)}>
-              <GraficoSaldo pontos={serie?.pontos ?? []} largura={larguraGrafico} cor={c.primario} reduzirMovimento={reduzir}
+              <GraficoSaldo pontos={serie?.pontos ?? []} largura={larguraGrafico} cor={c.texto} fundoPonto={c.superficie} reduzirMovimento={reduzir}
                 rotulo={`Gráfico de evolução do saldo no período de ${NOME_PERIODO[periodo]}`} />
             </View>
             <SeletorPeriodo valor={periodo} aoMudar={setPeriodo} />
@@ -480,7 +481,7 @@ export function Home() {
         <Animated.View key={`7-${entrada}`} entering={entra(7)} style={s.px}>
           <View style={[s.linha, { justifyContent: "space-between" }]}>
             <Text style={[s.tituloSecao, { color: c.texto }]} accessibilityRole="header">Últimos lançamentos</Text>
-            <Tocavel onPress={() => irAba("Lancamentos")} accessibilityRole="button" style={{ paddingVertical: 14, paddingLeft: 12 }}>
+            <Tocavel onPress={() => nav.navigate("Lancamentos")} accessibilityRole="button" style={{ paddingVertical: 14, paddingLeft: 12 }}>
               <Text style={{ ...tipo.corpo(14, "semibold"), lineHeight: 20, color: c.primario }}>Ver todos</Text>
             </Tocavel>
           </View>
@@ -502,7 +503,7 @@ export function Home() {
                 return (
                   <Tocavel key={l.id} style={[s.item, { borderBottomColor: c.borda }]} accessibilityRole="button"
                     accessibilityLabel={`${l.descricao || "Sem descrição"}, ${oculto ? "valor oculto" : texto}, ${l.contaNome}, ${grupoData(l.data).toLowerCase()}`}
-                    onPress={() => irAba("Lancamentos")}>
+                    onPress={() => nav.navigate("Lancamentos")}>
                     <CategoryIcon categoriaId={l.categoriaId} tipo={l.tipo} />
                     <View style={{ flex: 1, marginLeft: 12 }}>
                       <Text style={{ ...tipo.corpo(15, "medium"), lineHeight: 20, color: c.texto }} numberOfLines={1}>{l.descricao || "Sem descrição"}</Text>
@@ -526,7 +527,7 @@ export function Home() {
         }>
         {pop?.tipo === "conta" && painel?.contas.find((x) => x.id === pop.id) && <ConteudoConta conta={painel.contas.find((x) => x.id === pop.id)!} oculto={oculto} />}
         {pop?.tipo === "cofrinho" && painel?.cofrinhos && <ConteudoCofrinhos cof={painel.cofrinhos} oculto={oculto} />}
-        {pop?.tipo === "cartao" && painel?.cartoes.find((x) => x.id === pop.id) && <ConteudoCartao cartao={painel.cartoes.find((x) => x.id === pop.id)!} oculto={oculto} />}
+        {pop?.tipo === "cartao" && painel?.cartoes.find((x) => x.id === pop.id) && <ConteudoCartao cartao={painel.cartoes.find((x) => x.id === pop.id)!} oculto={oculto} titular={nome.completo || nome.apelido || "Você"} />}
         {pop?.tipo === "atualizar" && upd && (
           <PassosAtualizacao passos={upd.passos}
             titulo={upd.erro ? "Atualização interrompida" : upd.fim ? "Tudo atualizado" : upd.soIA ? "Solis AI reanalisando" : "Atualizando seus bancos"}
@@ -628,11 +629,11 @@ function SeletorPeriodo({ valor, aoMudar }: { valor: PeriodoSaldo; aoMudar: (p: 
   const ind = useAnimatedStyle(() => ({ transform: [{ translateX: pos.value * (largura / PERIODOS.length) }] }));
   return (
     <View style={[s.periodos, { backgroundColor: c.fundo }]} onLayout={(e) => setLargura(e.nativeEvent.layout.width - 6)} accessibilityRole="tablist">
-      {largura > 0 && <Animated.View style={[s.indicador, { width: largura / PERIODOS.length, backgroundColor: c.primario }, ind]} />}
+      {largura > 0 && <Animated.View style={[s.indicador, { width: largura / PERIODOS.length, backgroundColor: c.texto }, ind]} />}
       {PERIODOS.map((p) => (
         <Tocavel key={p} onPress={() => aoMudar(p)} style={s.periodo} hitSlop={{ top: 8, bottom: 8 }}
           accessibilityRole="tab" accessibilityState={{ selected: p === valor }} accessibilityLabel={`Período de ${NOME_PERIODO[p]}`}>
-          <Text style={{ ...tipo.corpo(13, "semibold"), lineHeight: 18, color: p === valor ? c.sobrePrimario : c.textoSuave }}>{p}</Text>
+          <Text style={{ ...tipo.corpo(13, "semibold"), lineHeight: 18, color: p === valor ? c.fundo : c.textoSuave }}>{p}</Text>
         </Tocavel>
       ))}
     </View>

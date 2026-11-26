@@ -10,7 +10,7 @@ import { formatarDinheiro } from "../utils/dinheiro";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParams, TabParams } from "../navigation";
+import type { RootStackParams } from "../navigation";
 
 type Periodo = "30d" | "7d" | "60d";
 const PERIODOS: { label: string; valor: Periodo }[] = [
@@ -31,7 +31,7 @@ export function Lancamentos() {
   const [carregando, setCarregando] = useState(false);
   const busca$ = useRef<React.ComponentRef<typeof TextInput>>(null);
   // A lupa da Home abre esta aba já com o cursor na busca.
-  const focarBusca = useRoute<RouteProp<TabParams, "Lancamentos">>().params?.focarBusca;
+  const focarBusca = useRoute<RouteProp<RootStackParams, "Lancamentos">>().params?.focarBusca;
   useEffect(() => { if (focarBusca) setTimeout(() => busca$.current?.focus(), 250); }, [focarBusca]);
 
   const carregar = useCallback(async () => {
@@ -50,7 +50,7 @@ export function Lancamentos() {
   return (
     <SafeScreen>
       <View style={[s.cabecalho, { paddingHorizontal: tema.spacing.lg }]}>
-        <Text style={[tema.font.titulo, { color: c.texto }]}>Lançamentos</Text>
+        <Text style={[tema.font.legenda, { color: c.textoSuave }]}>Contas e importações</Text>
         <Pressable
           onPress={() => nav.navigate("NovoLancamento")}
           style={[s.botaoNovo, { backgroundColor: c.primario }]}

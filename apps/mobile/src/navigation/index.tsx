@@ -17,6 +17,7 @@ import { Desbloquear } from "../screens/Desbloquear";
 import { RestaurarBackup } from "../screens/RestaurarBackup";
 import { Home } from "../screens/Home";
 import { Lancamentos } from "../screens/Lancamentos";
+import { Cartoes } from "../screens/Cartoes";
 import { Metas } from "../screens/Metas";
 import { Mais } from "../screens/Mais";
 import { Investimentos } from "../screens/Investimentos";
@@ -36,11 +37,12 @@ export type RootStackParams = {
   } | undefined;
   Importacao: undefined;
   ConexaoBancaria: undefined;
+  Lancamentos: { focarBusca?: number } | undefined;
 };
 
 export type TabParams = {
   Inicio: undefined;
-  Lancamentos: { focarBusca?: number } | undefined;
+  Cartoes: undefined;
   Metas: undefined;
   Investimentos: undefined;
   Chat: undefined;
@@ -53,7 +55,7 @@ const Tab = createBottomTabNavigator<TabParams>();
 // Duas cápsulas flutuantes: 4 abas à esquerda, Solis AI e Mais à direita.
 const ABAS: Array<{ name: keyof TabParams; label?: string; icone: NomeNav; direita?: boolean }> = [
   { name: "Inicio", label: "Início", icone: "home" },
-  { name: "Lancamentos", label: "Cartões", icone: "card" },
+  { name: "Cartoes", label: "Cartões", icone: "card" },
   { name: "Metas", label: "Metas", icone: "goal" },
   { name: "Investimentos", label: "Invest.", icone: "chart" },
   { name: "Chat", label: "Solis AI", icone: "ai", direita: true },
@@ -135,7 +137,7 @@ function Tabs() {
       }}
     >
       <Tab.Screen name="Inicio"        component={Home}        options={{ title: "Início" }} />
-      <Tab.Screen name="Lancamentos"   component={Lancamentos} options={{ title: "Lançamentos" }} />
+      <Tab.Screen name="Cartoes"       component={Cartoes}     options={{ title: "Cartões" }} />
       <Tab.Screen name="Metas"         component={Metas}       options={{ title: "Metas" }} />
       <Tab.Screen name="Investimentos" component={Investimentos} options={{ title: "Invest." }} />
       <Tab.Screen name="Chat"          component={ChatSolis}   options={{ title: "Solis AI" }} />
@@ -172,6 +174,7 @@ export function AppNavigator() {
               <Stack.Screen name="NovoLancamento" options={{ headerShown: true, title: "Novo lançamento" }}>
                 {({ navigation, route }) => <NovoLancamento onSalvo={() => navigation.goBack()} inicial={route.params} />}
               </Stack.Screen>
+              <Stack.Screen name="Lancamentos" component={Lancamentos} options={{ headerShown: true, title: "Lançamentos" }} />
               <Stack.Screen name="Importacao" component={Importacao} options={{ headerShown: true, title: "Importar extrato" }} />
               <Stack.Screen name="ConexaoBancaria" component={ConexaoBancaria} options={{ headerShown: true, title: "Conexão bancária" }} />
             </>
