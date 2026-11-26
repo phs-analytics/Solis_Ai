@@ -8,15 +8,12 @@ import type { Meta, MovimentoMeta } from "@solis/dados";
 import { auxiliares, corBanco, tipo, useTema } from "../../theme";
 import { formatarDinheiro, parseDinheiro } from "../../utils/dinheiro";
 import { Texto as Text, Entrada as TextInput } from "../Texto";
+import { Icone } from "../Icone";
+import { iconeMeta } from "./iconesMeta";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const R_ANEL = 56, CIRCUNF = 2 * Math.PI * R_ANEL;
 
-const ICONES_META: Record<string, string> = {
-  viagem: "✈️", celular: "📱", casa: "🏠", carro: "🚗", estudo: "📚",
-  presente: "🎁", emergencia: "🛡️", bullseye: "🎯", cofrinho: "🐷",
-  saude: "❤️", vestuario: "👗", computador: "💻", outros: "⭐",
-};
 
 function AnelProgresso({ pct, cor, ativo }: { pct: number; cor: string; ativo: boolean }) {
   const p = useSharedValue(0);
@@ -27,7 +24,7 @@ function AnelProgresso({ pct, cor, ativo }: { pct: number; cor: string; ativo: b
     strokeDasharray: [CIRCUNF * Math.min(1, p.value), CIRCUNF],
   }));
   return (
-    <Svg width={150} height={150} viewBox="0 0 130 130">
+    <Svg width={176} height={176} viewBox="0 0 130 130">
       <Circle r={R_ANEL} cx={65} cy={65} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={14} />
       <G rotation={-90} origin="65,65">
         <AnimatedCircle animatedProps={animProps} r={R_ANEL} cx={65} cy={65} fill="none" stroke={cor} strokeWidth={14} strokeLinecap="round" />
@@ -42,8 +39,8 @@ function LinhaMovimento({ m, oculto }: { m: MovimentoMeta; oculto: boolean }) {
   const data = new Date(m.criadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   return (
     <Animated.View entering={FadeInDown.duration(300)} style={[s.linhaMov, { borderColor: c.borda }]}>
-      <View style={[s.dotMov, { backgroundColor: e ? "#11A85F22" : "#E0344F22" }]}>
-        <Text style={{ fontSize: 14 }}>{e ? "⬆️" : "⬇️"}</Text>
+      <View style={[s.dotMov, { backgroundColor: `${e ? c.sucesso : c.erro}22` }]}>
+        <Text style={{ ...tipo.corpo(16, "semibold"), color: e ? c.sucesso : c.erro }}>{e ? "↑" : "↓"}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0, marginLeft: 10 }}>
         <Text style={{ ...tipo.corpo(13, "medium"), color: c.texto }} numberOfLines={1}>{m.descricao ?? (e ? "Depósito" : "Retirada")}</Text>
@@ -68,6 +65,8 @@ export function DetalheMeta({
   const [valorDeposito, setValorDeposito] = useState("");
   const [modoRetirada, setModoRetirada] = useState(false);
   const [inputVisivel, setInputVisivel] = useState(false);
+  const [filtro, setFiltro] = useState<"dep" | "ret" | null>(null);
+  const movsFiltrados = filtro ? movs.filter((m) => (m.valorCentavos > 0) === (filtro === "dep")) : movs;
 
   const carregar = useCallback(async () => {
     if (!metaId) return;
@@ -80,12 +79,12 @@ export function DetalheMeta({
   const cor = meta ? (meta.cor ?? corBanco(meta.bancNome ?? meta.nome)) : c.primario;
   const pct = meta && meta.alvoCentavos > 0 ? Math.min(1, meta.atualCentavos / meta.alvoCentavos) : 0;
   const falta = meta ? Math.max(0, meta.alvoCentavos - meta.atualCentavos) : 0;
-  const emoji = meta ? (ICONES_META[meta.icone ?? "bullseye"] ?? "⭐") : "⭐";
 
   async function confirmarMovimento() {
     if (!meta) return;
     const centavos = parseDinheiro(valorDeposito);
     if (!centavos || centavos <= 0) { Alert.alert("Valor inválido"); return; }
+    if (modoRetirada && centavos > meta.atualCentavos) { Alert.alert("Não dá para retirar mais do que está guardado."); return; }
     if (modoRetirada) await retirar(banco, meta.id, centavos);
     else await depositar(banco, meta.id, centavos);
     setValorDeposito(""); setInputVisivel(false);
@@ -105,7 +104,10 @@ export function DetalheMeta({
             <Pressable onPress={aoFechar} style={s.btnVoltar} accessibilityLabel="Voltar">
               <Text style={{ color: auxiliares.branco, fontSize: 20 }}>‹</Text>
             </Pressable>
-            <Text style={{ ...tipo.corpo(16, "semibold"), color: auxiliares.branco }}>{emoji} {meta.nome}</Text>
+            <View style={s.titulo}>
+              <View style={s.tituloIc}><Icone nome={iconeMeta(meta.icone)} tamanho={14} cor={cor} /></View>
+              <Text style={{ ...tipo.corpo(16, "semibold"), color: auxiliares.branco, flexShrink: 1 }} numberOfLines={1}>{meta.nome}</Text>
+            </View>
             <View style={s.btnVoltar} />
           </View>
 
@@ -128,12 +130,13 @@ export function DetalheMeta({
           <View style={s.anelWrap}>
             <AnelProgresso pct={pct} cor={cor} ativo={visivel} />
             <View style={[StyleSheet.absoluteFill, s.anelCentro]}>
-              <Text style={{ ...tipo.valor(26), color: auxiliares.branco }}>
-                {oculto ? "•••" : formatarDinheiro(meta.atualCentavos)}
+              <Text style={{ ...tipo.valor(20), color: auxiliares.branco, maxWidth: 118 }} numberOfLines={1} adjustsFontSizeToFit>
+                {oculto ? "R$ •••" : formatarDinheiro(meta.atualCentavos)}
               </Text>
-              <Text style={{ ...tipo.corpo(11), color: "rgba(255,255,255,0.65)" }}>
-                de {oculto ? "R$ •••" : formatarDinheiro(meta.alvoCentavos)} · {Math.round(pct * 100)}%
+              <Text style={{ ...tipo.corpo(11), color: "rgba(255,255,255,0.65)", maxWidth: 118 }} numberOfLines={1} adjustsFontSizeToFit>
+                de {oculto ? "R$ •••" : formatarDinheiro(meta.alvoCentavos)}
               </Text>
+              <Text style={{ ...tipo.corpo(12, "semibold"), color: cor, marginTop: 2 }}>{Math.round(pct * 100)}%</Text>
             </View>
           </View>
 
@@ -148,6 +151,17 @@ export function DetalheMeta({
               <Text style={{ ...tipo.valor(16), color: auxiliares.branco }}>{oculto ? "R$ •••" : formatarDinheiro(meta.atualCentavos)}</Text>
             </View>
           </View>
+
+          <View style={s.acoes}>
+            <Pressable onPress={() => { setModoRetirada(false); setInputVisivel(true); }}
+              style={[s.btnAcao, { backgroundColor: cor }]} accessibilityRole="button" accessibilityLabel="Guardar dinheiro">
+              <Text style={{ ...tipo.corpo(13, "semibold"), color: auxiliares.branco }}>+ Guardar</Text>
+            </Pressable>
+            <Pressable onPress={() => { setModoRetirada(true); setInputVisivel(true); }}
+              style={[s.btnAcao, { backgroundColor: "rgba(255,255,255,0.12)" }]} accessibilityRole="button" accessibilityLabel="Retirar dinheiro">
+              <Text style={{ ...tipo.corpo(13, "semibold"), color: auxiliares.branco }}>− Retirar</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Painel inferior */}
@@ -155,14 +169,16 @@ export function DetalheMeta({
           <View style={s.painelTopo}>
             <Text style={{ ...tipo.corpo(15, "semibold"), color: c.texto }}>Lançamentos</Text>
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <Pressable onPress={() => { setModoRetirada(false); setInputVisivel(true); }}
-                style={[s.btnAcao, { backgroundColor: cor }]} accessibilityRole="button" accessibilityLabel="Depositar">
-                <Text style={{ ...tipo.corpo(12, "semibold"), color: auxiliares.branco }}>+ Depositar</Text>
-              </Pressable>
-              <Pressable onPress={() => { setModoRetirada(true); setInputVisivel(true); }}
-                style={[s.btnAcao, { backgroundColor: c.superficie }]} accessibilityRole="button" accessibilityLabel="Retirar">
-                <Text style={{ ...tipo.corpo(12, "semibold"), color: c.texto }}>− Retirar</Text>
-              </Pressable>
+              {([["dep", "Depósitos"], ["ret", "Retiradas"]] as const).map(([k, rotulo]) => {
+                const on = filtro === k;
+                return (
+                  <Pressable key={k} onPress={() => setFiltro(on ? null : k)}
+                    style={[s.chip, { borderColor: on ? cor : c.borda, backgroundColor: on ? cor : "transparent" }]}
+                    accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Mostrar só ${rotulo.toLowerCase()}`}>
+                    <Text style={{ ...tipo.corpo(12, "semibold"), color: on ? auxiliares.branco : c.texto }}>{rotulo}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
@@ -184,12 +200,12 @@ export function DetalheMeta({
           )}
 
           <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
-            {movs.length === 0 ? (
+            {movsFiltrados.length === 0 ? (
               <Text style={{ ...tipo.corpo(13), color: c.textoSuave, textAlign: "center", paddingTop: 24 }}>
-                Nenhum lançamento ainda
+                {filtro === "dep" ? "Nenhum depósito" : filtro === "ret" ? "Nenhuma retirada" : "Nenhum lançamento"} ainda
               </Text>
             ) : (
-              movs.map((m) => <LinhaMovimento key={m.id} m={m} oculto={oculto} />)
+              movsFiltrados.map((m) => <LinhaMovimento key={m.id} m={m} oculto={oculto} />)
             )}
           </ScrollView>
         </View>
@@ -203,16 +219,20 @@ const s = StyleSheet.create({
   brilho: { position: "absolute", width: 300, height: 300, borderRadius: 150, top: -60, alignSelf: "center" },
   headerNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   btnVoltar: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.12)", alignItems: "center", justifyContent: "center" },
+  titulo: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginHorizontal: 8 },
+  tituloIc: { width: 28, height: 28, borderRadius: 9, backgroundColor: "rgba(255,255,255,0.12)", alignItems: "center", justifyContent: "center" },
   pills: { flexDirection: "row", gap: 8, marginBottom: 20 },
   pill: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   dot: { width: 6, height: 6, borderRadius: 3 },
   anelWrap: { alignItems: "center", marginBottom: 16, position: "relative" },
   anelCentro: { alignItems: "center", justifyContent: "center" },
-  miniCards: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  miniCards: { flexDirection: "row", gap: 10, marginBottom: 12 },
   miniCard: { flex: 1, borderRadius: 12, padding: 12, gap: 2 },
   painel: { flex: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 20 },
   painelTopo: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-  btnAcao: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  acoes: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  btnAcao: { flex: 1, borderRadius: 22, paddingVertical: 11, alignItems: "center" },
+  chip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6 },
   inputArea: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12 },
   btnConfirmar: { borderRadius: 8, paddingHorizontal: 14, paddingVertical: 6 },
   btnCancelar: { paddingHorizontal: 8 },

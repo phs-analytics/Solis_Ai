@@ -1,25 +1,18 @@
 import React, { useState } from "react";
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { ZoomIn } from "react-native-reanimated";
 import { useBanco } from "../../contexto/BancoContext";
 import { criarMeta } from "@solis/dados";
 import { auxiliares, corBanco, tipo, useTema } from "../../theme";
 import { parseDinheiro } from "../../utils/dinheiro";
 import { Texto as Text, Entrada as TextInput } from "../Texto";
 
-const ICONES = [
-  { key: "cofrinho", emoji: "🐷", label: "Cofrinho" },
-  { key: "viagem", emoji: "✈️", label: "Viagem" },
-  { key: "emergencia", emoji: "🛡️", label: "Reserva" },
-  { key: "celular", emoji: "📱", label: "Celular" },
-  { key: "casa", emoji: "🏠", label: "Casa" },
-  { key: "carro", emoji: "🚗", label: "Carro" },
-  { key: "estudo", emoji: "📚", label: "Estudos" },
-  { key: "presente", emoji: "🎁", label: "Presente" },
-  { key: "saude", emoji: "❤️", label: "Saúde" },
-  { key: "outros", emoji: "⭐", label: "Outros" },
-];
+import { Icone } from "../Icone";
+import { ICONES_META as ICONES, iconeMeta } from "./iconesMeta";
 
+const BANCOS = ["", "Nubank", "Inter", "Itaú", "Neon"];
 const CORES = ["#9B3DD1", "#F26A1B", "#1F5FAD", "#11A85F", "#FFB162", "#A35139", "#E0344F", "#3A4B5F"];
+const PRAZO_OK = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export function NovaMetaModal({ visivel, aoFechar, aoSalvar }: { visivel: boolean; aoFechar: () => void; aoSalvar: () => void }) {
   const c = useTema().cores;
@@ -30,108 +23,151 @@ export function NovaMetaModal({ visivel, aoFechar, aoSalvar }: { visivel: boolea
   const [alvo, setAlvo] = useState("");
   const [prazo, setPrazo] = useState("");
   const [bancNome, setBancNome] = useState("");
+  const [erro, setErro] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  function limpar() {
+    setNome(""); setAlvo(""); setPrazo(""); setBancNome(""); setIcone("cofrinho"); setCor(CORES[0]!); setErro("");
+  }
+  function fechar() { limpar(); aoFechar(); }
 
   async function salvar() {
-    if (!nome.trim()) { Alert.alert("Digite o nome da meta"); return; }
+    if (!nome.trim()) { setErro("Dê um nome para a meta."); return; }
     const alvoCentavos = parseDinheiro(alvo) ?? 0;
-    if (alvoCentavos <= 0) { Alert.alert("Valor alvo inválido"); return; }
-    await criarMeta(banco, {
-      nome: nome.trim(), icone, cor, bancNome: bancNome.trim() || null,
-      descricao: null, alvoCentavos, prazo: prazo.trim() || null,
-    });
-    setNome(""); setAlvo(""); setPrazo(""); setBancNome(""); setIcone("cofrinho"); setCor(CORES[0]!);
-    aoSalvar();
+    if (alvoCentavos <= 0) { setErro("Diga quanto quer juntar."); return; }
+    if (prazo.trim() && !PRAZO_OK.test(prazo.trim())) { setErro("Prazo no formato AAAA-MM, ex.: 2026-12."); return; }
+    setSalvando(true);
+    try {
+      await criarMeta(banco, {
+        nome: nome.trim(), icone, cor, bancNome: bancNome || null,
+        descricao: null, alvoCentavos, prazo: prazo.trim() || null,
+      });
+      limpar();
+      aoSalvar();
+    } catch {
+      setErro("Não deu para salvar a meta. Tente de novo.");
+    } finally {
+      setSalvando(false);
+    }
   }
 
+  const campo = [s.input, { color: c.texto, borderColor: c.borda }];
+
   return (
-    <Modal visible={visivel} animationType="slide" presentationStyle="pageSheet" onRequestClose={aoFechar}>
-      <View style={[s.container, { backgroundColor: c.fundo }]}>
-        <View style={s.alca} />
-        <View style={s.headerMod}>
-          <Pressable onPress={aoFechar} accessibilityLabel="Fechar">
-            <Text style={{ ...tipo.corpo(15), color: c.textoSuave }}>Cancelar</Text>
-          </Pressable>
-          <Text style={{ ...tipo.corpo(16, "semibold"), color: c.texto }}>Nova meta</Text>
-          <Pressable onPress={salvar} accessibilityRole="button" accessibilityLabel="Criar meta">
-            <Text style={{ ...tipo.corpo(15, "semibold"), color: c.primario }}>Criar</Text>
-          </Pressable>
-        </View>
-
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 48, gap: 20 }} showsVerticalScrollIndicator={false}>
-          {/* Nome */}
-          <View style={s.grupo}>
-            <Text style={[s.rotulo, { color: c.textoSuave }]}>Nome da meta</Text>
-            <TextInput style={[s.input, { backgroundColor: c.superficie, color: c.texto, borderColor: c.borda }]}
-              placeholder="Ex: Viagem para a praia" placeholderTextColor={c.textoSuave}
-              value={nome} onChangeText={setNome} />
-          </View>
-
-          {/* Banco (opcional) */}
-          <View style={s.grupo}>
-            <Text style={[s.rotulo, { color: c.textoSuave }]}>Banco / Cofrinho (opcional)</Text>
-            <TextInput style={[s.input, { backgroundColor: c.superficie, color: c.texto, borderColor: c.borda }]}
-              placeholder="Ex: Nubank, Inter…" placeholderTextColor={c.textoSuave}
-              value={bancNome} onChangeText={(t) => { setBancNome(t); if (t.trim()) setCor(corBanco(t)); }} />
-          </View>
-
-          {/* Ícone */}
-          <View style={s.grupo}>
-            <Text style={[s.rotulo, { color: c.textoSuave }]}>Ícone</Text>
-            <View style={s.gradeIcones}>
-              {ICONES.map((ic) => (
-                <Pressable key={ic.key} onPress={() => setIcone(ic.key)} accessibilityRole="radio" accessibilityState={{ checked: icone === ic.key }}
-                  style={[s.iconeItem, icone === ic.key && { backgroundColor: `${cor}33`, borderColor: cor, borderWidth: 2 }, { backgroundColor: c.superficie }]}>
-                  <Text style={{ fontSize: 22 }}>{ic.emoji}</Text>
-                  <Text style={{ ...tipo.corpo(10), color: c.textoSuave }}>{ic.label}</Text>
-                </Pressable>
-              ))}
+    <Modal visible={visivel} transparent animationType="fade" onRequestClose={fechar} statusBarTranslucent>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={s.raiz}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={fechar} accessibilityLabel="Fechar" />
+        {visivel && (
+          <Animated.View entering={ZoomIn.springify().damping(18)} style={[s.cartao, { backgroundColor: c.superficie, borderColor: c.borda }]}
+            accessibilityViewIsModal>
+            <View style={s.cab}>
+              <View style={[s.previa, { backgroundColor: `${cor}38` }]}><Icone nome={iconeMeta(icone)} tamanho={20} cor={cor} /></View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ ...tipo.display(17), color: c.texto }} accessibilityRole="header">Nova meta</Text>
+                <Text style={{ ...tipo.corpo(12), color: c.textoSuave }} numberOfLines={1}>Um cofrinho para guardar aos poucos</Text>
+              </View>
+              <Pressable onPress={fechar} style={[s.x, { borderColor: c.borda }]} accessibilityRole="button" accessibilityLabel="Fechar">
+                <Text style={{ ...tipo.corpo(18), color: c.texto, lineHeight: 20 }}>×</Text>
+              </Pressable>
             </View>
-          </View>
 
-          {/* Cor */}
-          <View style={s.grupo}>
-            <Text style={[s.rotulo, { color: c.textoSuave }]}>Cor</Text>
-            <View style={s.gradeCores}>
-              {CORES.map((co) => (
-                <Pressable key={co} onPress={() => setCor(co)} accessibilityRole="radio" accessibilityState={{ checked: cor === co }}
-                  style={[s.bolaCorWrap, cor === co && { borderColor: co, borderWidth: 3 }]}>
-                  <View style={[s.bolaCor, { backgroundColor: co }]} />
-                </Pressable>
-              ))}
+            <ScrollView contentContainerStyle={s.corpo} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View style={s.grupo}>
+                <Text style={[s.rotulo, { color: c.textoSuave }]}>Nome da meta</Text>
+                <TextInput style={campo} placeholder="Ex.: Viagem para a praia" placeholderTextColor={c.textoSuave}
+                  maxLength={40} value={nome} onChangeText={(t) => { setNome(t); setErro(""); }} />
+              </View>
+
+              <View style={s.grupo}>
+                <Text style={[s.rotulo, { color: c.textoSuave }]}>Quanto quer juntar</Text>
+                <TextInput style={campo} placeholder="R$ 0,00" placeholderTextColor={c.textoSuave} keyboardType="decimal-pad"
+                  value={alvo} onChangeText={(t) => { setAlvo(t); setErro(""); }} />
+              </View>
+
+              <View style={s.grupo}>
+                <Text style={[s.rotulo, { color: c.textoSuave }]}>Ícone</Text>
+                <View style={s.gradeIcones}>
+                  {ICONES.map((ic) => {
+                    const on = icone === ic.key;
+                    return (
+                      <Pressable key={ic.key} onPress={() => setIcone(ic.key)} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={ic.label}
+                        style={[s.iconeItem, { backgroundColor: on ? `${cor}2E` : c.fundo, borderColor: on ? cor : "transparent" }]}>
+                        <Icone nome={ic.icone} tamanho={18} cor={on ? cor : c.textoSuave} />
+                        <Text style={{ ...tipo.corpo(10), color: c.textoSuave }} numberOfLines={1}>{ic.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={s.grupo}>
+                <Text style={[s.rotulo, { color: c.textoSuave }]}>Onde o dinheiro fica</Text>
+                <View style={s.linha}>
+                  {BANCOS.map((b) => {
+                    const on = bancNome === b;
+                    return (
+                      <Pressable key={b || "nenhum"} onPress={() => { setBancNome(b); if (b) setCor(corBanco(b)); }}
+                        accessibilityRole="radio" accessibilityState={{ checked: on }}
+                        style={[s.chip, { borderColor: on ? cor : c.borda, backgroundColor: on ? cor : "transparent" }]}>
+                        <Text style={{ ...tipo.corpo(12, "semibold"), color: on ? auxiliares.branco : c.texto }} numberOfLines={1}>{b || "Nenhum"}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={s.grupo}>
+                <Text style={[s.rotulo, { color: c.textoSuave }]}>Cor</Text>
+                <View style={[s.linha, { gap: 10 }]}>
+                  {CORES.map((co) => (
+                    <Pressable key={co} onPress={() => setCor(co)} accessibilityRole="radio" accessibilityState={{ checked: cor === co }} accessibilityLabel={`Cor ${co}`}
+                      style={[s.bolaWrap, { borderColor: cor === co ? co : "transparent" }]}>
+                      <View style={[s.bola, { backgroundColor: co }]} />
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View style={s.grupo}>
+                <Text style={[s.rotulo, { color: c.textoSuave }]}>Prazo (opcional)</Text>
+                <TextInput style={campo} placeholder="AAAA-MM, ex.: 2026-12" placeholderTextColor={c.textoSuave} maxLength={7}
+                  keyboardType="numbers-and-punctuation" value={prazo} onChangeText={(t) => { setPrazo(t); setErro(""); }} />
+              </View>
+
+              {!!erro && <Text style={{ ...tipo.corpo(12, "medium"), color: c.erro }} accessibilityLiveRegion="polite">{erro}</Text>}
+            </ScrollView>
+
+            <View style={[s.pe, { borderColor: c.borda }]}>
+              <Pressable onPress={fechar} style={[s.botao, { borderWidth: 1, borderColor: c.borda }]} accessibilityRole="button">
+                <Text style={{ ...tipo.corpo(14, "semibold"), color: c.texto }}>Cancelar</Text>
+              </Pressable>
+              <Pressable onPress={salvar} disabled={salvando} style={[s.botao, { backgroundColor: cor, opacity: salvando ? 0.6 : 1 }]} accessibilityRole="button" accessibilityLabel="Criar meta">
+                <Text style={{ ...tipo.corpo(14, "semibold"), color: auxiliares.branco }}>{salvando ? "Salvando…" : "Criar meta"}</Text>
+              </Pressable>
             </View>
-          </View>
-
-          {/* Valor alvo */}
-          <View style={s.grupo}>
-            <Text style={[s.rotulo, { color: c.textoSuave }]}>Valor que quer alcançar (R$)</Text>
-            <TextInput style={[s.input, { backgroundColor: c.superficie, color: c.texto, borderColor: c.borda }]}
-              placeholder="R$ 0,00" placeholderTextColor={c.textoSuave} keyboardType="decimal-pad"
-              value={alvo} onChangeText={setAlvo} />
-          </View>
-
-          {/* Prazo */}
-          <View style={s.grupo}>
-            <Text style={[s.rotulo, { color: c.textoSuave }]}>Data prevista (opcional, AAAA-MM)</Text>
-            <TextInput style={[s.input, { backgroundColor: c.superficie, color: c.texto, borderColor: c.borda }]}
-              placeholder="Ex: 2026-12" placeholderTextColor={c.textoSuave}
-              value={prazo} onChangeText={setPrazo} />
-          </View>
-        </ScrollView>
-      </View>
+          </Animated.View>
+        )}
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, paddingTop: 12 },
-  alca: { width: 36, height: 4, borderRadius: 2, backgroundColor: "#C9C1B1", alignSelf: "center", marginBottom: 16 },
-  headerMod: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 20 },
-  grupo: { gap: 8 },
-  rotulo: { ...tipo.corpo(12, "semibold"), letterSpacing: 0.4, textTransform: "uppercase" as const },
-  input: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 },
-  gradeIcones: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  iconeItem: { width: 68, alignItems: "center", justifyContent: "center", borderRadius: 12, paddingVertical: 10, gap: 4, borderWidth: 2, borderColor: "transparent" },
-  gradeCores: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
-  bolaCorWrap: { borderRadius: 20, padding: 2, borderWidth: 3, borderColor: "transparent" },
-  bolaCor: { width: 32, height: 32, borderRadius: 16 },
+  raiz: { flex: 1, justifyContent: "center", paddingHorizontal: 14, backgroundColor: "rgba(0,0,0,0.45)" },
+  cartao: { maxHeight: "88%", borderRadius: 24, borderWidth: 1, overflow: "hidden", elevation: 12 },
+  cab: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 12 },
+  previa: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  x: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  corpo: { paddingHorizontal: 18, paddingBottom: 8, gap: 14 },
+  grupo: { gap: 7 },
+  rotulo: { ...tipo.corpo(11, "semibold"), letterSpacing: 0.5, textTransform: "uppercase" as const },
+  input: { height: 46, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 15 },
+  gradeIcones: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  iconeItem: { width: "18.6%", alignItems: "center", borderRadius: 12, paddingVertical: 8, gap: 2, borderWidth: 1.5 },
+  linha: { flexDirection: "row", gap: 6 },
+  chip: { flex: 1, alignItems: "center", borderRadius: 99, borderWidth: 1, paddingVertical: 8, paddingHorizontal: 2 },
+  bolaWrap: { borderRadius: 19, padding: 2, borderWidth: 2 },
+  bola: { width: 28, height: 28, borderRadius: 14 },
+  pe: { flexDirection: "row", gap: 10, paddingHorizontal: 18, paddingTop: 12, paddingBottom: 18, borderTopWidth: StyleSheet.hairlineWidth },
+  botao: { flex: 1, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
 });

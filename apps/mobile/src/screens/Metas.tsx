@@ -14,6 +14,7 @@ import { CardMetaTimeline } from "../components/metas/CardMetaTimeline";
 import { DetalheMeta } from "../components/metas/DetalheMeta";
 import { NovaMetaModal } from "../components/metas/NovaMetaModal";
 import { tipo } from "../theme";
+import { Icone } from "../components/Icone";
 import { auxiliares } from "../theme";
 
 // ── Calendário semanal ────────────────────────────────────────────────────────
@@ -176,7 +177,7 @@ export function Metas() {
         {/* Metas concluídas */}
         {concluidas.length > 0 && (
           <Animated.View entering={FadeInDown.delay(240).duration(400)} style={{ marginTop: 8, paddingHorizontal: 20 }}>
-            <Text style={{ ...tipo.corpo(13, "semibold"), color: c.textoSuave, marginBottom: 10, letterSpacing: 0.5, textTransform: "uppercase" }}>Concluídas ✓</Text>
+            <Text style={{ ...tipo.corpo(13, "semibold"), color: c.textoSuave, marginBottom: 10, letterSpacing: 0.5, textTransform: "uppercase" }}>Concluídas</Text>
             {concluidas.map((m) => (
               <CardMetaTimeline
                 key={m.id}
@@ -192,7 +193,7 @@ export function Metas() {
         {/* Estado vazio */}
         {metas.length === 0 && (
           <Animated.View entering={FadeInDown.delay(180).duration(400)} style={s.vazio}>
-            <Text style={{ fontSize: 48 }}>🐷</Text>
+            <View style={[s.vazioIc, { backgroundColor: c.primarioSuave }]}><Icone nome="piggy-bank" tamanho={34} cor={c.primario} /></View>
             <Text style={{ ...tipo.corpo(16, "semibold"), color: c.texto, marginTop: 12 }}>Nenhuma meta ainda</Text>
             <Text style={{ ...tipo.corpo(13), color: c.textoSuave, textAlign: "center", marginTop: 6 }}>
               Crie seu primeiro cofrinho{"\n"}e comece a guardar dinheiro!
@@ -231,6 +232,7 @@ const s = StyleSheet.create({
   cardResumo: { borderRadius: 18, padding: 18, flexDirection: "row", alignItems: "center", elevation: 1, shadowColor: auxiliares.preto, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
   anelResWrap: { width: 90, height: 90, position: "relative" },
   vazio: { paddingTop: 60, alignItems: "center", paddingHorizontal: 32 },
+  vazioIc: { width: 76, height: 76, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   btnCriar: { marginTop: 20, borderRadius: 24, paddingHorizontal: 24, paddingVertical: 12 },
 });
 

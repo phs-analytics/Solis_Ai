@@ -5,12 +5,8 @@ import { auxiliares, corBanco, tipo, useTema } from "../../theme";
 import { formatarDinheiro } from "../../utils/dinheiro";
 import { Texto as Text } from "../Texto";
 import type { Meta } from "@solis/dados";
-
-const ICONES_META: Record<string, string> = {
-  viagem: "✈️", celular: "📱", casa: "🏠", carro: "🚗", estudo: "📚",
-  presente: "🎁", emergencia: "🛡️", bullseye: "🎯", cofrinho: "🐷",
-  saude: "❤️", vestuario: "👗", computador: "💻", outros: "⭐",
-};
+import { Icone } from "../Icone";
+import { iconeMeta } from "./iconesMeta";
 
 function MiniGrafico({ pontos, cor, largura = 80 }: { pontos: number[]; cor: string; largura?: number }) {
   if (pontos.length < 2) return <View style={{ width: largura, height: 40 }} />;
@@ -44,16 +40,14 @@ export function CardMetaTimeline({
   const pct = meta.alvoCentavos > 0 ? Math.min(1, meta.atualCentavos / meta.alvoCentavos) : 0;
   const pctStr = `${Math.round(pct * 100)}%`;
   const falta = meta.alvoCentavos - meta.atualCentavos;
-  const emojiKey = meta.icone ?? "bullseye";
-  const emoji = ICONES_META[emojiKey] ?? "⭐";
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`Meta ${meta.nome}, ${pctStr} concluído`}
       style={[s.card, { backgroundColor: c.superficie }]}>
       {/* Cabeçalho */}
       <View style={s.cabecalho}>
-        <View style={[s.iconeWrap, { backgroundColor: `${cor}22` }]}>
-          <Text style={{ fontSize: 18 }}>{emoji}</Text>
+        <View style={[s.iconeWrap, { backgroundColor: `${cor}26` }]}>
+          <Icone nome={iconeMeta(meta.icone)} tamanho={18} cor={cor} />
         </View>
         <View style={{ flex: 1, minWidth: 0, marginLeft: 10 }}>
           <Text style={{ ...tipo.corpo(14, "semibold"), color: c.texto }} numberOfLines={1}>{meta.nome}</Text>
