@@ -46,23 +46,25 @@ A chave é derivada da sua senha mestra e guardada no **Android Keystore** do se
 
 ## 4. Dados de mercado (Etapa 6+)
 
-O app pode consultar serviços externos para exibir indicadores e cotações. Isso só ocorre com sua permissão explícita (configuração "Buscar cotações online").
+O app consulta serviços externos para exibir indicadores e cotações. A opção "Buscar cotações online" vem **ligada**; você pode desligá-la a qualquer momento em Mais.
 
 | Serviço | O que é enviado | Para quê | Base legal |
 |---|---|---|---|
 | Banco Central do Brasil (`api.bcb.gov.br`) | Nada (consulta pública) | Selic e CDI | Legítimo interesse público |
 | IBGE (`servicodados.ibge.gov.br`) | Nada (consulta pública) | IPCA mensal | Legítimo interesse público |
-| **brapi.dev** | Tickers dos ativos da sua carteira | Cotação em tempo real | **Consentimento** (você ativa nas configurações) |
+| **brapi.dev** | Códigos de ativos (ex.: PETR4) que você abre, favorita ou tem na carteira, e o texto que você digita na busca de Mercado; a sua chave da brapi, se você cadastrar uma | Cotação, lista "Em alta" e histórico de preços | **Legítimo interesse** (ligado por padrão; você desliga em Mais) |
 
-> **brapi.dev** é um serviço terceiro brasileiro de dados de mercado. Ao ativar cotações online, os códigos dos seus ativos (ex.: "PETR4", "VALE3") são enviados ao servidor da brapi.dev para retornar o preço atual. Esses códigos **não identificam você pessoalmente**, mas revelam quais ativos você acompanha. A política de privacidade da brapi.dev está em <https://brapi.dev>.
+> **brapi.dev** é um serviço terceiro brasileiro de dados de mercado. Com as cotações online ligadas, os códigos dos seus ativos (ex.: "PETR4", "VALE3") são enviados ao servidor da brapi.dev para retornar o preço atual. Esses códigos **não identificam você pessoalmente**, mas revelam quais ativos você acompanha. A política de privacidade da brapi.dev está em <https://brapi.dev>.
 >
-> Para não enviar nenhum dado externo, mantenha a opção "Buscar cotações online" desativada — o app continua funcionando com o preço médio que você cadastrou.
+> Para não enviar nenhum dado à brapi.dev, desligue "Buscar cotações online" em Mais. A carteira continua mostrando os valores que vieram do seu banco.
+>
+> A chave da brapi (opcional) fica só no armazenamento seguro do celular e é enviada apenas à brapi.dev.
 
 ### Conexão bancária com o Meu Pluggy (opcional, desligada por padrão)
 
 | Serviço | O que é enviado | O que volta | Base legal |
 |---|---|---|---|
-| **Pluggy** (`api.pluggy.ai`) | Seu Client ID, Client Secret e os itemIds que você cadastrou | Saldos e lançamentos dos bancos que **você** conectou no Meu Pluggy | **Consentimento** (você cadastra as credenciais em Mais → Conexão bancária) |
+| **Pluggy** (`api.pluggy.ai`) | Seu Client ID, Client Secret e os itemIds que você cadastrou | Saldos, lançamentos e investimentos dos bancos que **você** conectou no Meu Pluggy | **Consentimento** (você cadastra as credenciais em Mais → Conexão bancária) |
 
 - O Solis não manda seus lançamentos, sua senha nem outros dados para a Pluggy; só baixa o que ela já tem.
 - **A Pluggy, porém, recebe e guarda os dados dos bancos que você conecta no site dela**, segundo a política dela (<https://www.pluggy.ai/legal>), que prevê uso de parceiros e armazenamento fora do Brasil. Essa relação é entre você e a Pluggy.
@@ -78,8 +80,8 @@ O app pode consultar serviços externos para exibir indicadores e cotações. Is
 | Acessar seus dados | Todos estão no app, visíveis para você |
 | Exportar seus dados | Mais → Exportar backup (arquivo `.solis` cifrado; abre só com a sua senha). Você escolhe onde guardar, como o seu Google Drive; o Solis não envia o arquivo para lugar nenhum. Quem tiver o arquivo pode tentar adivinhar a senha sem limite de tentativas; por isso a senha tem no mínimo 12 caracteres. |
 | Excluir seus dados | Menu → Configurações → Apagar todos os dados |
-| Saber quais fornecedores processam seus dados | Seção 4 acima (brapi.dev e Pluggy, apenas se você ativar) |
-| Revogar consentimento de cotações | Desative "Buscar cotações online" nas configurações |
+| Saber quais fornecedores processam seus dados | Seção 4 acima (brapi.dev, ligada por padrão; Pluggy, só se você conectar) |
+| Parar de enviar códigos à brapi.dev | Desligue "Buscar cotações online" em Mais |
 | Revogar todo consentimento | Desinstale o app — os dados são apagados pelo Android |
 
 ---

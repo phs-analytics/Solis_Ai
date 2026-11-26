@@ -159,6 +159,9 @@ Planejado: `packages/ia` (Solis AI), `apps/web` (futuro).
 10. **Levar dados para outro celular**: backup `.solis` (banco SQLCipher + salt) salvo onde a pessoa quiser (ex.: Drive pela tela de compartilhar); restauração no primeiro acesso, testando a senha antes de substituir. Sem servidor.
 11. **Meu Pluggy (18/11/2026, decisão do Pedro, muda o escopo)**: o Solis vira ferramenta de **uso pessoal + portfólio**. Conexão bancária opcional via conta gratuita do Meu Pluggy de cada pessoa: Client ID/Secret/itemIds no SecureStore (`solis_pluggy_v1`), app chama `api.pluggy.ai` direto (`packages/core/src/pluggy`), grava no SQLCipher (`packages/dados/src/pluggy/sincronizar.ts`, schema v4 `externo_id`), no máximo 1x/24h ao abrir. Tutorial em `GUIDE_PLUGGY.md`. A Pluggy vê os dados bancários: isso é dito no app, no guia e no PRIVACY.md. `GET /transactions` antigo some em 31/12/2026; usamos `/v2/transactions`.
 
+12. **Investimentos e mercado v2 (26/11/2026, v0.9.2)**: "Minha carteira" mostra só investimentos do Meu Pluggy (`GET /investments`, gravados em `ativos` com `externo_id`, schema v7); sem cadastro manual. "Mercado e taxas": Selic/CDI/IPCA, busca e "Em alta" pela brapi v2 (`/api/v2/tickers`, sem chave), favoritos em `configuracoes.mercado_favoritos`, histórico (`/api/v2/stocks/historical`) com chave pessoal opcional em Mais (`solis_brapi_v1`). "Em alta" é igual para todos (nunca pelo perfil: seria recomendação). Cotações online **ligadas por padrão** (desligar em Mais); PRIVACY.md atualizado. Metas: `externo_id` marca cofrinho do banco (sem Guardar/Retirar manual). Pop-out do banco na Início com Hoje/Semana/Mês (do calendário)/Últ. 6 meses e tipo do lançamento.
+   - Pendente: validar no celular o formato real da resposta do histórico v2 (o parser aceita `results` ou `data`) e se o Meu Pluggy grátis devolve investimentos.
+
 Futuro: iPhone e versão web.
 
 ## Decisões ainda abertas
