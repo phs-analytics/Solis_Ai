@@ -5,7 +5,7 @@
 
 import type { Banco } from "./vault.js";
 
-export const VERSAO_SCHEMA = 5;
+export const VERSAO_SCHEMA = 6;
 
 export async function inicializarSchema(banco: Banco): Promise<void> {
   await banco.withTransactionAsync(async () => {
@@ -26,6 +26,7 @@ export async function inicializarSchema(banco: Banco): Promise<void> {
     if (versaoAtual < 3) await migrar_v3(banco);
     if (versaoAtual < 4) await migrar_v4(banco);
     if (versaoAtual < 5) await migrar_v5(banco);
+    if (versaoAtual < 6) await migrar_v6(banco);
   });
 }
 
@@ -203,5 +204,19 @@ async function migrar_v5(banco: Banco): Promise<void> {
 
     INSERT INTO _migracoes (versao, aplicada_em)
     VALUES (5, datetime('now'));
+  `);
+}
+
+// ── Migração v6: cor personalizada, banco vinculado e descrição nas metas ──
+
+async function migrar_v6(banco: Banco): Promise<void> {
+  await banco.execAsync(`
+    ALTER TABLE metas ADD COLUMN cor TEXT;
+    ALTER TABLE metas ADD COLUMN banco_nome TEXT;
+    ALTER TABLE metas ADD COLUMN descricao TEXT;
+    ALTER TABLE metas_movimentos ADD COLUMN descricao TEXT;
+
+    INSERT INTO _migracoes (versao, aplicada_em)
+    VALUES (6, datetime('now'));
   `);
 }

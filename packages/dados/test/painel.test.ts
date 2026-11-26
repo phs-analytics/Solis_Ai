@@ -33,7 +33,7 @@ describe("painel das últimas 24 h", () => {
     await criarLancamento(b, { contaId: conta.id, valorCentavos: -1250, descricao: "Padaria", categoriaId: null, data: "2026-11-24", tipo: "despesa", recorrente: false });
     await b.runAsync("UPDATE lancamentos SET criado_em = ?", ["2020-01-01T00:00:00.000Z"]);
     await criarLancamento(b, { contaId: conta.id, valorCentavos: 15000, descricao: "Pix", categoriaId: null, data: "2026-11-24", tipo: "receita", recorrente: false });
-    const meta = await criarMeta(b, { nome: "Viagem", icone: null, alvoCentavos: 100000, prazo: null });
+    const meta = await criarMeta(b, { nome: "Viagem", icone: null, cor: null, bancNome: null, descricao: null, alvoCentavos: 100000, prazo: null });
     await depositar(b, meta.id, 8000);
 
     const p = await montarPainel(b);
