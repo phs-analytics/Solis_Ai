@@ -46,7 +46,11 @@ export function NavIcone({ nome, cor, tamanho = 20, play, riscado = false, giran
 
 type IP = { p: SharedValue<number>; t: number; cor: string; riscado?: boolean; girando?: boolean };
 const traco = (cor: string) => ({ stroke: cor, strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" });
-const px = (t: number, x: number, y: number) => `${(x * t) / 24}px ${(y * t) / 24}px`;
+// worklet: é chamada dentro de useAnimatedStyle (roda na thread de UI)
+function px(t: number, x: number, y: number) {
+  "worklet";
+  return `${(x * t) / 24}px ${(y * t) / 24}px`;
+}
 
 function Casa({ p, t, cor }: IP) {
   const corpo = useAnimatedStyle(() => ({
